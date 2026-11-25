@@ -63,14 +63,16 @@ Write them to the scratchpad (not the repo), in English with a short Dutch parag
 
 ## 6. Confirm, then publish
 
-Publishing is outward-facing: show the user the version, tag, pre-release yes/no and the notes, and wait for an
+Publishing is outward-facing: show the user the version, tag and the notes, and wait for an
 explicit go. Then:
 
 ```
-gh release create v<version> "Win64\Release\RDCManagerX-<version>-win64.zip" --target main --title "RDCManagerX <version>" --notes-file <notes file> [--prerelease]
+gh release create v<version> "Win64\Release\RDCManagerX-<version>-win64.zip" --target main --title "RDCManagerX <version>" --notes-file <notes file> --latest
 ```
 
-- `--prerelease` for the first releases, until the user says releases are stable.
+- Normal releases marked latest (user decision 2026-11-25, after the first release); `--prerelease` only when the
+  user asks for it.
+- `gh` may not be on the PATH of this session: use `C:\Program Files\GitHub CLI\gh.exe`.
 - Afterwards `gh release view v<version>` and report the URL. `git fetch --tags` so the local tag exists.
 
 Versioning stays date based (`yyyy.mm.dd.xxx`, user decision: it is an app, not an API or library).
