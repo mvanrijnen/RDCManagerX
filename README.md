@@ -4,8 +4,8 @@ Een RDP-verbindingsbeheerder in de stijl van Microsoft Remote Desktop Connection
 leest en schrijft `.rdg`-bestanden van RDCMan en heeft een eigen formaat, `.rdcx`.
 
 Het belangrijkste verschil met RDCMan is **dynamische resolutie**: de sessie past zich aan de venstergrootte aan.
-Daarnaast heeft RDCManagerX een wachtwoordkluis, gesplitste weergave, Wake-on-LAN, en routes via **Tailscale** of
-een **RD Gateway**.
+Daarnaast heeft RDCManagerX een wachtwoordkluis, gesplitste weergave, Wake-on-LAN, een optionele
+**bereikbaarheidscontrole** in de boom, en routes via **Tailscale** of een **RD Gateway**.
 
 Windows, 64-bit. Gebouwd met Delphi 12.
 
@@ -33,6 +33,50 @@ onthouden* aan staan (Bestand > Opties).
 
 Neem je een bestand mee naar een andere pc, dan gaan de definities mee, maar de geheimen niet. Op die pc vul je de
 auth key of het wachtwoord één keer opnieuw in, of je logt in via de browser.
+
+---
+
+## Bereikbaarheid en status
+
+RDCManagerX kan op de achtergrond controleren of servers bereikbaar zijn. Dit staat standaard **uit**. Je zet het aan
+op een bestand, groep of server: **Eigenschappen > Route > Bereikbaarheid tonen in de boom**. Zet daarvoor eerst het
+overerf-vinkje uit. Groepen en servers eronder erven de instelling.
+
+Zo werkt de controle:
+
+1. RDCManagerX stuurt een ping (ICMP, er zijn geen beheerdersrechten nodig). Komt er geen antwoord, dan probeert het
+   een korte TCP-verbinding met de RDP-poort, omdat Windows ping vaak blokkeert.
+2. Is de server bereikbaar, dan vraagt RDCManagerX via NetBIOS (UDP 137, zoals `nbtstat -A`) de computernaam op dat
+   adres op. Komt die niet overeen, dan wijst het DNS-record waarschijnlijk naar een ander apparaat. Antwoordt er
+   niemand via NetBIOS, of is de server met een IP-adres ingevoerd, dan wordt deze stap overgeslagen.
+
+Alle servers worden tegelijk gecontroleerd, zonder dat de app daar trager van wordt. Het interval is standaard 30
+seconden en stel je in bij **Bestand > Opties** (5 tot 3600 seconden). Alleen servers met route **Direct** worden
+gecontroleerd: servers achter Tailscale of een gateway zijn vanaf deze pc niet rechtstreeks te bereiken. Het gaat
+alleen om IPv4.
+
+### Wat je ziet
+
+Een server zonder open sessie krijgt een gekleurd icoon in de boom:
+
+| Kleur | Betekenis |
+|---|---|
+| Blauw | Bereikbaarheid wordt niet gecontroleerd, of de eerste controle loopt nog |
+| Groen | Bereikbaar |
+| Rood | Niet bereikbaar |
+| Oranje | Bereikbaar, maar op dat adres antwoordt een andere computer: het DNS-record is waarschijnlijk verouderd |
+
+Een server met een sessie houdt het gewone icoon met een gekleurde stip: oranje betekent verbinden, groen verbonden en
+rood een fout.
+
+- **Statusbalk:** bij een geselecteerde server staat bijvoorbeeld *"dc01 is online (3 ms)"* of *"dc01 is niet
+  bereikbaar (sinds 14:05)"*.
+- **Tooltip in de boom:** bij een server staan de sessiestatus, de bereikbaarheid (met adres en reactietijd), wanneer
+  hij voor het laatst bereikbaar was, de laatste controle en de opmerking. Bij een groep staat hoeveel servers
+  bereikbaar zijn.
+
+Oranje komt meestal door een verouderd DNS-record: het adres is via DHCP aan een ander apparaat uitgedeeld, maar het
+oude record staat nog in de DNS. Verwijder het oude record en zet DNS-scavenging aan.
 
 ---
 
