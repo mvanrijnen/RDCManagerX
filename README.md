@@ -10,8 +10,8 @@ An RDP connection manager in the style of Microsoft Remote Desktop Connection Ma
 RDCMan `.rdg` files and also has its own format, `.rdcx`.
 
 The main difference from RDCMan is **dynamic resolution**: the remote session follows the size of the window.
-RDCManagerX also has a password vault, a split session view, Wake-on-LAN, an optional **reachability check** in the
-tree, and routes via **Tailscale** or an **RD Gateway**.
+RDCManagerX also has a **multi-view** (split screen with several sessions side by side), a password vault,
+Wake-on-LAN, an optional **reachability check** in the tree, and routes via **Tailscale** or an **RD Gateway**.
 
 Windows, 64-bit. Built with Delphi 12.
 
@@ -22,7 +22,33 @@ Windows, 64-bit. Built with Delphi 12.
 
 **Keywords:** Delphi, Delphi 12, VCL, Object Pascal, RDP, Remote Desktop, Remote Desktop Protocol, RDP client,
 RDP manager, RDCMan, Remote Desktop Connection Manager, RDCMan alternative, mstsc, mstscax, RD Gateway,
-RDP Gateway, Remote Desktop Gateway, Tailscale, tsnet, WireGuard, dynamic resolution, Wake-on-LAN, Windows.
+RDP Gateway, Remote Desktop Gateway, Tailscale, tsnet, WireGuard, dynamic resolution, multi-view, split screen,
+Wake-on-LAN, Windows.
+
+---
+
+## Multi-view (split screen)
+
+Work with several sessions at the same time: the session area can be split into a grid of panes, each with its own
+tabs. Choose a layout in the **View** menu (*Beeld*):
+
+- quick choices: 1 pane, 2/3/4 side by side, 2 stacked, 2×2, 3×2 and 4×2;
+- **Custom…** (*Aangepast…*): any grid up to 6 columns × 3 rows;
+- **Distribute evenly** (*Gelijk verdelen*) resets the splitters.
+
+How it works:
+
+- **Every pane has its own tab bar.** Drag a tab to another pane (or use the tab menu *Move to next pane*) to show
+  that session there; drag within a tab bar to change the order.
+- **Splitters** between the panes can be dragged; the sizes are remembered.
+- **Dynamic resolution per pane:** each session follows the size of its own pane, also while you drag a splitter.
+- **Connect a whole group** (*Server > Connect all servers*): the sessions are spread over the panes, with the
+  credentials asked only once.
+- Clicking a session or an empty pane makes it the active pane (accent line under its tab bar); new connections open
+  there.
+- A session can also go to a **separate window** or **full screen** (tab menu) and back, without reconnecting.
+
+The layout (grid and splitter positions) is stored in the app settings, not in the connection file.
 
 ---
 

@@ -10,14 +10,42 @@ Een RDP-verbindingsbeheerder in de stijl van Microsoft Remote Desktop Connection
 leest en schrijft `.rdg`-bestanden van RDCMan en heeft een eigen formaat, `.rdcx`.
 
 Het belangrijkste verschil met RDCMan is **dynamische resolutie**: de sessie past zich aan de venstergrootte aan.
-Daarnaast heeft RDCManagerX een wachtwoordkluis, gesplitste weergave, Wake-on-LAN, een optionele
-**bereikbaarheidscontrole** in de boom, en routes via **Tailscale** of een **RD Gateway**.
+Daarnaast heeft RDCManagerX een **multi-view** (gesplitst scherm met meerdere sessies naast elkaar), een
+wachtwoordkluis, Wake-on-LAN, een optionele **bereikbaarheidscontrole** in de boom, en routes via **Tailscale** of een
+**RD Gateway**.
 
 Windows, 64-bit. Gebouwd met Delphi 12.
 
 **Trefwoorden:** Delphi, Delphi 12, VCL, Object Pascal, RDP, Remote Desktop, Remote Desktop Protocol, RDP client,
 RDP manager, RDCMan, Remote Desktop Connection Manager, RDCMan alternative, mstsc, mstscax, RD Gateway,
-RDP Gateway, Remote Desktop Gateway, Tailscale, tsnet, WireGuard, dynamic resolution, Wake-on-LAN, Windows.
+RDP Gateway, Remote Desktop Gateway, Tailscale, tsnet, WireGuard, dynamic resolution, multi-view, split screen,
+Wake-on-LAN, Windows.
+
+---
+
+## Multi-view (gesplitst scherm)
+
+Werk met meerdere sessies tegelijk: het sessiegebied kan worden verdeeld in een raster van vakken, elk met eigen tabs.
+Kies een indeling in het menu **Beeld**:
+
+- snelle keuzes: 1 vak, 2/3/4 naast elkaar, 2 boven elkaar, 2×2, 3×2 en 4×2;
+- **Aangepast…**: elk raster tot 6 kolommen × 3 rijen;
+- **Gelijk verdelen** zet de splitters terug.
+
+Zo werkt het:
+
+- **Elk vak heeft een eigen tabbalk.** Sleep een tab naar een ander vak (of kies in het tabmenu *Naar het volgende
+  vak verplaatsen*) om die sessie daar te tonen; sleep binnen een tabbalk om de volgorde te wijzigen.
+- **Splitters** tussen de vakken zijn versleepbaar; de maten worden onthouden.
+- **Dynamische resolutie per vak:** elke sessie volgt de grootte van haar eigen vak, ook tijdens het slepen van een
+  splitter.
+- **Een hele groep verbinden** (*Server > Alle servers verbinden*): de sessies worden over de vakken verdeeld en de
+  aanmeldgegevens worden één keer gevraagd.
+- Klik op een sessie of een leeg vak om het actief te maken (accentlijn onder de tabbalk); nieuwe verbindingen openen
+  daar.
+- Een sessie kan ook naar een **eigen venster** of **volledig scherm** (tabmenu) en terug, zonder opnieuw te verbinden.
+
+De indeling (raster en splitterposities) staat in de app-instellingen, niet in het verbindingsbestand.
 
 ---
 
