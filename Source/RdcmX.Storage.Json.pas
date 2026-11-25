@@ -63,7 +63,7 @@ implementation
 
 uses
   System.Generics.Collections,
-  RdcmX.Storage.Rdg;
+  RdcmX.Lang, RdcmX.Storage.Rdg;
 
 const
   cAttributePrefix = '@';
@@ -531,7 +531,7 @@ begin
       if (lSection <> nil) and (lPair.JsonValue is TJSONObject) then
         TRdcJsonFormat.JsonToSection(TJSONObject(lPair.JsonValue), lSection)
       else
-        FFile.Warnings.Add(Format('Onbekende instellingsgroep "%s" bij "%s" genegeerd.', [lPair.JsonString.Value, aNode.Caption]));
+        FFile.Warnings.Add(Format(_('Onbekende instellingsgroep "%s" bij "%s" genegeerd.'), [lPair.JsonString.Value, aNode.Caption]));
     end;
 
   lChildren := aObject.GetValue('children') as TJSONArray;
@@ -581,9 +581,9 @@ var
 begin
   lVersion := aRoot.GetValue<Integer>('formatVersion', 0);
   if lVersion > cRdcxFormatVersion then
-    raise ERdcFormatError.CreateFmt('%s is gemaakt met een nieuwere versie van RDCManX (formatVersion %d); deze versie ondersteunt t/m formatVersion %d.', [aFileName, lVersion, cRdcxFormatVersion]);
+    raise ERdcFormatError.CreateFmt(_('%s is gemaakt met een nieuwere versie van RDCManX (formatVersion %d); deze versie ondersteunt t/m formatVersion %d.'), [aFileName, lVersion, cRdcxFormatVersion]);
   if lVersion < 1 then
-    raise ERdcFormatError.CreateFmt('%s is geen geldig .rdcx-bestand (formatVersion ontbreekt).', [aFileName]);
+    raise ERdcFormatError.CreateFmt(_('%s is geen geldig .rdcx-bestand (formatVersion ontbreekt).'), [aFileName]);
   // Migratie van oudere formatVersions komt hier zodra die er zijn.
 
   FFile := TRdcFile.Create('');
@@ -632,7 +632,7 @@ begin
 
       lValue := aRoot.GetValue('root');
       if not (lValue is TJSONObject) then
-        raise ERdcFormatError.CreateFmt('%s bevat geen "root".', [aFileName]);
+        raise ERdcFormatError.CreateFmt(_('%s bevat geen "root".'), [aFileName]);
       ReadNode(FFile, TJSONObject(lValue));
 
       ReadRefList(aRoot, 'connected', FFile.Connected);
@@ -642,7 +642,7 @@ begin
       begin
         lNode := FFile.FindByPath(lPending.Value);
         if lNode = nil then
-          FFile.Warnings.Add(Format('Pad "%s" verwijst niet naar een bestaande node; wordt ongewijzigd bewaard.', [lPending.Value]));
+          FFile.Warnings.Add(Format(_('Pad "%s" verwijst niet naar een bestaande node; wordt ongewijzigd bewaard.'), [lPending.Value]));
         lPending.Key.AddPath(lPending.Value, lNode);
       end;
 
@@ -677,7 +677,7 @@ begin
   if not (lValue is TJSONObject) then
   begin
     lValue.Free;
-    raise ERdcFormatError.CreateFmt('%s is geen geldig JSON-object.', [aFileName]);
+    raise ERdcFormatError.CreateFmt(_('%s is geen geldig JSON-object.'), [aFileName]);
   end;
   lReader := TJsonReader.Create;
   try

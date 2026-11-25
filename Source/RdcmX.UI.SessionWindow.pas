@@ -95,6 +95,9 @@ type
 
 implementation
 
+uses
+  RdcmX.Lang;
+
 { TRdcHostArea }
 
 procedure TRdcHostArea.CreateParams(var Params: TCreateParams);
@@ -195,15 +198,15 @@ begin
   FDockButton := TSpeedButton.Create(Self);
   FDockButton.Parent := FBar;
   FDockButton.Flat := True;
-  FDockButton.Caption := 'Terugzetten in hoofdvenster';
+  FDockButton.Caption := _('Terugzetten in hoofdvenster');
   FDockButton.OnClick := DockButtonClick;
   FFullScreenButton := TSpeedButton.Create(Self);
   FFullScreenButton.Parent := FBar;
   FFullScreenButton.Flat := True;
   if FFullScreen then
-    FFullScreenButton.Caption := 'Venster'
+    FFullScreenButton.Caption := _('Venster')
   else
-    FFullScreenButton.Caption := 'Volledig scherm';
+    FFullScreenButton.Caption := _('Volledig scherm');
   FFullScreenButton.OnClick := FullScreenButtonClick;
 
   if FFullScreen then

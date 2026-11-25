@@ -51,8 +51,9 @@ object frmProfiles: TfrmProfiles
     Height = 30
     AutoSize = False
     Caption =
-      'Wachtwoorden worden nooit opgeslagen; bij elke verbinding wordt e' +
-      'rom gevraagd. Hernoemen past alle verwijzingen in het bestand aan.'
+      'Wachtwoorden staan nooit in het bestand; bij het verbinden wordt e' +
+      'rom gevraagd, tenzij het in de wachtwoordkluis onthouden is. Hern' +
+      'oemen past alle verwijzingen in het bestand aan.'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clGrayText
     Font.Height = -12

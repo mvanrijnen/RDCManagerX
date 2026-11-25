@@ -617,7 +617,8 @@ function RdcTextToEnum(const aText: string; const aNames: array of string; aDefa
 implementation
 
 uses
-  System.StrUtils;
+  System.StrUtils,
+  RdcmX.Lang;
 
 function RdcBoolText(aValue: Boolean): string;
 begin
@@ -1461,7 +1462,7 @@ begin
   for lGroup in FGroups do
     if lGroup.ClassType = aClass then
       Exit(lGroup);
-  raise EArgumentException.CreateFmt('Onbekende instellingsgroep %s', [aClass.ClassName]);
+  raise EArgumentException.CreateFmt(_('Onbekende instellingsgroep %s'), [aClass.ClassName]);
 end;
 
 function TRdcNodeSettings.FindByXmlName(const aXmlName: string): TRdcSettingsGroup;
@@ -1799,7 +1800,7 @@ end;
 procedure TRdcGroup.Insert(aIndex: Integer; aNode: TRdcNode);
 begin
   if aNode.FParent <> nil then
-    raise EInvalidOpException.Create('Node zit al in een groep; gebruik MoveHere.');
+    raise EInvalidOpException.Create(_('Node zit al in een groep; gebruik MoveHere.'));
   FChildren.Insert(aIndex, aNode);
   aNode.FParent := Self;
 end;
@@ -1843,7 +1844,7 @@ end;
 procedure TRdcGroup.MoveHere(aNode: TRdcNode; aIndex: Integer);
 begin
   if (aNode = Self) or ((aNode is TRdcGroup) and IsDescendantOf(TRdcGroup(aNode))) then
-    raise EInvalidOpException.Create('Een groep kan niet in zichzelf of een eigen subgroep worden geplaatst.');
+    raise EInvalidOpException.Create(_('Een groep kan niet in zichzelf of een eigen subgroep worden geplaatst.'));
   if aNode.FParent <> nil then
     aNode.FParent.Extract(aNode);
   if (aIndex < 0) or (aIndex > FChildren.Count) then

@@ -48,7 +48,8 @@ implementation
 uses
   Winapi.ActiveX, Winapi.Windows,
   System.Generics.Collections, System.Variants,
-  Xml.Win.msxmldom, Xml.XMLDoc, Xml.XMLIntf;
+  Xml.Win.msxmldom, Xml.XMLDoc, Xml.XMLIntf,
+  RdcmX.Lang;
 
 const
   cPasswordElement = 'password';
@@ -152,7 +153,7 @@ begin
     lDocument.LoadFromXML(aText);
     lDocument.Active := True;
     if lDocument.DocumentElement = nil then
-      raise ERdcFormatError.Create('Leeg XML-document.');
+      raise ERdcFormatError.Create(_('Leeg XML-document.'));
     Result := ConvertElement(lDocument.DocumentElement);
     lDocument := nil;
   finally
@@ -213,7 +214,7 @@ begin
   if (lPassword <> nil) and (lPassword.Text <> '') then
   begin
     lPassword.Text := '';
-    FFile.Warnings.Add(Format('Opgeslagen wachtwoord genegeerd bij %s; RDCManX slaat geen wachtwoorden op en schrijft het niet terug.', [aContext]));
+    FFile.Warnings.Add(Format(_('Opgeslagen wachtwoord genegeerd bij %s; RDCManX slaat geen wachtwoorden op en schrijft het niet terug.'), [aContext]));
   end;
 end;
 
@@ -230,7 +231,7 @@ begin
   begin
     if lChild.Name <> TRdcCredentialProfile.XmlName then
     begin
-      FFile.Warnings.Add(Format('Onbekend element <%s> in credentialsProfiles genegeerd.', [lChild.Name]));
+      FFile.Warnings.Add(Format(_('Onbekend element <%s> in credentialsProfiles genegeerd.'), [lChild.Name]));
       Continue;
     end;
     lProfile := TRdcCredentialProfile.Create;
@@ -324,10 +325,10 @@ var
 begin
   FFileName := aFileName;
   if aRoot.Name <> 'RDCMan' then
-    raise ERdcFormatError.CreateFmt('%s is geen RDCMan-bestand (root-element <%s>).', [aFileName, aRoot.Name]);
+    raise ERdcFormatError.CreateFmt(_('%s is geen RDCMan-bestand (root-element <%s>).'), [aFileName, aRoot.Name]);
   lSchemaVersion := StrToIntDef(aRoot.GetAttribute('schemaVersion'), 0);
   if lSchemaVersion < 3 then
-    raise ERdcFormatError.CreateFmt('%s heeft schemaVersion %s; alleen schemaVersion 3 (RDCMan 2.7 en nieuwer) wordt ondersteund.', [aFileName, aRoot.GetAttribute('schemaVersion')]);
+    raise ERdcFormatError.CreateFmt(_('%s heeft schemaVersion %s; alleen schemaVersion 3 (RDCMan 2.7 en nieuwer) wordt ondersteund.'), [aFileName, aRoot.GetAttribute('schemaVersion')]);
 
   FFile := TRdcFile.Create('');
   lPaths := TList<TPair<TRdcNodeRefList, string>>.Create;
@@ -367,14 +368,14 @@ begin
         lAnchorName := lChild.Name;
       end;
       if not lFileFound then
-        raise ERdcFormatError.CreateFmt('%s bevat geen <file>-element.', [aFileName]);
+        raise ERdcFormatError.CreateFmt(_('%s bevat geen <file>-element.'), [aFileName]);
 
       // Paden pas herleiden als de hele boom staat.
       for lPair in lPaths do
       begin
         lNode := FFile.FindByPath(lPair.Value);
         if lNode = nil then
-          FFile.Warnings.Add(Format('Pad "%s" verwijst niet naar een bestaande node; wordt ongewijzigd bewaard.', [lPair.Value]));
+          FFile.Warnings.Add(Format(_('Pad "%s" verwijst niet naar een bestaande node; wordt ongewijzigd bewaard.'), [lPair.Value]));
         lPair.Key.AddPath(lPair.Value, lNode);
       end;
       FFile.Modified := False;

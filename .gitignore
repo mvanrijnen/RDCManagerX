@@ -25,3 +25,6 @@ Bridge/bin/**/*.h
 
 # IDE desktop state
 *.dsk
+
+# Python bytecode (Tools)
+__pycache__/

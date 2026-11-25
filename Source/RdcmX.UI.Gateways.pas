@@ -90,17 +90,32 @@ type
     function SaveSecrets: Boolean;
     function AddressChanged(aEdit: TRdcGatewayEdit): Boolean;
     procedure ApplyToFile;
+  protected
+    /// <summary>Translates the DFM texts after loading, before OnCreate.</summary>
+    procedure DoCreate; override;
   public
     /// <summary>True als er iets gewijzigd is (en toegepast op het bestand).</summary>
     class function Execute(aFile: TRdcFile; const aSecrets: IRdcSecretAccess; const aIdInUseElsewhere: TFunc<string, Boolean>): Boolean; static;
   end;
 
-const
-  cRdcGatewayCredsModeCaptions: array[TRdcGatewayCredsMode] of string = ('Sessie', 'Eigen', 'Vragen', 'Smartcard');
-
 implementation
 
+uses
+  RdcmX.Lang;
+
 {$R *.dfm}
+
+/// <summary>Short caption of a credentials mode for the list, in the active language.</summary>
+function GatewayCredsModeCaption(aMode: TRdcGatewayCredsMode): string;
+begin
+  case aMode of
+    gcmSession: Result := _('Sessie');
+    gcmSeparate: Result := _('Eigen');
+    gcmAsk: Result := _('Vragen');
+  else
+    Result := _('Smartcard');
+  end;
+end;
 
 { TRdcGatewayEdit }
 
@@ -135,6 +150,13 @@ begin
   finally
     lForm.Free;
   end;
+end;
+
+procedure TfrmGateways.DoCreate;
+begin
+  // Translate the DFM texts before OnCreate runs.
+  TranslateComponent(Self);
+  inherited;
 end;
 
 procedure TfrmGateways.FormCreate(Sender: TObject);
@@ -189,7 +211,7 @@ var
   lDef: TRdcGatewayDef;
   lEdit: TRdcGatewayEdit;
 begin
-  Caption := Format('RDP-gateways - %s', [FFile.Caption]);
+  Caption := Format(_('RDP-gateways - %s'), [FFile.Caption]);
   for lDef in FFile.Gateways do
   begin
     lEdit := TRdcGatewayEdit.Create;
@@ -239,7 +261,7 @@ begin
   lEdit := TRdcGatewayEdit(aItem.Data);
   aItem.Caption := lEdit.Def.Name;
   aItem.SubItems[0] := lEdit.Def.Address;
-  aItem.SubItems[1] := cRdcGatewayCredsModeCaptions[lEdit.Def.CredsMode];
+  aItem.SubItems[1] := GatewayCredsModeCaption(lEdit.Def.CredsMode);
 end;
 
 function TfrmGateways.SelectedEdit: TRdcGatewayEdit;
@@ -311,11 +333,11 @@ begin
   edtPassword.Enabled := lOwn;
   btnClearPassword.Enabled := lOwn and ((lEdit.NewPassword <> '') or (lEdit.HasStoredPassword and not lEdit.ClearPassword));
   if (lEdit <> nil) and lEdit.HasStoredPassword and not lEdit.ClearPassword and AddressChanged(lEdit) then
-    edtPassword.TextHint := 'server gewijzigd: opgeslagen wachtwoord wordt gewist'
+    edtPassword.TextHint := _('server gewijzigd: opgeslagen wachtwoord wordt gewist')
   else if (lEdit <> nil) and lEdit.HasStoredPassword and not lEdit.ClearPassword then
-    edtPassword.TextHint := 'opgeslagen in de wachtwoordkluis'
+    edtPassword.TextHint := _('opgeslagen in de wachtwoordkluis')
   else
-    edtPassword.TextHint := 'leeg = vragen bij verbinden';
+    edtPassword.TextHint := _('leeg = vragen bij verbinden');
   btnDelete.Enabled := lEdit <> nil;
 end;
 
@@ -390,7 +412,7 @@ begin
   lEdit := TRdcGatewayEdit.Create;
   lEdit.IsNew := True;
   lEdit.Def.Id := TGUID.NewGuid.ToString;
-  lEdit.Def.Name := UniqueName('Nieuwe gateway');
+  lEdit.Def.Name := UniqueName(_('Nieuwe gateway'));
   FEdits.Add(lEdit);
   FChanged := True;
   FillList(lEdit);
@@ -411,7 +433,7 @@ begin
     lUsage := FFile.GatewayUsageCount(lEdit.Def.Id);
     if lUsage > 0 then
     begin
-      MessageDlg(Format('Gateway "%s" wordt nog gebruikt door %d route(s) in dit bestand. Kies daar eerst een andere route.', [lEdit.Def.Name, lUsage]), mtWarning, [mbOK], 0);
+      MessageDlg(Format(_('Gateway "%s" wordt nog gebruikt door %d route(s) in dit bestand. Kies daar eerst een andere route.'), [lEdit.Def.Name, lUsage]), mtWarning, [mbOK], 0);
       Exit;
     end;
   end;
@@ -457,20 +479,20 @@ begin
   for lEdit in FEdits do
   begin
     if lEdit.Def.Name = '' then
-      Exit(Fail(lEdit, edtName, 'Elke gateway moet een naam hebben.'));
+      Exit(Fail(lEdit, edtName, _('Elke gateway moet een naam hebben.')));
     for lOther in FEdits do
       if (lOther <> lEdit) and SameText(lOther.Def.Name, lEdit.Def.Name) then
-        Exit(Fail(lEdit, edtName, Format('Er zijn twee gateways met de naam "%s".', [lEdit.Def.Name])));
+        Exit(Fail(lEdit, edtName, Format(_('Er zijn twee gateways met de naam "%s".'), [lEdit.Def.Name])));
     if lEdit.Def.HostName = '' then
-      Exit(Fail(lEdit, edtHostName, 'Vul de gatewayserver in.'));
+      Exit(Fail(lEdit, edtHostName, _('Vul de gatewayserver in.')));
     if (lEdit.Def.HostName.Contains(':') or lEdit.Def.HostName.Contains('/')) then
-      Exit(Fail(lEdit, edtHostName, 'Vul bij de gatewayserver alleen de naam in; de poort heeft een eigen veld.'));
+      Exit(Fail(lEdit, edtHostName, _('Vul bij de gatewayserver alleen de naam in; de poort heeft een eigen veld.')));
     if (lEdit.Def.Port <> 0) and ((lEdit.Def.Port < 1) or (lEdit.Def.Port > 65535)) then
-      Exit(Fail(lEdit, edtPort, 'De poort moet tussen 1 en 65535 liggen (leeg = 443).'));
+      Exit(Fail(lEdit, edtPort, _('De poort moet tussen 1 en 65535 liggen (leeg = 443).')));
     if (lEdit.Def.CredsMode = gcmSeparate) and (lEdit.Def.UserName = '') then
-      Exit(Fail(lEdit, edtUserName, 'Vul de gebruikersnaam voor de gateway in.'));
+      Exit(Fail(lEdit, edtUserName, _('Vul de gebruikersnaam voor de gateway in.')));
     if (lEdit.NewPassword <> '') and not FSecrets.CanStoreSecrets then
-      Exit(Fail(lEdit, edtPassword, 'Het gateway-wachtwoord kan alleen in de wachtwoordkluis worden bewaard. Zet "Wachtwoorden onthouden" aan in Opties, of laat het veld leeg (dan wordt erom gevraagd bij verbinden).'));
+      Exit(Fail(lEdit, edtPassword, _('Het gateway-wachtwoord kan alleen in de wachtwoordkluis worden bewaard. Zet "Wachtwoorden onthouden" aan in Opties, of laat het veld leeg (dan wordt erom gevraagd bij verbinden).')));
   end;
   Result := True;
 end;
@@ -490,7 +512,7 @@ begin
     if AddressChanged(lEdit) then
     begin
       if lEdit.HasStoredPassword and (lEdit.NewPassword = '') then
-        if MessageDlg(Format('De server van gateway "%s" is gewijzigd.'#13#10#13#10'Het opgeslagen wachtwoord hoort bij de oude server en wordt gewist. Doorgaan?', [lEdit.Def.Name]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
+        if MessageDlg(Format(_('De server van gateway "%s" is gewijzigd.'#13#10#13#10'Het opgeslagen wachtwoord hoort bij de oude server en wordt gewist. Doorgaan?'), [lEdit.Def.Name]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
         begin
           FillList(lEdit);
           Exit(False);
@@ -502,10 +524,10 @@ begin
   for lEdit in FEdits do
     if (lEdit.NewPassword <> '') and (lEdit.Def.CredsMode = gcmSeparate) then
     begin
-      if not FSecrets.SaveSecret(TRdcPasswordVault.GatewayTarget(lEdit.Def.Id, lEdit.Def.Address), 'Gateway ' + lEdit.Def.Name, lEdit.NewPassword, Format('Het wachtwoord voor gateway "%s" wordt in de wachtwoordkluis opgeslagen.', [lEdit.Def.Name])) then
+      if not FSecrets.SaveSecret(TRdcPasswordVault.GatewayTarget(lEdit.Def.Id, lEdit.Def.Address), 'Gateway ' + lEdit.Def.Name, lEdit.NewPassword, Format(_('Het wachtwoord voor gateway "%s" wordt in de wachtwoordkluis opgeslagen.'), [lEdit.Def.Name])) then
       begin
         FillList(lEdit);
-        MessageDlg(Format('Het wachtwoord voor gateway "%s" kon niet in de wachtwoordkluis worden opgeslagen.', [lEdit.Def.Name]), mtWarning, [mbOK], 0);
+        MessageDlg(Format(_('Het wachtwoord voor gateway "%s" kon niet in de wachtwoordkluis worden opgeslagen.'), [lEdit.Def.Name]), mtWarning, [mbOK], 0);
         Exit(False);
       end;
       WipeString(lEdit.NewPassword);

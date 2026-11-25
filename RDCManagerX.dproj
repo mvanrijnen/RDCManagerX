@@ -86,6 +86,7 @@
         <DCCReference Include="Source\RdcmX.AppSettings.pas"/>
         <DCCReference Include="Source\RdcmX.Credentials.pas"/>
         <DCCReference Include="Source\RdcmX.Crypto.pas"/>
+        <DCCReference Include="Source\RdcmX.Lang.pas"/>
         <DCCReference Include="Source\RdcmX.Log.pas"/>
         <DCCReference Include="Source\RdcmX.Model.pas"/>
         <DCCReference Include="Source\RdcmX.Rdp.Host.pas"/>
@@ -138,6 +139,18 @@
         <DCCReference Include="Source\RdcmX.XmlTree.pas"/>
         <RcCompile Include="Source\Version.rc">
             <Form>Version.res</Form>
+        </RcCompile>
+        <RcCompile Include="Source\TsBridge.rc">
+            <Form>TsBridge.res</Form>
+        </RcCompile>
+        <RcCompile Include="Source\Help.rc">
+            <Form>Help.res</Form>
+        </RcCompile>
+        <RcCompile Include="Source\HelpChm.rc">
+            <Form>HelpChm.res</Form>
+        </RcCompile>
+        <RcCompile Include="Source\Lang.rc">
+            <Form>Lang.res</Form>
         </RcCompile>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

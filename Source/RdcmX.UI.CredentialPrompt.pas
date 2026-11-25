@@ -30,6 +30,8 @@ type
     procedure FormShow(Sender: TObject);
   private
     procedure FocusFirstEmptyField;
+  protected
+    procedure DoCreate; override;
   public
     /// <summary>aShowRemember: vinkje "Wachtwoord onthouden" tonen (Opties); aRemember: begin- en eindstand daarvan.</summary>
     class function Execute(const aServerCaption: string; var aUserName, aDomain: string; out aPassword: string; aShowRemember: Boolean; var aRemember: Boolean): Boolean; static;
@@ -37,7 +39,17 @@ type
 
 implementation
 
+uses
+  RdcmX.Lang;
+
 {$R *.dfm}
+
+procedure TfrmCredentialPrompt.DoCreate;
+begin
+  // Translate the DFM texts before OnCreate runs.
+  TranslateComponent(Self);
+  inherited;
+end;
 
 class function TfrmCredentialPrompt.Execute(const aServerCaption: string; var aUserName, aDomain: string; out aPassword: string; aShowRemember: Boolean; var aRemember: Boolean): Boolean;
 var
@@ -46,15 +58,15 @@ begin
   aPassword := '';
   lForm := TfrmCredentialPrompt.Create(Application);
   try
-    lForm.lblInfo.Caption := 'Verbinden met ' + aServerCaption;
+    lForm.lblInfo.Caption := Format(_('Verbinden met %s'), [aServerCaption]);
     lForm.edtUser.Text := aUserName;
     lForm.edtDomain.Text := aDomain;
     lForm.chkRemember.Visible := aShowRemember;
     lForm.chkRemember.Checked := aRemember;
     if aShowRemember then
-      lForm.lblHint.Caption := 'Onthouden: versleuteld in Windows Referentiebeheer, nooit in het bestand.'
+      lForm.lblHint.Caption := _('Onthouden: versleuteld in Windows Referentiebeheer, nooit in het bestand.')
     else
-      lForm.lblHint.Caption := 'Het wachtwoord wordt niet opgeslagen.';
+      lForm.lblHint.Caption := _('Het wachtwoord wordt niet opgeslagen.');
     Result := lForm.ShowModal = mrOk;
     if Result then
     begin

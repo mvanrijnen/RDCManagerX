@@ -2,6 +2,8 @@
 
 **English** | [Nederlands](README.nl.md)
 
+![RDCManagerX with the fictional Contoso demo file](Docs/images/screenshot-en.png)
+
 An RDP connection manager in the style of Microsoft Remote Desktop Connection Manager (RDCMan). It reads and writes
 RDCMan `.rdg` files and also has its own format, `.rdcx`.
 
@@ -14,8 +16,9 @@ Windows, 64-bit. Built with Delphi 12.
 **Manual:** [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/) (English and Dutch, HTML and PDF).
 
 > [!NOTE]
-> The user interface is currently in Dutch. Menu paths below are given in English, with the Dutch label in
-> parentheses, e.g. **Properties > Route** (*Eigenschappen > Route*).
+> The user interface is available in English and Dutch (**File > Options > Language**; by default it follows the
+> Windows display language). Menu paths below are given in English, with the Dutch label in parentheses, e.g.
+> **Properties > Route** (*Eigenschappen > Route*).
 
 **Keywords:** Delphi, Delphi 12, VCL, Object Pascal, RDP, Remote Desktop, Remote Desktop Protocol, RDP client,
 RDP manager, RDCMan, Remote Desktop Connection Manager, RDCMan alternative, mstsc, mstscax, RD Gateway,

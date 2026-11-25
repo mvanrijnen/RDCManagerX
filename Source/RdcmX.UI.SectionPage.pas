@@ -119,6 +119,9 @@ type
 
 implementation
 
+uses
+  RdcmX.Lang;
+
 const
   cLeft = 12;
   cControlLeft = 230;
@@ -138,7 +141,7 @@ begin
   FInheritBox := TCheckBox.Create(FSheet);
   FInheritBox.Parent := FSheet;
   FInheritBox.SetBounds(Scale(cLeft), FTop, Scale(cControlLeft + cControlWidth - cLeft), Scale(17));
-  FInheritBox.Hint := 'Aan: deze instellingen komen van de bovenliggende groep (of de standaard). Uit: eigen instellingen voor deze server of groep.';
+  FInheritBox.Hint := _('Aan: deze instellingen komen van de bovenliggende groep (of de standaard). Uit: eigen instellingen voor deze server of groep.');
   FInheritBox.ShowHint := True;
   FInheritBox.Caption := aInheritCaption;
   FInheritBox.OnClick := InheritClick;
@@ -559,7 +562,7 @@ begin
     if (lField.Kind = fkInt) and (not TryStrToInt(Trim(TEdit(lField.Control).Text), lValue) or (lValue < lField.MinValue) or (lValue > lField.MaxValue)) then
     begin
       aControl := lField.Control;
-      aMessage := Format('"%s" moet een getal tussen %d en %d zijn.', [lField.Caption, lField.MinValue, lField.MaxValue]);
+      aMessage := Format(_('"%s" moet een getal tussen %d en %d zijn.'), [lField.Caption, lField.MinValue, lField.MaxValue]);
       Exit(False);
     end;
   Result := True;

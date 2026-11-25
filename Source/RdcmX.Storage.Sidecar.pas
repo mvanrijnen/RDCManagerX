@@ -40,7 +40,7 @@ implementation
 
 uses
   System.Classes, System.Generics.Collections, System.JSON,
-  RdcmX.Storage.Json;
+  RdcmX.Lang, RdcmX.Storage.Json;
 
 const
   cSidecarExtension = '.rdcx.json';
@@ -111,12 +111,12 @@ begin
   try
     if not (lRoot is TJSONObject) then
     begin
-      aFile.Warnings.Add('Sidecar-bestand is geen geldige JSON en is genegeerd.');
+      aFile.Warnings.Add(_('Sidecar-bestand is geen geldige JSON en is genegeerd.'));
       Exit;
     end;
     if TJSONObject(lRoot).GetValue<Integer>('formatVersion', 0) > cSidecarFormatVersion then
     begin
-      aFile.Warnings.Add('Sidecar-bestand heeft een nieuwere formatVersion en is genegeerd.');
+      aFile.Warnings.Add(_('Sidecar-bestand heeft een nieuwere formatVersion en is genegeerd.'));
       Exit;
     end;
     TRdcJsonFormat.JsonToDefinitions(TJSONObject(lRoot), aFile);
@@ -137,7 +137,7 @@ begin
         end;
       if not lUsable then
       begin
-        aFile.Warnings.Add(Format('Sidecar-entry "%s" hoort bij geen bestaande node; wordt bewaard.', [lPair.JsonString.Value]));
+        aFile.Warnings.Add(Format(_('Sidecar-entry "%s" hoort bij geen bestaande node; wordt bewaard.'), [lPair.JsonString.Value]));
         aFile.SidecarOrphans.AddOrSetValue(lPair.JsonString.Value, lPair.JsonValue.ToJSON);
         Continue;
       end;

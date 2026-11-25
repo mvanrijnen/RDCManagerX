@@ -4,7 +4,7 @@ object frmOptions: TfrmOptions
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Opties'
-  ClientHeight = 556
+  ClientHeight = 596
   ClientWidth = 460
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -15,19 +15,44 @@ object frmOptions: TfrmOptions
   Position = poOwnerFormCenter
   OnShow = FormShow
   TextHeight = 15
+  object lblLanguage: TLabel
+    Hint =
+      'Taal van de schermen en meldingen: volgt Windows, English of Ned' +
+      'erlands. Een wijziging geldt bij de volgende start.'
+    Left = 16
+    Top = 20
+    Width = 25
+    Height = 15
+    Caption = 'Taal'
+  end
+  object cbLanguage: TComboBox
+    Hint =
+      'Taal van de schermen en meldingen: volgt Windows, English of Ned' +
+      'erlands. Een wijziging geldt bij de volgende start.'
+    Left = 260
+    Top = 16
+    Width = 184
+    Height = 23
+    Style = csDropDownList
+    TabOrder = 0
+    Items.Strings = (
+      'Systeem (volgt Windows)'
+      'English'
+      'Nederlands')
+  end
   object lblRecentCount: TLabel
     Hint =
       'Hoeveel laatst verbonden servers bovenaan de boom onder Recent staan ' +
       '(0 = Recent niet tonen).'
     Left = 16
-    Top = 20
+    Top = 60
     Width = 160
     Height = 15
     Caption = 'Aantal recente servers in de boom'
   end
   object lblRecentHint: TLabel
     Left = 16
-    Top = 50
+    Top = 90
     Width = 428
     Height = 32
     AutoSize = False
@@ -47,14 +72,14 @@ object frmOptions: TfrmOptions
       'Uiterlijk: volgt Windows, licht of donker. Zijn er sessies open, dan ' +
       'geldt een wijziging bij de volgende start.'
     Left = 16
-    Top = 102
+    Top = 142
     Width = 37
     Height = 15
     Caption = 'Thema'
   end
   object lblThemeHint: TLabel
     Left = 16
-    Top = 132
+    Top = 172
     Width = 428
     Height = 48
     AutoSize = False
@@ -71,7 +96,7 @@ object frmOptions: TfrmOptions
   end
   object lblAutoSaveHint: TLabel
     Left = 36
-    Top = 220
+    Top = 260
     Width = 408
     Height = 48
     AutoSize = False
@@ -89,7 +114,7 @@ object frmOptions: TfrmOptions
   end
   object lblRememberHint: TLabel
     Left = 36
-    Top = 312
+    Top = 352
     Width = 408
     Height = 64
     AutoSize = False
@@ -111,11 +136,11 @@ object frmOptions: TfrmOptions
       'Wachtwoorden versleuteld onthouden in de wachtwoordkluis (met een hoo' +
       'fdwachtwoord). Uitzetten wist de kluis en alle onthouden wachtwoorden.'
     Left = 16
-    Top = 284
+    Top = 324
     Width = 428
     Height = 19
     Caption = 'Onthouden van wachtwoorden toestaan'
-    TabOrder = 3
+    TabOrder = 4
     OnClick = chkRememberPasswordsClick
   end
   object chkAutoSave: TCheckBox
@@ -123,23 +148,23 @@ object frmOptions: TfrmOptions
       'Wijzigingen in bestanden na 2 seconden automatisch opslaan. Uit: bij ' +
       'het sluiten wordt gevraagd of je wilt opslaan.'
     Left = 16
-    Top = 192
+    Top = 232
     Width = 428
     Height = 19
     Caption = 'Wijzigingen in bestanden automatisch opslaan'
-    TabOrder = 2
+    TabOrder = 3
   end
   object seRecentCount: TSpinEdit
     Hint =
       'Hoeveel laatst verbonden servers bovenaan de boom onder Recent staan ' +
       '(0 = Recent niet tonen).'
     Left = 260
-    Top = 16
+    Top = 56
     Width = 70
     Height = 24
     MaxValue = 25
     MinValue = 0
-    TabOrder = 0
+    TabOrder = 1
     Value = 5
   end
   object cbTheme: TComboBox
@@ -147,11 +172,11 @@ object frmOptions: TfrmOptions
       'Uiterlijk: volgt Windows, licht of donker. Zijn er sessies open, dan ' +
       'geldt een wijziging bij de volgende start.'
     Left = 260
-    Top = 98
+    Top = 138
     Width = 184
     Height = 23
     Style = csDropDownList
-    TabOrder = 1
+    TabOrder = 2
     Items.Strings = (
       'Systeem (volgt Windows)'
       'Licht'
@@ -162,7 +187,7 @@ object frmOptions: TfrmOptions
       'Na zoveel minuten zonder gebruik vergrendelt de kluis; daarna wordt h' +
       'et hoofdwachtwoord opnieuw gevraagd (0 = nooit).'
     Left = 36
-    Top = 384
+    Top = 424
     Width = 196
     Height = 15
     Caption = 'Kluis vergrendelen na (minuten, 0 = nooit)'
@@ -172,12 +197,12 @@ object frmOptions: TfrmOptions
       'Na zoveel minuten zonder gebruik vergrendelt de kluis; daarna wordt h' +
       'et hoofdwachtwoord opnieuw gevraagd (0 = nooit).'
     Left = 260
-    Top = 380
+    Top = 420
     Width = 70
     Height = 24
     MaxValue = 1440
     MinValue = 0
-    TabOrder = 5
+    TabOrder = 6
     Value = 15
   end
   object btnChangeMasterPassword: TButton
@@ -185,11 +210,11 @@ object frmOptions: TfrmOptions
       'Het hoofdwachtwoord van de kluis wijzigen. Alle onthouden wachtwoorde' +
       'n worden met het nieuwe opnieuw versleuteld.'
     Left = 36
-    Top = 416
+    Top = 456
     Width = 200
     Height = 26
     Caption = 'Hoofdwachtwoord wijzigen...'
-    TabOrder = 6
+    TabOrder = 7
     OnClick = btnChangeMasterPasswordClick
   end
   object lblPingInterval: TLabel
@@ -197,7 +222,7 @@ object frmOptions: TfrmOptions
       'Hoe vaak servers met "Bereikbaarheid tonen" (Eigenschappen > Route) g' +
       'econtroleerd worden: 5 tot 3600 seconden.'
     Left = 16
-    Top = 464
+    Top = 504
     Width = 236
     Height = 15
     Caption = 'Bereikbaarheid controleren elke (seconden)'
@@ -207,22 +232,22 @@ object frmOptions: TfrmOptions
       'Hoe vaak servers met "Bereikbaarheid tonen" (Eigenschappen > Route) g' +
       'econtroleerd worden: 5 tot 3600 seconden.'
     Left = 260
-    Top = 460
+    Top = 500
     Width = 70
     Height = 24
     MaxValue = 3600
     MinValue = 5
-    TabOrder = 7
+    TabOrder = 8
     Value = 30
   end
   object pnlButtons: TPanel
     Left = 0
-    Top = 502
+    Top = 542
     Width = 460
     Height = 54
     Align = alBottom
     BevelOuter = bvNone
-    TabOrder = 4
+    TabOrder = 5
     object btnOk: TButton
       Hint = 'Instellingen opslaan.'
       Left = 280

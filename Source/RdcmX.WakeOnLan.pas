@@ -32,7 +32,8 @@ type
 implementation
 
 uses
-  Winapi.Winsock2;
+  Winapi.Winsock2,
+  RdcmX.Lang;
 
 class function TRdcWakeOnLan.TryParseMac(const aText: string; out aMac: TRdcMacAddress): Boolean;
 var
@@ -79,16 +80,16 @@ var
   lWsaData: TWSAData;
 begin
   if not TryParseMac(aMacText, lMac) then
-    raise EArgumentException.CreateFmt('Ongeldig MAC-adres "%s".', [aMacText]);
+    raise EArgumentException.CreateFmt(_('Ongeldig MAC-adres "%s".'), [aMacText]);
   if (aPort < 1) or (aPort > 65535) then
-    raise EArgumentException.CreateFmt('Ongeldige WOL-poort %d.', [aPort]);
+    raise EArgumentException.CreateFmt(_('Ongeldige WOL-poort %d.'), [aPort]);
   lBroadcast := AnsiString(Trim(aBroadcast));
   FillChar(lAddr, SizeOf(lAddr), 0);
   lAddr.sin_family := AF_INET;
   lAddr.sin_port := htons(Word(aPort));
   lAddr.sin_addr.S_addr := inet_addr(PAnsiChar(lBroadcast));
   if (lAddr.sin_addr.S_addr = INADDR_NONE) and (lBroadcast <> '255.255.255.255') then
-    raise EArgumentException.CreateFmt('Ongeldig broadcastadres "%s" (verwacht een IPv4-adres).', [aBroadcast]);
+    raise EArgumentException.CreateFmt(_('Ongeldig broadcastadres "%s" (verwacht een IPv4-adres).'), [aBroadcast]);
 
   lPacket := BuildMagicPacket(lMac);
   if WSAStartup($0202, lWsaData) <> 0 then

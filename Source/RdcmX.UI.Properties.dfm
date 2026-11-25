@@ -214,7 +214,7 @@ object frmProperties: TfrmProperties
         Width = 498
         Height = 64
         AutoSize = False
-        Caption = 'Wachtwoorden worden nooit opgeslagen; bij elke verbinding wordt erom gevraagd.'
+        Caption = 'Wachtwoorden staan nooit in het bestand; bij het verbinden wordt erom gevraagd, tenzij het in de wachtwoordkluis onthouden is.'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clGrayText
         Font.Height = -12

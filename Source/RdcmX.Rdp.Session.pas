@@ -240,10 +240,18 @@ const
   cRdpDynamicSupportNames: array[TRdpDynamicSupport] of string = ('nog niet getest (volgt bij de eerste formaatwijziging)', 'werkt', 'niet ondersteund (opnieuw verbinden bij formaatwijziging)');
   cRdpSizeModeNames: array[TRdpSizeMode] of string = ('dynamisch', 'venstergrootte bij verbinden', 'vaste grootte', 'volledig scherm');
 
+/// <summary>Session state as UI text in the active language (the const arrays above stay Dutch for the log).</summary>
+function RdpSessionStateText(aState: TRdpSessionState): string;
+/// <summary>Dynamic-resolution support as UI text in the active language.</summary>
+function RdpDynamicSupportText(aSupport: TRdpDynamicSupport): string;
+/// <summary>Display mode as UI text in the active language.</summary>
+function RdpSizeModeText(aMode: TRdpSizeMode): string;
+
 implementation
 
 uses
-  RdcmX.Credentials;
+  RdcmX.Credentials,
+  RdcmX.Lang;
 
 const
   cMinDesktopSize = 200;
@@ -262,6 +270,39 @@ const
   cDiscLocalByUser = 1;
   cDiscRemoteByUser = 2;
   cDiscRemoteByServer = 3;
+
+function RdpSessionStateText(aState: TRdpSessionState): string;
+begin
+  case aState of
+    rssConnecting: Result := _('Bezig met verbinden');
+    rssConnected: Result := _('Verbonden');
+    rssLoggedIn: Result := _('Ingelogd');
+    rssDisconnecting: Result := _('Bezig met verbreken');
+  else
+    Result := _('Niet verbonden');
+  end;
+end;
+
+function RdpDynamicSupportText(aSupport: TRdpDynamicSupport): string;
+begin
+  case aSupport of
+    rdsConfirmed: Result := _('werkt');
+    rdsUnsupported: Result := _('niet ondersteund (opnieuw verbinden bij formaatwijziging)');
+  else
+    Result := _('nog niet getest (volgt bij de eerste formaatwijziging)');
+  end;
+end;
+
+function RdpSizeModeText(aMode: TRdpSizeMode): string;
+begin
+  case aMode of
+    rsmClientArea: Result := _('venstergrootte bij verbinden');
+    rsmFixed: Result := _('vaste grootte');
+    rsmFullScreen: Result := _('volledig scherm');
+  else
+    Result := _('dynamisch');
+  end;
+end;
 
 { TRdpConnectionSettings }
 
@@ -315,7 +356,7 @@ begin
   FHost.BoundsRect := aParent.ClientRect;
   FHost.OnResized := HostResized;
   FHost.OnDpiChanged := HostDpiChanged;
-  FHost.StatusText := 'Niet verbonden';
+  FHost.StatusText := _('Niet verbonden');
 
   CreateControl;
 end;
@@ -384,10 +425,10 @@ begin
     end;
   end;
   if FControl = nil then
-    raise Exception.Create('Geen bruikbare Remote Desktop ActiveX-control (mstscax.dll) gevonden.');
+    raise Exception.Create(_('Geen bruikbare Remote Desktop ActiveX-control (mstscax.dll) gevonden.'));
 
   if not Supports(FControl.DefaultDispatch, IMsRdpClient, FClient) then
-    raise Exception.Create('De Remote Desktop ActiveX-control ondersteunt IMsRdpClient niet.');
+    raise Exception.Create(_('De Remote Desktop ActiveX-control ondersteunt IMsRdpClient niet.'));
 
   FControl.Visible := False;
   FControl.Parent := FHost;
@@ -628,7 +669,7 @@ begin
   begin
     WipeString(FSettings.GatewayPassword);
     if FSettings.GatewayEnabled then
-      raise Exception.Create('deze versie van de Remote Desktop-client kan geen gateway instellen (IMsRdpClient5 ontbreekt).');
+      raise Exception.Create(_('deze versie van de Remote Desktop-client kan geen gateway instellen (IMsRdpClient5 ontbreekt).'));
     Exit;
   end;
   lTransport := lClient5.TransportSettings;
@@ -639,7 +680,7 @@ begin
   end;
   // Gateway gevraagd maar niet ondersteund: niet stilletjes direct verbinden.
   if lTransport.GatewayIsSupported = 0 then
-    raise Exception.Create('deze versie van de Remote Desktop-client (mstscax.dll) ondersteunt geen Extern bureaublad-gateway.');
+    raise Exception.Create(_('deze versie van de Remote Desktop-client (mstscax.dll) ondersteunt geen Extern bureaublad-gateway.'));
   lTransport.GatewayHostname := FSettings.GatewayHostName;
   if FSettings.GatewayAutoDetect then
   begin
@@ -826,7 +867,7 @@ begin
     Exit;
   if Trim(FSettings.Server) = '' then
   begin
-    SetError('Geen server opgegeven.');
+    SetError(_('Geen server opgegeven.'));
     Exit;
   end;
 
@@ -856,7 +897,7 @@ begin
       FSettings.Password := '';
       WipeString(FSettings.GatewayPassword);
       ShowControl(False);
-      SetError('Verbinden mislukt: ' + E.Message);
+      SetError(Format(_('Verbinden mislukt: %s'), [E.Message]));
       SetState(rssDisconnected);
       Log('Connect-fout: ' + E.Message);
     end;
@@ -874,7 +915,7 @@ begin
     FUserDisconnect := True;
     WipeString(FSettings.Password);
     WipeString(FSettings.GatewayPassword);
-    SetStatus('Verbinding verbroken.');
+    SetStatus(_('Verbinding verbroken.'));
     SetState(rssDisconnected);
     Exit;
   end;
@@ -1174,7 +1215,7 @@ begin
   if FReconnectPending then
   begin
     SetState(rssDisconnected);
-    SetStatus('Opnieuw verbinden met nieuwe afmeting...');
+    SetStatus(_('Opnieuw verbinden met nieuwe afmeting...'));
     PostMessage(FMsgWnd, WM_RDPX_DEFERRED, cDeferredConnect, 0);
     Exit;
   end;
@@ -1184,18 +1225,21 @@ begin
   begin
     FResizeReconnecting := False;
     FResizeReconnectFailed := True;
-    SetError('De server ondersteunt geen dynamische resolutie, en opnieuw verbinden met de nieuwe afmeting is mislukt' + IfThen(lDescription <> '', ' (' + lDescription + ')', '') + '.'#13#10#13#10'Verbind opnieuw: de sessie houdt dan een vaste afmeting.');
+    if lDescription <> '' then
+      SetError(Format(_('De server ondersteunt geen dynamische resolutie, en opnieuw verbinden met de nieuwe afmeting is mislukt (%s).'#13#10#13#10'Verbind opnieuw: de sessie houdt dan een vaste afmeting.'), [lDescription]))
+    else
+      SetError(_('De server ondersteunt geen dynamische resolutie, en opnieuw verbinden met de nieuwe afmeting is mislukt.'#13#10#13#10'Verbind opnieuw: de sessie houdt dan een vaste afmeting.'));
     SetState(rssDisconnected);
     Exit;
   end;
 
   // Status/fout zetten vóór de state-wissel, zodat OnStateChanged de juiste fouttoestand ziet.
   if (FUserDisconnect and (aDiscReason = cDiscLocalByUser)) or (aDiscReason in [cDiscRemoteByUser, cDiscRemoteByServer]) then
-    SetStatus('Verbinding verbroken.' + IfThen(lDescription <> '', #13#10#13#10 + lDescription, ''))
+    SetStatus(_('Verbinding verbroken.') + IfThen(lDescription <> '', #13#10#13#10 + lDescription, ''))
   else if lDescription <> '' then
-    SetError(Format('Verbinding verbroken: %s'#13#10#13#10'(code %d, uitgebreid %d)', [lDescription, aDiscReason, lExtended]))
+    SetError(Format(_('Verbinding verbroken: %s'#13#10#13#10'(code %d, uitgebreid %d)'), [lDescription, aDiscReason, lExtended]))
   else
-    SetError(Format('Verbinding verbroken (code %d, uitgebreid %d).', [aDiscReason, lExtended]));
+    SetError(Format(_('Verbinding verbroken (code %d, uitgebreid %d).'), [aDiscReason, lExtended]));
   SetState(rssDisconnected);
 end;
 
@@ -1216,7 +1260,7 @@ begin
   if FDestroying then
     Exit;
   Log(Format('OnFatalError: %d', [aErrorCode]));
-  SetStatus(Format('Fatale fout in de RDP-control (code %d).', [aErrorCode]));
+  SetStatus(Format(_('Fatale fout in de RDP-control (code %d).'), [aErrorCode]));
 end;
 
 procedure TRdpSession.RdpRemoteDesktopSizeChange(aSender: TObject; aWidth: Integer; aHeight: Integer);
@@ -1243,7 +1287,7 @@ begin
   if FDestroying then
     Exit;
   Log(Format('OnAutoReconnecting2: reden %d, poging %d/%d, netwerk %s', [aDisconnectReason, aAttemptCount, aMaxAttemptCount, BoolToStr(aNetworkAvailable, True)]));
-  SetStatus(Format('Automatisch opnieuw verbinden (poging %d van %d)...', [aAttemptCount, aMaxAttemptCount]));
+  SetStatus(Format(_('Automatisch opnieuw verbinden (poging %d van %d)...'), [aAttemptCount, aMaxAttemptCount]));
 end;
 
 procedure TRdpSession.RdpAutoReconnected(aSender: TObject);
@@ -1291,9 +1335,9 @@ begin
   FState := aState;
   case aState of
     rssConnecting:
-      SetStatus('Verbinden met ' + IfThen(FSettings.DisplayName <> '', FSettings.DisplayName, FSettings.Server) + '...');
+      SetStatus(Format(_('Verbinden met %s...'), [IfThen(FSettings.DisplayName <> '', FSettings.DisplayName, FSettings.Server)]));
     rssDisconnecting:
-      SetStatus('Verbinding verbreken...');
+      SetStatus(_('Verbinding verbreken...'));
   end;
   if Assigned(FOnStateChanged) then
     FOnStateChanged(Self);

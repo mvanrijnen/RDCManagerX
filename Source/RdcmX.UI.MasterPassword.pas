@@ -41,6 +41,8 @@ type
     procedure FocusFirstField;
     function ValidateInput: Boolean;
     procedure WipeFields;
+  protected
+    procedure DoCreate; override;
   public
     /// <summary>aPassword: het (nieuwe) hoofdwachtwoord; aOldPassword: alleen bij Wijzigen. Aanroeper wist beide na gebruik.</summary>
     class function Execute(aMode: TRdcMasterPasswordMode; const aInfo: string; out aPassword, aOldPassword: string): TRdcMasterPasswordResult; static;
@@ -49,9 +51,16 @@ type
 implementation
 
 uses
-  RdcmX.Credentials;
+  RdcmX.Credentials, RdcmX.Lang;
 
 {$R *.dfm}
+
+procedure TfrmMasterPassword.DoCreate;
+begin
+  // Translate the DFM texts before OnCreate runs.
+  TranslateComponent(Self);
+  inherited;
+end;
 
 class function TfrmMasterPassword.Execute(aMode: TRdcMasterPasswordMode; const aInfo: string; out aPassword, aOldPassword: string): TRdcMasterPasswordResult;
 var
@@ -102,24 +111,24 @@ begin
   case aMode of
     mpmUnlock:
       begin
-        Caption := 'Wachtwoordkluis ontgrendelen';
-        lblNew.Caption := 'Hoofdwachtwoord';
-        btnOk.Caption := 'Ontgrendelen';
-        lblHint.Caption := 'Het hoofdwachtwoord wordt niet opgeslagen. Vergeten? Dan kan de kluis alleen leeggemaakt worden.';
+        Caption := _('Wachtwoordkluis ontgrendelen');
+        lblNew.Caption := _('Hoofdwachtwoord');
+        btnOk.Caption := _('Ontgrendelen');
+        lblHint.Caption := _('Het hoofdwachtwoord wordt niet opgeslagen. Vergeten? Dan kan de kluis alleen leeggemaakt worden.');
       end;
     mpmCreate:
       begin
-        Caption := 'Hoofdwachtwoord instellen';
-        lblNew.Caption := 'Nieuw hoofdwachtwoord';
-        btnOk.Caption := 'Instellen';
-        lblHint.Caption := Format('Minimaal %d tekens. Het hoofdwachtwoord wordt nergens opgeslagen en is niet te herstellen: vergeten = alle onthouden wachtwoorden kwijt.', [cRdcMinMasterPasswordLength]);
+        Caption := _('Hoofdwachtwoord instellen');
+        lblNew.Caption := _('Nieuw hoofdwachtwoord');
+        btnOk.Caption := _('Instellen');
+        lblHint.Caption := Format(_('Minimaal %d tekens. Het hoofdwachtwoord wordt nergens opgeslagen en is niet te herstellen: vergeten = alle onthouden wachtwoorden kwijt.'), [cRdcMinMasterPasswordLength]);
       end;
     mpmChange:
       begin
-        Caption := 'Hoofdwachtwoord wijzigen';
-        lblNew.Caption := 'Nieuw hoofdwachtwoord';
-        btnOk.Caption := 'Wijzigen';
-        lblHint.Caption := Format('Minimaal %d tekens. Alle onthouden wachtwoorden worden opnieuw versleuteld.', [cRdcMinMasterPasswordLength]);
+        Caption := _('Hoofdwachtwoord wijzigen');
+        lblNew.Caption := _('Nieuw hoofdwachtwoord');
+        btnOk.Caption := _('Wijzigen');
+        lblHint.Caption := Format(_('Minimaal %d tekens. Alle onthouden wachtwoorden worden opnieuw versleuteld.'), [cRdcMinMasterPasswordLength]);
       end;
   end;
 end;
@@ -140,19 +149,19 @@ begin
   if (FMode = mpmChange) and (edtOld.Text = '') then
   begin
     edtOld.SetFocus;
-    MessageDlg('Vul het huidige hoofdwachtwoord in.', mtWarning, [mbOK], 0);
+    MessageDlg(_('Vul het huidige hoofdwachtwoord in.'), mtWarning, [mbOK], 0);
     Exit;
   end;
   if not TRdcPasswordVault.IsStrongEnough(edtNew.Text) then
   begin
     edtNew.SetFocus;
-    MessageDlg(Format('Het hoofdwachtwoord moet minimaal %d tekens lang zijn.', [cRdcMinMasterPasswordLength]), mtWarning, [mbOK], 0);
+    MessageDlg(Format(_('Het hoofdwachtwoord moet minimaal %d tekens lang zijn.'), [cRdcMinMasterPasswordLength]), mtWarning, [mbOK], 0);
     Exit;
   end;
   if edtNew.Text <> edtConfirm.Text then
   begin
     edtConfirm.SetFocus;
-    MessageDlg('De twee nieuwe hoofdwachtwoorden zijn niet gelijk.', mtWarning, [mbOK], 0);
+    MessageDlg(_('De twee nieuwe hoofdwachtwoorden zijn niet gelijk.'), mtWarning, [mbOK], 0);
     Exit;
   end;
   Result := True;

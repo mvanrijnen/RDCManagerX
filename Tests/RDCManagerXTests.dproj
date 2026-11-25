@@ -73,6 +73,7 @@
         <DCCReference Include="..\Source\RdcmX.Model.pas"/>
         <DCCReference Include="..\Source\RdcmX.AppSettings.pas"/>
         <DCCReference Include="..\Source\RdcmX.Credentials.pas"/>
+        <DCCReference Include="..\Source\RdcmX.Lang.pas"/>
         <DCCReference Include="..\Source\RdcmX.Log.pas"/>
         <DCCReference Include="..\Source\RdcmX.Ping.pas"/>
         <DCCReference Include="..\Source\RdcmX.Tailscale.pas"/>
@@ -89,6 +90,7 @@
         <DCCReference Include="RdcmX.Tests.Tailscale.pas"/>
         <DCCReference Include="RdcmX.Tests.AppSettings.pas"/>
         <DCCReference Include="RdcmX.Tests.Ping.pas"/>
+        <DCCReference Include="RdcmX.Tests.Lang.pas"/>
         <RcCompile Include="TsBridgeTest.rc">
             <Form>TsBridgeTest.res</Form>
         </RcCompile>

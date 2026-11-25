@@ -62,6 +62,7 @@ type
     FColumnRatios: TArray<Double>;
     FRowRatios: TArray<Double>;
     FTheme: string;
+    FLanguage: string;
     FSnapshot: TDictionary<string, string>; // sleutel -> JSON zoals bij laden/laatste opslaan
     procedure MigrateSplitMode(const aSplitMode: string; aSplitRatio: Double);
     function BuildJson: TJSONObject;
@@ -89,6 +90,8 @@ type
     property RowRatios: TArray<Double> read FRowRatios write FRowRatios;
     /// <summary>'system', 'light' of 'dark'.</summary>
     property Theme: string read FTheme write FTheme;
+    /// <summary>UI language: 'system' (follows the Windows display language), 'en' or 'nl'. Applied at startup.</summary>
+    property Language: string read FLanguage write FLanguage;
     /// <summary>Favoriete servers (van alle bestanden; per bestand te herkennen aan FileName).</summary>
     property Favorites: TArray<TRdcStoredShortcut> read FFavorites write FFavorites;
     /// <summary>Laatst verbonden servers, nieuwste eerst.</summary>
@@ -128,6 +131,7 @@ begin
   FGridColumns := 1;
   FGridRows := 1;
   FTheme := 'system';
+  FLanguage := 'system';
   FRecentServerCount := 5;
   FAutoLockMinutes := 15;
   FPingIntervalSec := 30;
@@ -253,6 +257,7 @@ begin
         else
           MigrateSplitMode(TJSONObject(lRoot).GetValue<string>('splitMode', 'none'), TJSONObject(lRoot).GetValue<Double>('splitRatio', 0.5));
         FTheme := TJSONObject(lRoot).GetValue<string>('theme', FTheme);
+        FLanguage := TJSONObject(lRoot).GetValue<string>('language', FLanguage);
         FFavorites := ReadShortcuts(TJSONObject(lRoot), 'favorites');
         FRecentServers := ReadShortcuts(TJSONObject(lRoot), 'recentServers');
         FRecentServerCount := TJSONObject(lRoot).GetValue<Integer>('recentServerCount', FRecentServerCount);
@@ -412,6 +417,7 @@ begin
     lRoot.AddPair('columnRatios', WriteRatios(FColumnRatios));
     lRoot.AddPair('rowRatios', WriteRatios(FRowRatios));
     lRoot.AddPair('theme', FTheme);
+    lRoot.AddPair('language', FLanguage);
     lRoot.AddPair('favorites', WriteShortcuts(FFavorites));
     lRoot.AddPair('recentServers', WriteShortcuts(FRecentServers));
     lRoot.AddPair('recentServerCount', TJSONNumber.Create(FRecentServerCount));

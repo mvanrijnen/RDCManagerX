@@ -220,6 +220,7 @@ uses
   System.StrUtils,
   System.ZLib,
   RdcmX.Crypto,
+  RdcmX.Lang,
   RdcmX.Log;
 
 // cTsBridgeSha256: controlesom van de tsbridge.dll die bij deze build hoort (Tools\build-tsbridge.cmd schrijft dit).
@@ -377,13 +378,13 @@ begin
   aConfig.ControlUrl := Trim(aDef.ControlUrl);
   if not RdcIsValidControlUrl(aConfig.ControlUrl) then
   begin
-    aError := Format('De control URL "%s" is niet toegestaan: gebruik https:// (http:// alleen naar localhost).', [aConfig.ControlUrl]);
+    aError := Format(_('De control URL "%s" is niet toegestaan: gebruik https:// (http:// alleen naar localhost).'), [aConfig.ControlUrl]);
     Exit(False);
   end;
   aConfig.Dir := RdcTailnetDir(aDef.Id);
   if TRdcLog.Enabled then
     aConfig.LogFile := TPath.Combine(ExtractFilePath(TRdcLog.FileName), Format('tsbridge-%s.log', [ExtractFileName(aConfig.Dir)]));
-  lReason := Format('Tailscale-netwerk "%s" gebruikt geheimen uit de wachtwoordkluis.', [aDef.Name]);
+  lReason := Format(_('Tailscale-netwerk "%s" gebruikt geheimen uit de wachtwoordkluis.'), [aDef.Name]);
 
   if aAuthKey <> '' then
     aConfig.AuthKey := aAuthKey
@@ -391,7 +392,7 @@ begin
   begin
     if not aSecrets.LoadSecret(TRdcPasswordVault.TailnetAuthKeyTarget(aDef.Id, aDef.ControlUrl), lReason, aConfig.AuthKey) then
     begin
-      aError := 'De auth key in de wachtwoordkluis kon niet worden gelezen: het hoofdwachtwoord is niet ingevoerd, of "Wachtwoorden onthouden" staat uit (Bestand > Opties).';
+      aError := _('De auth key in de wachtwoordkluis kon niet worden gelezen: het hoofdwachtwoord is niet ingevoerd, of "Wachtwoorden onthouden" staat uit (Bestand > Opties).');
       Exit(False);
     end;
   end;
@@ -405,7 +406,7 @@ begin
       if not aSecrets.LoadSecret(lTarget, lReason, lStateKey) then
       begin
         aConfig.Wipe;
-        aError := 'De sleutel van dit netwerk staat in de wachtwoordkluis, maar kon niet worden gelezen: het hoofdwachtwoord is niet ingevoerd, of "Wachtwoorden onthouden" staat uit (Bestand > Opties).';
+        aError := _('De sleutel van dit netwerk staat in de wachtwoordkluis, maar kon niet worden gelezen: het hoofdwachtwoord is niet ingevoerd, of "Wachtwoorden onthouden" staat uit (Bestand > Opties).');
         Exit(False);
       end;
     end
@@ -414,7 +415,7 @@ begin
       if not aSecrets.CanStoreSecrets then
       begin
         aConfig.Wipe;
-        aError := 'Een niet-ephemeral netwerk bewaart zijn sleutels versleuteld met een sleutel uit de wachtwoordkluis. Zet "Wachtwoorden onthouden" aan in Opties, of maak het netwerk ephemeral.';
+        aError := _('Een niet-ephemeral netwerk bewaart zijn sleutels versleuteld met een sleutel uit de wachtwoordkluis. Zet "Wachtwoorden onthouden" aan in Opties, of maak het netwerk ephemeral.');
         Exit(False);
       end;
       // Nieuwe sleutel: een oude state (sleutel uit een geleegde kluis) is onleesbaar geworden; weg ermee, anders
@@ -426,7 +427,7 @@ begin
         on E: Exception do
         begin
           aConfig.Wipe;
-          aError := 'De oude (onleesbare) state van dit netwerk kon niet worden verwijderd: ' + E.Message;
+          aError := Format(_('De oude (onleesbare) state van dit netwerk kon niet worden verwijderd: %s'), [E.Message]);
           Exit(False);
         end;
       end;
@@ -437,7 +438,7 @@ begin
       begin
         WipeString(lStateKey);
         aConfig.Wipe;
-        aError := 'De sleutel van dit netwerk kon niet in de wachtwoordkluis worden opgeslagen.';
+        aError := _('De sleutel van dit netwerk kon niet in de wachtwoordkluis worden opgeslagen.');
         Exit(False);
       end;
     end;
@@ -712,7 +713,7 @@ var
   begin
     Result := GetProcAddress(lModule, PChar(aName));
     if Result = nil then
-      raise ETsBridge.CreateFmt('%s mist de functie %s (verkeerde versie?).', [cTsBridgeDll, aName]);
+      raise ETsBridge.CreateFmt(_('%s mist de functie %s (verkeerde versie?).'), [cTsBridgeDll, aName]);
   end;
 
 begin
@@ -728,7 +729,7 @@ begin
       lPath := EmbeddedBridgePath;
       if not ExtractEmbeddedBridge(lPath, lError) then
       begin
-        FLoadError := Format('De ingebouwde %s kon niet worden uitgepakt naar %s: %s', [cTsBridgeDll, ExtractFilePath(lPath), lError]);
+        FLoadError := Format(_('De ingebouwde %s kon niet worden uitgepakt naar %s: %s'), [cTsBridgeDll, ExtractFilePath(lPath), lError]);
         Exit;
       end;
     end
@@ -738,7 +739,7 @@ begin
       lPath := ExtractFilePath(ParamStr(0)) + cTsBridgeDll;
       if not FileExists(lPath) then
       begin
-        FLoadError := Format('%s staat niet naast RDCManagerX.exe; verbinden via Tailscale is niet beschikbaar.', [cTsBridgeDll]);
+        FLoadError := Format(_('%s staat niet naast RDCManagerX.exe; verbinden via Tailscale is niet beschikbaar.'), [cTsBridgeDll]);
         Exit;
       end;
     end;
@@ -747,7 +748,7 @@ begin
     lFile := CreateFile(PChar(lPath), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if lFile = INVALID_HANDLE_VALUE then
     begin
-      FLoadError := Format('%s kon niet worden geopend: %s', [cTsBridgeDll, SysErrorMessage(GetLastError)]);
+      FLoadError := Format(_('%s kon niet worden geopend: %s'), [cTsBridgeDll, SysErrorMessage(GetLastError)]);
       Exit;
     end;
     try
@@ -755,9 +756,9 @@ begin
       if (cTsBridgeSha256 = '') or not SameText(lHash, cTsBridgeSha256) then
       begin
         if lEmbedded then
-          FLoadError := Format('De uitgepakte %s is tussentijds gewijzigd (controlesom klopt niet); verbinden via Tailscale is uitgeschakeld. Start RDCManagerX opnieuw.', [cTsBridgeDll])
+          FLoadError := Format(_('De uitgepakte %s is tussentijds gewijzigd (controlesom klopt niet); verbinden via Tailscale is uitgeschakeld. Start RDCManagerX opnieuw.'), [cTsBridgeDll])
         else
-          FLoadError := Format('%s hoort niet bij deze versie van RDCManagerX (controlesom klopt niet); verbinden via Tailscale is uitgeschakeld. Zet de tsbridge.dll van dezelfde build ernaast.', [cTsBridgeDll]);
+          FLoadError := Format(_('%s hoort niet bij deze versie van RDCManagerX (controlesom klopt niet); verbinden via Tailscale is uitgeschakeld. Zet de tsbridge.dll van dezelfde build ernaast.'), [cTsBridgeDll]);
         TRdcLog.Write(Format('tsbridge.dll geweigerd: SHA-256 %s, verwacht %s', [lHash, cTsBridgeSha256]));
         Exit;
       end;
@@ -767,7 +768,7 @@ begin
     end;
     if lModule = 0 then
     begin
-      FLoadError := Format('%s kon niet worden geladen: %s', [cTsBridgeDll, SysErrorMessage(GetLastError)]);
+      FLoadError := Format(_('%s kon niet worden geladen: %s'), [cTsBridgeDll, SysErrorMessage(GetLastError)]);
       Exit;
     end;
     try
@@ -818,15 +819,15 @@ end;
 class function TRdcTsBridge.CodeText(aCode: Integer): string;
 begin
   case aCode of
-    cTsOk: Result := 'gelukt';
-    cTsInvalidHandle: Result := 'onbekend netwerk';
-    cTsInvalidArgs: Result := 'ongeldige instellingen';
-    cTsTimeout: Result := 'time-out';
-    cTsClosed: Result := 'geannuleerd of gesloten';
-    cTsNotFound: Result := 'niet gevonden';
-    cTsOffline: Result := 'apparaat is offline';
+    cTsOk: Result := _('gelukt');
+    cTsInvalidHandle: Result := _('onbekend netwerk');
+    cTsInvalidArgs: Result := _('ongeldige instellingen');
+    cTsTimeout: Result := _('time-out');
+    cTsClosed: Result := _('geannuleerd of gesloten');
+    cTsNotFound: Result := _('niet gevonden');
+    cTsOffline: Result := _('apparaat is offline');
   else
-    Result := Format('fout %d', [aCode]);
+    Result := Format(_('fout %d'), [aCode]);
   end;
 end;
 
@@ -858,7 +859,7 @@ begin
         Result := GTsLastError(0, aBuf, aBufLen);
       end);
     FHandle := 0;
-    raise ETsBridge.Create('Tailscale-netwerk kon niet worden aangemaakt: ' + lError);
+    raise ETsBridge.CreateFmt(_('Tailscale-netwerk kon niet worden aangemaakt: %s'), [lError]);
   end;
 end;
 
@@ -920,12 +921,12 @@ var
   lTarget: UTF8String;
 begin
   if FHandle <= 0 then
-    raise ETsBridge.Create('Tailscale-netwerk is gesloten.');
+    raise ETsBridge.Create(_('Tailscale-netwerk is gesloten.'));
   lLocal := UTF8String(aLocalAddress);
   lTarget := UTF8String(aTarget);
   Result := GTsNetAddForward(FHandle, PAnsiChar(lLocal), PAnsiChar(lTarget));
   if Result <= 0 then
-    raise ETsBridge.CreateFmt('Doorsturen naar %s via Tailscale is mislukt: %s', [aTarget, IfThen(LastErrorText <> '', LastErrorText, TRdcTsBridge.CodeText(Result))]);
+    raise ETsBridge.CreateFmt(_('Doorsturen naar %s via Tailscale is mislukt: %s'), [aTarget, IfThen(LastErrorText <> '', LastErrorText, TRdcTsBridge.CodeText(Result))]);
 end;
 
 procedure TRdcTailnet.RemoveForward(aLocalPort: Integer);
@@ -942,7 +943,7 @@ begin
   aError := '';
   if FHandle <= 0 then
   begin
-    aError := 'Tailscale-netwerk is gesloten.';
+    aError := _('Tailscale-netwerk is gesloten.');
     Exit(False);
   end;
   lTarget := UTF8String(aTarget);
@@ -1191,7 +1192,7 @@ var
   lEntry: TEntry;
 begin
   if not FEntries.TryGetValue(aId, lEntry) or (lEntry.State <> esRunning) or (lEntry.Net = nil) then
-    raise ETsBridge.Create('Tailscale-netwerk is niet verbonden.');
+    raise ETsBridge.Create(_('Tailscale-netwerk is niet verbonden.'));
   Result := lEntry.Net.AddForward(aLocalAddress, aTarget);
 end;
 
@@ -1209,7 +1210,7 @@ var
 begin
   if not FEntries.TryGetValue(aId, lEntry) or (lEntry.State <> esRunning) or (lEntry.Net = nil) then
   begin
-    aError := 'Tailscale-netwerk is niet verbonden.';
+    aError := _('Tailscale-netwerk is niet verbonden.');
     Exit(False);
   end;
   Result := lEntry.Net.CheckTarget(aTarget, aError);

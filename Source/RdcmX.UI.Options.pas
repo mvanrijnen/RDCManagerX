@@ -11,10 +11,12 @@ uses
   Winapi.Messages, Winapi.Windows,
   System.Classes, System.SysUtils, System.UITypes,
   Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Graphics, Vcl.Samples.Spin, Vcl.StdCtrls,
-  RdcmX.UI.Theme;
+  RdcmX.Lang, RdcmX.UI.Theme;
 
 type
   TRdcOptions = record
+    /// <summary>UI language; applies at the next start.</summary>
+    Language: TRdcLanguage;
     RecentServerCount: Integer;
     Theme: TRdcTheme;
     AutoSave: Boolean;
@@ -25,6 +27,8 @@ type
   end;
 
   TfrmOptions = class(TForm)
+    lblLanguage: TLabel;
+    cbLanguage: TComboBox;
     lblRecentCount: TLabel;
     seRecentCount: TSpinEdit;
     lblRecentHint: TLabel;
@@ -54,6 +58,8 @@ type
     procedure FocusFirstField;
     procedure LoadOptions(const aOptions: TRdcOptions);
     procedure SaveOptions(var aOptions: TRdcOptions);
+  protected
+    procedure DoCreate; override;
   public
     /// <summary>aChangeMasterPassword: wijzigt het hoofdwachtwoord (knop; alleen als de kluis bestaat).</summary>
     class function Execute(var aOptions: TRdcOptions; aVaultExists: Boolean; const aChangeMasterPassword: TProc): Boolean; static;
@@ -62,6 +68,13 @@ type
 implementation
 
 {$R *.dfm}
+
+procedure TfrmOptions.DoCreate;
+begin
+  // Translate the DFM texts before OnCreate runs.
+  TranslateComponent(Self);
+  inherited;
+end;
 
 class function TfrmOptions.Execute(var aOptions: TRdcOptions; aVaultExists: Boolean; const aChangeMasterPassword: TProc): Boolean;
 var
@@ -110,11 +123,12 @@ end;
 
 procedure TfrmOptions.FocusFirstField;
 begin
-  ActiveControl := seRecentCount;
+  ActiveControl := cbLanguage;
 end;
 
 procedure TfrmOptions.LoadOptions(const aOptions: TRdcOptions);
 begin
+  cbLanguage.ItemIndex := Ord(aOptions.Language);
   seRecentCount.Value := aOptions.RecentServerCount;
   cbTheme.ItemIndex := Ord(aOptions.Theme);
   chkAutoSave.Checked := aOptions.AutoSave;
@@ -125,6 +139,8 @@ end;
 
 procedure TfrmOptions.SaveOptions(var aOptions: TRdcOptions);
 begin
+  if cbLanguage.ItemIndex >= 0 then
+    aOptions.Language := TRdcLanguage(cbLanguage.ItemIndex);
   aOptions.RecentServerCount := seRecentCount.Value;
   if cbTheme.ItemIndex >= 0 then
     aOptions.Theme := TRdcTheme(cbTheme.ItemIndex);

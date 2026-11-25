@@ -1,0 +1,2 @@
+// English UI catalogue (gettext .po, Dutch msgid -> English msgstr), read by RdcmX.Lang. Maintained with Tools\i18n.py.
+LANG_EN RCDATA "Source\\Lang\\en.po"

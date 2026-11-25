@@ -49,7 +49,7 @@ implementation
 uses
   Winapi.Windows,
   System.Classes, System.Hash, System.IOUtils,
-  RdcmX.Storage.Json, RdcmX.Storage.Rdg, RdcmX.Storage.Sidecar;
+  RdcmX.Lang, RdcmX.Storage.Json, RdcmX.Storage.Rdg, RdcmX.Storage.Sidecar;
 
 type
   TRdgStorage = class(TInterfacedObject, IRdcFileStorage)
@@ -119,7 +119,7 @@ begin
   else if lExtension = '.rdcx' then
     Result := TJsonStorage.Create
   else
-    raise ERdcStorageError.CreateFmt('Onbekend bestandstype "%s" (verwacht .rdg of .rdcx).', [lExtension]);
+    raise ERdcStorageError.CreateFmt(_('Onbekend bestandstype "%s" (verwacht .rdg of .rdcx).'), [lExtension]);
 end;
 
 class function TRdcStorage.FileHash(const aFileName: string): string;
@@ -186,7 +186,7 @@ begin
   if lTarget = '' then
     lTarget := aFile.FileName;
   if lTarget = '' then
-    raise ERdcStorageError.Create('Geen bestandsnaam om naar op te slaan.');
+    raise ERdcStorageError.Create(_('Geen bestandsnaam om naar op te slaan.'));
   lSameFile := SameFileName(ExpandFileName(lTarget), ExpandFileName(aFile.FileName));
 
   if lSameFile and HasExternalChange(aFile) then

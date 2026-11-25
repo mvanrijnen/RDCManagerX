@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-RDCManagerX: a Delphi 12 (VCL, Win64) RDP connection manager modelled on Microsoft's Remote Desktop Connection Manager (working title in the assignment: RDCManX, hence the `RdcmX.*` unit prefix). Its key feature is **dynamic resolution**: the remote desktop follows the panel size via `IMsRdpClient9.UpdateSessionDisplaySettings`, without reconnecting and without smart sizing. Source control is SVN (not git). UI texts and code comments are Dutch.
+RDCManagerX: a Delphi 12 (VCL, Win64) RDP connection manager modelled on Microsoft's Remote Desktop Connection Manager (working title in the assignment: RDCManX, hence the `RdcmX.*` unit prefix). Its key feature is **dynamic resolution**: the remote desktop follows the panel size via `IMsRdpClient9.UpdateSessionDisplaySettings`, without reconnecting and without smart sizing. Source control is git, published on GitHub (`https://github.com/mvanrijnen/RDCManagerX`, public; the local folder name still says SVN). The UI is bilingual (English/Dutch, see "Language, GitHub and documentation"); the Dutch texts are the source.
 
 Status:
 - Phase 1 is built: tree, session tabs and dynamic resolution.
@@ -77,6 +77,20 @@ Tests\Win64\Debug\RDCManagerXTests.exe --exitbehavior:Continue
   - Optional: `Samples\password-test.rdg`.
 - RDP behaviour has no automated tests; the user tests it against real servers. Start the app with `/debuglog` to write `%LOCALAPPDATA%\RDCManagerX\debug.log`.
 
+## Language, GitHub and documentation
+
+- **UI language** (`RdcmX.Lang`, user request: everything bilingual): gettext style. The Dutch texts in code and DFMs are the msgids; English comes from `Source\Lang\en.po`, embedded as RCDATA `LANG_EN` (`Source\Lang.rc`).
+  - Every user-visible literal in code goes through `_('Dutch text')`; format strings too (`Format(_('%s is online (%d ms)'), [...])`). Build sentences as one `Format(_())`, not by concatenating fragments. The argument must be a constant (literals, `#nn`, `+`), otherwise the extractor cannot find it. Do not wrap log lines, keys, persisted or compared values.
+  - Forms translate their DFM in `DoCreate` (`TranslateComponent(Self)`, before OnCreate). Only stored properties are translated, so action-linked controls keep following their action. The main form re-links `tbMenu.Menu` afterwards so the toolbar menu buttons pick up the translated captions.
+  - The language (`language` in `settings.json`: system/en/nl, Options dialog) is applied once at startup in the dpr (`ApplyStartupLanguage`), like the theme; a change applies at the next start. `system` = Dutch when the Windows display language is Dutch, otherwise English.
+  - After changing UI texts: `python Tools\i18n.py update`, translate the new entries in `en.po`, and `python Tools\i18n.py check` must pass (no missing translations, no non-constant `_()` arguments). New fields and hints need an English translation too.
+  - The unit has no VCL dependency, so the console test project can use units that call `_`. Without a catalogue (tests, Dutch) `_` returns the source text.
+- **Code comments and commit messages:** new ones in English (user decision 2026-11-25). Existing Dutch comments stay; translate them only in code you are changing anyway.
+- **README:** `README.md` (English, what GitHub shows) and `README.nl.md` (Dutch), with a language switch at the top. Keep both in sync.
+- **GitHub Pages:** `.github/workflows/pages.yml` publishes the manual (en/nl, HTML and PDF, landing page `Docs\site\index.html`) to `https://mvanrijnen.github.io/RDCManagerX/` on changes in `Docs`.
+- **Security scans:** `.github/workflows/codacy.yml` (SARIF split per tool: code scanning accepts one run per category) and `devskim.yml`. Actions are pinned to commit SHAs with the version in a comment.
+- **Public repo:** keep real names, hosts and company references out of everything committed (docs, samples, PDFs; `Samples/` is git-ignored). Test data with fake secrets must not look like real keys (build them from pieces), or GitHub secret scanning flags them.
+
 ## Architecture
 
 ### RDP
@@ -135,10 +149,10 @@ User docs: `README.md`. Manual test plan: `TESTPLAN.md`.
 
 ### Help and hints
 
-- **Help > Handleiding (F1):** `ShowManual` extracts the embedded CHM (`HELPCHM`, `Source\HelpChm.rc`) to `%LOCALAPPDATA%\RDCManagerX\help` and opens it. A CHM opened from a network share is blocked by Windows, but locally it works. Without a CHM it falls back to the embedded HTML (`HELPHTML`, `Source\Help.rc`) in the browser.
+- **Help > Manual (F1):** `ShowManual` extracts the embedded CHM in the UI language (`HELPCHM` = Dutch, `HELPCHM_EN` = English, `Source\HelpChm.rc`) to `%LOCALAPPDATA%\RDCManagerX\help` and opens it. A CHM opened from a network share is blocked by Windows, but locally it works. Without a CHM it falls back to the embedded HTML (`HELPHTML`/`HELPHTML_EN`, `Source\Help.rc`) in the browser.
 - **Building the manual:**
-  - The source is `Docs\RDCManagerX-Handleiding.html`. The PDF is made from it with Edge (`--print-to-pdf`).
-  - `Toolsuild-help.ps1` makes `Docs\help` (an IE-compatible HTML without CSS variables, the `.hhp`, and the `.hhc` table of contents built from the h2 ids). It compiles with `hhc.exe`, and rewrites `HelpChm.rc` (empty when no compiler is found).
+  - The sources are `Docs\RDCManagerX-Handleiding.html` (Dutch) and `Docs\RDCManagerX-Manual.html` (English). **Keep both in sync**: every change goes into both.
+  - `Tools\build-help.ps1` builds both languages: `Docs\help` (IE-compatible HTML without CSS variables, `.hhp`, `.hhc` table of contents from the h2 ids, CHM via `hhc.exe`), the PDFs via Edge (`--print-to-pdf`, no header/footer so no local path ends up in them), and rewrites `HelpChm.rc` (empty when no compiler is found).
   - `hhc.exe` comes from Microsoft's HTML Help Workshop (`htmlhelp.exe`, Microsoft-signed, link from the user). It is extracted without installing, from the installer's `CABINET` resource, to `%LOCALAPPDATA%\Programs\HTMLHelpWorkshop`. The "Itircl.dll not registered" message only concerns the full-text index and can be ignored.
   - After changing the manual: run `build-help.ps1`, then rebuild the exe.
 - **Hints (user request: clear explanations everywhere):**

@@ -106,6 +106,9 @@ type
     procedure ShowTestProgress;
     procedure TestFinished(aSuccess: Boolean; const aError: string);
     procedure UpdateButtons;
+  protected
+    /// <summary>Translates the DFM texts after loading, before OnCreate.</summary>
+    procedure DoCreate; override;
   public
     /// <summary>True als er iets gewijzigd is (en toegepast op het bestand). aIdInUseElsewhere: staat dit id ook
     /// in een ander open bestand (dan de geheimen bij verwijderen laten staan).</summary>
@@ -113,6 +116,9 @@ type
   end;
 
 implementation
+
+uses
+  RdcmX.Lang;
 
 {$R *.dfm}
 
@@ -150,6 +156,13 @@ begin
   finally
     lForm.Free;
   end;
+end;
+
+procedure TfrmTailnets.DoCreate;
+begin
+  // Translate the DFM texts before OnCreate runs.
+  TranslateComponent(Self);
+  inherited;
 end;
 
 procedure TfrmTailnets.FormCreate(Sender: TObject);
@@ -218,7 +231,7 @@ var
   lDef: TRdcTailnetDef;
   lEdit: TRdcTailnetEdit;
 begin
-  Caption := Format('Tailscale-netwerken - %s', [FFile.Caption]);
+  Caption := Format(_('Tailscale-netwerken - %s'), [FFile.Caption]);
   for lDef in FFile.Tailnets do
   begin
     lEdit := TRdcTailnetEdit.Create;
@@ -265,8 +278,6 @@ begin
 end;
 
 procedure TfrmTailnets.UpdateListItem(aItem: TListItem);
-const
-  cYesNo: array[Boolean] of string = ('nee', 'ja');
 var
   lEdit: TRdcTailnetEdit;
 begin
@@ -276,13 +287,16 @@ begin
     aItem.SubItems[0] := lEdit.Def.NodeHostName
   else
     aItem.SubItems[0] := RdcDefaultTailnetHostName;
-  aItem.SubItems[1] := cYesNo[lEdit.Def.Ephemeral];
-  if lEdit.NewAuthKey <> '' then
-    aItem.SubItems[2] := 'nieuw'
-  else if lEdit.HasStoredAuthKey and not lEdit.ClearAuthKey and not ControlUrlChanged(lEdit) then
-    aItem.SubItems[2] := 'in de kluis'
+  if lEdit.Def.Ephemeral then
+    aItem.SubItems[1] := _('ja')
   else
-    aItem.SubItems[2] := 'geen (browser)';
+    aItem.SubItems[1] := _('nee');
+  if lEdit.NewAuthKey <> '' then
+    aItem.SubItems[2] := _('nieuw')
+  else if lEdit.HasStoredAuthKey and not lEdit.ClearAuthKey and not ControlUrlChanged(lEdit) then
+    aItem.SubItems[2] := _('in de kluis')
+  else
+    aItem.SubItems[2] := _('geen (browser)');
 end;
 
 function TfrmTailnets.SelectedEdit: TRdcTailnetEdit;
@@ -325,11 +339,11 @@ begin
   end;
   edtNodeHost.TextHint := RdcDefaultTailnetHostName;
   if (lEdit <> nil) and lEdit.HasStoredAuthKey and not lEdit.ClearAuthKey and ControlUrlChanged(lEdit) then
-    edtAuthKey.TextHint := 'control URL gewijzigd: opgeslagen key wordt gewist'
+    edtAuthKey.TextHint := _('control URL gewijzigd: opgeslagen key wordt gewist')
   else if (lEdit <> nil) and lEdit.HasStoredAuthKey and not lEdit.ClearAuthKey then
-    edtAuthKey.TextHint := 'opgeslagen in de wachtwoordkluis'
+    edtAuthKey.TextHint := _('opgeslagen in de wachtwoordkluis')
   else
-    edtAuthKey.TextHint := 'tskey-auth-... (leeg = inloggen via de browser)';
+    edtAuthKey.TextHint := _('tskey-auth-... (leeg = inloggen via de browser)');
   UpdateButtons;
 end;
 
@@ -352,9 +366,9 @@ begin
   lvTailnets.Enabled := not IsTesting;
   btnTest.Enabled := (lEdit <> nil) and TRdcTsBridge.Available;
   if IsTesting then
-    btnTest.Caption := 'Test stoppen'
+    btnTest.Caption := _('Test stoppen')
   else
-    btnTest.Caption := 'Test verbinding';
+    btnTest.Caption := _('Test verbinding');
 end;
 
 procedure TfrmTailnets.StoreFields;
@@ -409,7 +423,7 @@ begin
   lEdit := TRdcTailnetEdit.Create;
   lEdit.IsNew := True;
   lEdit.Def.Id := TGUID.NewGuid.ToString;
-  lEdit.Def.Name := UniqueName('Nieuw netwerk');
+  lEdit.Def.Name := UniqueName(_('Nieuw netwerk'));
   FEdits.Add(lEdit);
   FChanged := True;
   FillList(lEdit);
@@ -430,16 +444,16 @@ begin
     lUsage := FFile.TailnetUsageCount(lEdit.Def.Id);
     if lUsage > 0 then
     begin
-      MessageDlg(Format('Netwerk "%s" wordt nog gebruikt door %d route(s) in dit bestand. Kies daar eerst een andere route.', [lEdit.Def.Name, lUsage]), mtWarning, [mbOK], 0);
+      MessageDlg(Format(_('Netwerk "%s" wordt nog gebruikt door %d route(s) in dit bestand. Kies daar eerst een andere route.'), [lEdit.Def.Name, lUsage]), mtWarning, [mbOK], 0);
       Exit;
     end;
   end;
   if FManager.RefCount(lEdit.Def.Id) > 0 then
   begin
-    MessageDlg(Format('Netwerk "%s" is in gebruik door een open sessie. Sluit die eerst.', [lEdit.Def.Name]), mtWarning, [mbOK], 0);
+    MessageDlg(Format(_('Netwerk "%s" is in gebruik door een open sessie. Sluit die eerst.'), [lEdit.Def.Name]), mtWarning, [mbOK], 0);
     Exit;
   end;
-  if MessageDlg(Format('Netwerk "%s" verwijderen?'#13#10#13#10'De auth key en de sleutels van dit netwerk worden van deze pc gewist.', [lEdit.Def.Name]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
+  if MessageDlg(Format(_('Netwerk "%s" verwijderen?'#13#10#13#10'De auth key en de sleutels van dit netwerk worden van deze pc gewist.'), [lEdit.Def.Name]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
     Exit;
   if not lEdit.IsNew then
     FDeletedIds.Add(lEdit.Def.Id);
@@ -474,44 +488,44 @@ begin
   if aEdit.Def.Name = '' then
   begin
     aControl := edtName;
-    aMessage := 'Elk netwerk moet een naam hebben.';
+    aMessage := _('Elk netwerk moet een naam hebben.');
     Exit;
   end;
   for lOther in FEdits do
     if (lOther <> aEdit) and SameText(lOther.Def.Name, aEdit.Def.Name) then
     begin
       aControl := edtName;
-      aMessage := Format('Er zijn twee netwerken met de naam "%s".', [aEdit.Def.Name]);
+      aMessage := Format(_('Er zijn twee netwerken met de naam "%s".'), [aEdit.Def.Name]);
       Exit;
     end;
   if (aEdit.Def.NodeHostName <> '') and not RdcIsValidNodeHostName(aEdit.Def.NodeHostName) then
   begin
     aControl := edtNodeHost;
-    aMessage := 'De naam in het tailnet mag alleen kleine letters, cijfers en streepjes bevatten (max. 63 tekens, niet beginnen of eindigen met een streepje).';
+    aMessage := _('De naam in het tailnet mag alleen kleine letters, cijfers en streepjes bevatten (max. 63 tekens, niet beginnen of eindigen met een streepje).');
     Exit;
   end;
   if (aEdit.NewAuthKey <> '') and not aEdit.NewAuthKey.StartsWith('tskey-') then
   begin
     aControl := edtAuthKey;
-    aMessage := 'Een auth key begint met "tskey-" (bijv. tskey-auth-...).';
+    aMessage := _('Een auth key begint met "tskey-" (bijv. tskey-auth-...).');
     Exit;
   end;
   if not RdcIsValidControlUrl(aEdit.Def.ControlUrl) then
   begin
     aControl := edtControlUrl;
-    aMessage := 'De control URL moet met https:// beginnen (http:// alleen naar localhost): anders kan de auth key onderweg worden onderschept.';
+    aMessage := _('De control URL moet met https:// beginnen (http:// alleen naar localhost): anders kan de auth key onderweg worden onderschept.');
     Exit;
   end;
   if (aEdit.Def.LocalAddress <> '') and not RdcIsValidLoopbackAddress(aEdit.Def.LocalAddress) then
   begin
     aControl := edtLocalAddress;
-    aMessage := 'Het lokale adres moet een loopback-adres zijn (127.x.x.x), bijv. 127.0.0.2.';
+    aMessage := _('Het lokale adres moet een loopback-adres zijn (127.x.x.x), bijv. 127.0.0.2.');
     Exit;
   end;
   if (aEdit.NewAuthKey <> '') and not FSecrets.CanStoreSecrets then
   begin
     aControl := edtAuthKey;
-    aMessage := 'Een auth key kan alleen in de wachtwoordkluis worden bewaard. Zet "Wachtwoorden onthouden" aan in Opties, of laat het veld leeg (dan log je in via de browser).';
+    aMessage := _('Een auth key kan alleen in de wachtwoordkluis worden bewaard. Zet "Wachtwoorden onthouden" aan in Opties, of laat het veld leeg (dan log je in via de browser).');
     Exit;
   end;
   Result := True;
@@ -551,7 +565,7 @@ begin
     if ControlUrlChanged(lEdit) then
     begin
       if lEdit.HasStoredAuthKey or FSecrets.HasSecret(TRdcPasswordVault.TailnetStateKeyTarget(lEdit.Def.Id, lEdit.OriginalControlUrl)) then
-        if MessageDlg(Format('De control URL van "%s" is gewijzigd.'#13#10#13#10'De opgeslagen auth key en sleutels horen bij de oude server en worden gewist; daarna is een nieuwe auth key of opnieuw inloggen nodig. Doorgaan?', [lEdit.Def.Name]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
+        if MessageDlg(Format(_('De control URL van "%s" is gewijzigd.'#13#10#13#10'De opgeslagen auth key en sleutels horen bij de oude server en worden gewist; daarna is een nieuwe auth key of opnieuw inloggen nodig. Doorgaan?'), [lEdit.Def.Name]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
         begin
           FillList(lEdit);
           Exit(False);
@@ -563,10 +577,10 @@ begin
   for lEdit in FEdits do
     if lEdit.NewAuthKey <> '' then
     begin
-      if not FSecrets.SaveSecret(TRdcPasswordVault.TailnetAuthKeyTarget(lEdit.Def.Id, lEdit.Def.ControlUrl), 'Tailscale ' + lEdit.Def.Name, lEdit.NewAuthKey, Format('De auth key van "%s" wordt in de wachtwoordkluis opgeslagen.', [lEdit.Def.Name])) then
+      if not FSecrets.SaveSecret(TRdcPasswordVault.TailnetAuthKeyTarget(lEdit.Def.Id, lEdit.Def.ControlUrl), 'Tailscale ' + lEdit.Def.Name, lEdit.NewAuthKey, Format(_('De auth key van "%s" wordt in de wachtwoordkluis opgeslagen.'), [lEdit.Def.Name])) then
       begin
         FillList(lEdit);
-        MessageDlg(Format('De auth key van "%s" kon niet in de wachtwoordkluis worden opgeslagen.', [lEdit.Def.Name]), mtWarning, [mbOK], 0);
+        MessageDlg(Format(_('De auth key van "%s" kon niet in de wachtwoordkluis worden opgeslagen.'), [lEdit.Def.Name]), mtWarning, [mbOK], 0);
         Exit(False);
       end;
       WipeString(lEdit.NewAuthKey);
@@ -634,7 +648,7 @@ end;
 procedure TfrmTailnets.ToggleTest;
 begin
   if IsTesting then
-    StopTest('Test gestopt.')
+    StopTest(_('Test gestopt.'))
   else
     StartTest;
 end;
@@ -662,7 +676,7 @@ begin
   end;
   if (lEdit.NewAuthKey <> '') and not lEdit.NewAuthKey.StartsWith('tskey-') then
   begin
-    MessageDlg('Een auth key begint met "tskey-" (bijv. tskey-auth-...).', mtWarning, [mbOK], 0);
+    MessageDlg(_('Een auth key begint met "tskey-" (bijv. tskey-auth-...).'), mtWarning, [mbOK], 0);
     Exit;
   end;
   if not RdcBuildTailnetConfig(lEdit.Def, FSecrets, lEdit.NewAuthKey, lConfig, lError) then
@@ -675,9 +689,9 @@ begin
   FAuthUrlOpened := '';
   lGuard := FTestGuard;
   if FManager.RefCount(FTestId) > 0 then
-    lblTestStatus.Caption := 'Dit netwerk is al actief voor een open sessie; status ophalen...'
+    lblTestStatus.Caption := _('Dit netwerk is al actief voor een open sessie; status ophalen...')
   else
-    lblTestStatus.Caption := 'Verbinden met het tailnet...';
+    lblTestStatus.Caption := _('Verbinden met het tailnet...');
   UpdateButtons;
   // Acquire wist lConfig (geheimen) na gebruik.
   FManager.Acquire(lConfig,
@@ -703,14 +717,14 @@ begin
       FAuthUrlOpened := lStatus.AuthUrl;
       if not RdcOpenAuthUrl(lStatus.AuthUrl) then
       begin
-        StopTest('De control server gaf een ongeldig login-adres (geen https); niet geopend.');
+        StopTest(_('De control server gaf een ongeldig login-adres (geen https); niet geopend.'));
         Exit;
       end;
     end;
-    lblTestStatus.Caption := 'Inloggen nodig: de login-pagina is in de browser geopend.'#13#10 + lStatus.AuthUrl;
+    lblTestStatus.Caption := Format(_('Inloggen nodig: de login-pagina is in de browser geopend.'#13#10'%s'), [lStatus.AuthUrl]);
   end
   else if lStatus.State <> '' then
-    lblTestStatus.Caption := Format('Verbinden met het tailnet... (%s)', [lStatus.State]);
+    lblTestStatus.Caption := Format(_('Verbinden met het tailnet... (%s)'), [lStatus.State]);
 end;
 
 procedure TfrmTailnets.TestFinished(aSuccess: Boolean; const aError: string);
@@ -722,14 +736,14 @@ begin
     Exit;
   if aSuccess and FManager.TryStatus(FTestId, lStatus) then
   begin
-    lText := Format('Verbonden. Adres in het tailnet: %s', [string.Join(', ', lStatus.IPs)]);
+    lText := Format(_('Verbonden. Adres in het tailnet: %s'), [string.Join(', ', lStatus.IPs)]);
     if lStatus.DnsName <> '' then
-      lText := lText + #13#10'Naam: ' + lStatus.DnsName;
+      lText := lText + #13#10 + Format(_('Naam: %s'), [lStatus.DnsName]);
   end
   else if aSuccess then
-    lText := 'Verbonden.'
+    lText := _('Verbonden.')
   else
-    lText := 'Niet gelukt: ' + aError;
+    lText := Format(_('Niet gelukt: %s'), [aError]);
   StopTest(lText);
 end;
 

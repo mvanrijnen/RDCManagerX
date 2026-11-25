@@ -64,6 +64,8 @@ type
     function UniqueName(const aBase: string): string;
     function ValidateProfiles: Boolean;
     procedure ApplyToFile;
+  protected
+    procedure DoCreate; override;
   public
     /// <summary>True als er iets gewijzigd is (en toegepast op het bestand).</summary>
     class function Execute(aFile: TRdcFile): Boolean; static;
@@ -71,7 +73,17 @@ type
 
 implementation
 
+uses
+  RdcmX.Lang;
+
 {$R *.dfm}
+
+procedure TfrmProfiles.DoCreate;
+begin
+  // Translate the DFM texts before OnCreate runs.
+  TranslateComponent(Self);
+  inherited;
+end;
 
 class function TfrmProfiles.Execute(aFile: TRdcFile): Boolean;
 var
@@ -134,7 +146,7 @@ var
   lEdit: TRdcProfileEdit;
   lProfile: TRdcCredentialProfile;
 begin
-  Caption := Format('Credential-profielen - %s', [FFile.Caption]);
+  Caption := Format(_('Credential-profielen - %s'), [FFile.Caption]);
   for lProfile in FFile.Profiles do
   begin
     lEdit := TRdcProfileEdit.Create;
@@ -266,7 +278,7 @@ var
   lEdit: TRdcProfileEdit;
 begin
   lEdit := TRdcProfileEdit.Create;
-  lEdit.ProfileName := UniqueName('Nieuw profiel');
+  lEdit.ProfileName := UniqueName(_('Nieuw profiel'));
   FEdits.Add(lEdit);
   FChanged := True;
   FillList(lEdit);
@@ -287,7 +299,7 @@ begin
     lUsage := FFile.ProfileUsageCount(lEdit.OriginalName);
     if lUsage > 0 then
     begin
-      MessageDlg(Format('Profiel "%s" wordt nog gebruikt door %d instelling(en) in dit bestand. Kies daar eerst een ander profiel of eigen aanmeldgegevens.', [lEdit.OriginalName, lUsage]), mtWarning, [mbOK], 0);
+      MessageDlg(Format(_('Profiel "%s" wordt nog gebruikt door %d instelling(en) in dit bestand. Kies daar eerst een ander profiel of eigen aanmeldgegevens.'), [lEdit.OriginalName, lUsage]), mtWarning, [mbOK], 0);
       Exit;
     end;
   end;
@@ -310,7 +322,7 @@ begin
     begin
       FillList(FEdits[lIndex]);
       edtProfileName.SetFocus;
-      MessageDlg('Elk profiel moet een naam hebben.', mtWarning, [mbOK], 0);
+      MessageDlg(_('Elk profiel moet een naam hebben.'), mtWarning, [mbOK], 0);
       Exit(False);
     end;
     for lOther := lIndex + 1 to FEdits.Count - 1 do
@@ -318,7 +330,7 @@ begin
       begin
         FillList(FEdits[lOther]);
         edtProfileName.SetFocus;
-        MessageDlg(Format('Er zijn twee profielen met de naam "%s".', [FEdits[lOther].ProfileName]), mtWarning, [mbOK], 0);
+        MessageDlg(Format(_('Er zijn twee profielen met de naam "%s".'), [FEdits[lOther].ProfileName]), mtWarning, [mbOK], 0);
         Exit(False);
       end;
   end;

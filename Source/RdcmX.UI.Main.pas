@@ -28,7 +28,7 @@ uses
   Winapi.CommCtrl, Winapi.Messages, Winapi.MultiMon, Winapi.Windows,
   System.Actions, System.Classes, System.DateUtils, System.Generics.Collections, System.ImageList, System.Math, System.StrUtils, System.SysUtils, System.Types, System.UITypes,
   Vcl.ActnList, Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Graphics, Vcl.ImgList, Vcl.Menus, Vcl.StdCtrls, Vcl.WinXCtrls,
-  RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Model, RdcmX.Ping, RdcmX.Rdp.Session, RdcmX.Sessions, RdcmX.Shortcuts, RdcmX.Storage, RdcmX.Tailscale, RdcmX.UI.SessionPanes, RdcmX.UI.SessionWindow, RdcmX.UI.Theme;
+  RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Lang, RdcmX.Model, RdcmX.Ping, RdcmX.Rdp.Session, RdcmX.Sessions, RdcmX.Shortcuts, RdcmX.Storage, RdcmX.Tailscale, RdcmX.UI.SessionPanes, RdcmX.UI.SessionWindow, RdcmX.UI.Theme;
 
 type
   TRdcTreeShortcutKind = (tskFavoritesHeader, tskRecentHeader, tskFavorite, tskRecent);
@@ -258,6 +258,8 @@ type
     procedure sbSearchChange(Sender: TObject);
     procedure sbSearchKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure tmrCloseTimer(Sender: TObject);
+  protected
+    procedure DoCreate; override;
   private
     FAppSettings: TRdcAppSettings;
     FClosing: Boolean;
@@ -345,6 +347,7 @@ type
     procedure UpdateShortcutImages(aNode: TRdcNode);
     procedure RefreshAfterRename;
     procedure ShowOptions;
+    procedure AnnounceLanguageChange(aLanguage: TRdcLanguage);
     procedure FocusSearch;
     function HandleSearchKey(aKey: Word): Boolean;
     function NodeMatchesFilter(aNode: TRdcNode): Boolean;
@@ -507,11 +510,19 @@ uses
   RdcmX.Log, RdcmX.UI.CredentialPrompt, RdcmX.UI.Gateways, RdcmX.UI.Icons, RdcmX.UI.MasterPassword, RdcmX.UI.Options, RdcmX.UI.Profiles, RdcmX.UI.Properties, RdcmX.UI.Tailnets, RdcmX.WakeOnLan;
 
 const
-  cNewFileName = 'Nieuw bestand';
-  cNewGroupName = 'Nieuwe groep';
   cMinTreeWidth96 = 120;
 
 { Event-handlers: alleen doorverwijzen }
+
+procedure TfrmMain.DoCreate;
+begin
+  // Translate the DFM texts before OnCreate. The toolbar menu copies the captions of mmMain into its buttons when
+  // the menu is assigned, so assign it again to show the translated captions.
+  TranslateComponent(Self);
+  tbMenu.Menu := nil;
+  tbMenu.Menu := mmMain;
+  inherited;
+end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
@@ -904,8 +915,8 @@ begin
   FSessions.OnActivated := SessionsActivated;
 
   FPanes := TRdcSessionPanes.Create(pnlSession, lblPlaceholder, ilNodes, pmTabs);
-  FPanes.EmptyText := 'Geen open sessies.'#13#10#13#10'Dubbelklik op een server in de boom (of selecteer hem en druk op Enter) om te verbinden.';
-  FPanes.EmptyPaneText := 'Leeg vak'#13#10#13#10'Sleep een tab hierheen of klik hier en dubbelklik op een server.';
+  FPanes.EmptyText := _('Geen open sessies.'#13#10#13#10'Dubbelklik op een server in de boom (of selecteer hem en druk op Enter) om te verbinden.');
+  FPanes.EmptyPaneText := _('Leeg vak'#13#10#13#10'Sleep een tab hierheen of klik hier en dubbelklik op een server.');
   FPanes.ApplyColors(RdcActiveStyleIsDark);
   FPanes.OnActiveChanged := PanesActiveChanged;
   FPanes.OnCloseRequest := PanesCloseRequest;
@@ -1127,9 +1138,9 @@ var
 begin
   lShortcut := ShortcutOf(aTreeNode);
   if (lShortcut <> nil) and (lShortcut.Kind = tskFavoritesHeader) then
-    Exit('Favoriete servers (Server > Aan favorieten toevoegen)');
+    Exit(_('Favoriete servers (Server > Aan favorieten toevoegen)'));
   if (lShortcut <> nil) and (lShortcut.Kind = tskRecentHeader) then
-    Exit('Laatst verbonden servers, nieuwste bovenaan (aantal: Bestand > Opties)');
+    Exit(_('Laatst verbonden servers, nieuwste bovenaan (aantal: Bestand > Opties)'));
   lNode := NodeOfTreeNode(aTreeNode);
   if lNode is TRdcServer then
     Exit(ServerHint(TRdcServer(lNode)));
@@ -1151,16 +1162,31 @@ begin
     lServers.Free;
   end;
   if TObject(aTreeNode.Data) is TRdcFile then
-    Result := Format('%s'#13#10'%d server(s)', [IfThen(TRdcFile(aTreeNode.Data).FileName <> '', TRdcFile(aTreeNode.Data).FileName, 'Nog niet opgeslagen'), lCount])
+    Result := Format(_('%s'#13#10'%d server(s)'), [IfThen(TRdcFile(aTreeNode.Data).FileName <> '', TRdcFile(aTreeNode.Data).FileName, _('Nog niet opgeslagen')), lCount])
   else
-    Result := Format('%s'#13#10'%d server(s)', [TRdcNode(aTreeNode.Data).Caption, lCount]);
+    Result := Format(_('%s'#13#10'%d server(s)'), [TRdcNode(aTreeNode.Data).Caption, lCount]);
   if lOnline > 0 then
-    Result := Result + Format(', %d bereikbaar', [lOnline]);
+    Result := Result + Format(_(', %d bereikbaar'), [lOnline]);
 end;
 
 function TfrmMain.ServerHint(aServer: TRdcServer): string;
-const
-  cSession: array[TRdpSessionState] of string = ('', 'Verbinden...', 'Verbonden', 'Aangemeld', 'Verbreken...');
+
+  function SessionText(aState: TRdpSessionState): string;
+  begin
+    case aState of
+      rssConnecting:
+        Result := _('Verbinden...');
+      rssConnected:
+        Result := _('Verbonden');
+      rssLoggedIn:
+        Result := _('Aangemeld');
+      rssDisconnecting:
+        Result := _('Verbreken...');
+    else
+      Result := '';
+    end;
+  end;
+
 var
   lChecked: TDateTime;
   lKey: string;
@@ -1173,41 +1199,41 @@ begin
   try
     lLines.Add(aServer.Caption);
     if not SameText(aServer.Caption, aServer.Name) then
-      lLines.Add('Server: ' + aServer.Name);
+      lLines.Add(Format(_('Server: %s'), [aServer.Name]));
     // Sessie
     if FSessions.StateOf(aServer) <> rssDisconnected then
-      lLines.Add('Sessie: ' + cSession[FSessions.StateOf(aServer)])
+      lLines.Add(Format(_('Sessie: %s'), [SessionText(FSessions.StateOf(aServer))]))
     else if FSessions.HasError(aServer) then
-      lLines.Add('Sessie: fout bij de laatste verbinding');
+      lLines.Add(_('Sessie: fout bij de laatste verbinding'));
     // Bereikbaarheid
     if not PingKeyOf(aServer, lKey) then
     begin
       if aServer.EffectiveRoute.Kind <> rkDirect then
-        lLines.Add('Bereikbaarheid: niet gecontroleerd (route via Tailscale of gateway)')
+        lLines.Add(_('Bereikbaarheid: niet gecontroleerd (route via Tailscale of gateway)'))
       else
-        lLines.Add('Bereikbaarheid: niet gecontroleerd (zet aan via Eigenschappen > Route)');
+        lLines.Add(_('Bereikbaarheid: niet gecontroleerd (zet aan via Eigenschappen > Route)'));
     end
     else if not FPingStates.TryGetValue(lKey, lResult) then
-      lLines.Add('Bereikbaarheid: nog niet gecontroleerd')
+      lLines.Add(_('Bereikbaarheid: nog niet gecontroleerd'))
     else
     begin
       if lResult.Online and lResult.Mismatch then
-        lLines.Add(Format('Bereikbaarheid: op %s antwoordt %s, niet deze server (DNS-record verouderd?)', [lResult.Address, lResult.ActualName]))
+        lLines.Add(Format(_('Bereikbaarheid: op %s antwoordt %s, niet deze server (DNS-record verouderd?)'), [lResult.Address, lResult.ActualName]))
       else if lResult.Online then
-        lLines.Add(Format('Bereikbaarheid: online (%d ms, %s)', [lResult.RoundTripMs, lResult.Address]))
+        lLines.Add(Format(_('Bereikbaarheid: online (%d ms, %s)'), [lResult.RoundTripMs, lResult.Address]))
       else if FPingSince.TryGetValue(lKey, lSince) then
-        lLines.Add(Format('Bereikbaarheid: niet bereikbaar sinds %s', [FormatDateTime('dd-mm hh:nn', lSince)]))
+        lLines.Add(Format(_('Bereikbaarheid: niet bereikbaar sinds %s'), [FormatDateTime('dd-mm hh:nn', lSince)]))
       else
-        lLines.Add('Bereikbaarheid: niet bereikbaar');
+        lLines.Add(_('Bereikbaarheid: niet bereikbaar'));
       if FPingLastSeen.TryGetValue(lKey, lSeen) then
-        lLines.Add('Laatst gezien: ' + FormatDateTime('dd-mm-yyyy hh:nn:ss', lSeen))
+        lLines.Add(Format(_('Laatst gezien: %s'), [FormatDateTime('dd-mm-yyyy hh:nn:ss', lSeen)]))
       else
-        lLines.Add('Laatst gezien: niet sinds de start van RDCManagerX');
+        lLines.Add(_('Laatst gezien: niet sinds de start van RDCManagerX'));
       if FPingChecked.TryGetValue(lKey, lChecked) then
-        lLines.Add('Laatste controle: ' + FormatDateTime('hh:nn:ss', lChecked));
+        lLines.Add(Format(_('Laatste controle: %s'), [FormatDateTime('hh:nn:ss', lChecked)]));
     end;
     if aServer.Comment <> '' then
-      lLines.Add('Opmerking: ' + aServer.Comment);
+      lLines.Add(Format(_('Opmerking: %s'), [aServer.Comment]));
     Result := lLines.Text.TrimRight;
   finally
     lLines.Free;
@@ -1226,18 +1252,19 @@ begin
   if (lServer = nil) or (FSessions.StateOf(lServer) <> rssDisconnected) or not PingKeyOf(lServer, lKey) or not FPingStates.TryGetValue(lKey, lResult) then
     Exit;
   if lResult.Online and lResult.Mismatch then
-    sbStatus.Panels[0].Text := Format('Op %s antwoordt %s, niet %s (DNS-record verouderd?)', [lResult.Address, lResult.ActualName, lServer.Name])
+    sbStatus.Panels[0].Text := Format(_('Op %s antwoordt %s, niet %s (DNS-record verouderd?)'), [lResult.Address, lResult.ActualName, lServer.Name])
   else if lResult.Online then
-    sbStatus.Panels[0].Text := Format('%s is online (%d ms)', [lServer.Caption, lResult.RoundTripMs])
+    sbStatus.Panels[0].Text := Format(_('%s is online (%d ms)'), [lServer.Caption, lResult.RoundTripMs])
   else if FPingSince.TryGetValue(lKey, lSince) then
-    sbStatus.Panels[0].Text := Format('%s is niet bereikbaar (sinds %s)', [lServer.Caption, FormatDateTime('hh:nn', lSince)])
+    sbStatus.Panels[0].Text := Format(_('%s is niet bereikbaar (sinds %s)'), [lServer.Caption, FormatDateTime('hh:nn', lSince)])
   else
-    sbStatus.Panels[0].Text := Format('%s is niet bereikbaar', [lServer.Caption]);
+    sbStatus.Panels[0].Text := Format(_('%s is niet bereikbaar'), [lServer.Caption]);
 end;
 
 procedure TfrmMain.ShowManual;
 var
   lDir: string;
+  lEnglish: Boolean;
   lExisting: TBytes;
   lFile: string;
   lName: string;
@@ -1246,7 +1273,19 @@ var
 begin
   // De handleiding zit in de exe (zoals tsbridge.dll): uitpakken naar het eigen profiel en openen. Een CHM vanaf een
   // netwerkshare toont Windows niet (beveiliging); lokaal wel. Is er geen CHM ingebouwd, dan de HTML in de browser.
-  if FindResource(HInstance, 'HELPCHM', RT_RCDATA) <> 0 then
+  // English UI: the English manual, falling back to the Dutch one when it is not embedded.
+  lEnglish := UiLanguageCode = 'en';
+  if lEnglish and (FindResource(HInstance, 'HELPCHM_EN', RT_RCDATA) <> 0) then
+  begin
+    lName := 'HELPCHM_EN';
+    lFile := 'RDCManagerX-en.chm';
+  end
+  else if lEnglish and (FindResource(HInstance, 'HELPHTML_EN', RT_RCDATA) <> 0) then
+  begin
+    lName := 'HELPHTML_EN';
+    lFile := 'RDCManagerX-Manual.html';
+  end
+  else if FindResource(HInstance, 'HELPCHM', RT_RCDATA) <> 0 then
   begin
     lName := 'HELPCHM';
     lFile := 'RDCManagerX.chm';
@@ -1278,7 +1317,7 @@ begin
   except
     on E: Exception do
     begin
-      MessageDlg('De handleiding kon niet worden geopend: ' + E.Message, mtWarning, [mbOK], 0);
+      MessageDlg(Format(_('De handleiding kon niet worden geopend: %s'), [E.Message]), mtWarning, [mbOK], 0);
       Exit;
     end;
   end;
@@ -1337,8 +1376,8 @@ begin
       lNames := lNames + #13#10'  - ' + lServer.Caption;
   end;
   if lCount > cMaxListed then
-    lNames := lNames + Format(#13#10'  ... en nog %d', [lCount - cMaxListed]);
-  Result := Format('Er zijn nog %d open sessie(s):%s'#13#10#13#10'Weet u zeker dat u RDCManagerX wilt afsluiten? Alle sessies worden verbroken (niet afgemeld).', [aActive, lNames]);
+    lNames := lNames + #13#10 + Format(_('  ... en nog %d'), [lCount - cMaxListed]);
+  Result := Format(_('Er zijn nog %d open sessie(s):%s'#13#10#13#10'Weet u zeker dat u RDCManagerX wilt afsluiten? Alle sessies worden verbroken (niet afgemeld).'), [aActive, lNames]);
 end;
 
 function TfrmMain.CanCloseApplication: Boolean;
@@ -1733,8 +1772,8 @@ begin
     // Tijdens zoeken niet tonen: dan telt alleen wat overeenkomt in de bestanden.
     if FFilter = '' then
     begin
-      FFavoritesHeader := AddShortcutSection(tskFavoritesHeader, 'Favorieten', ciFavorites, FShortcuts.FavoriteServers, tskFavorite, FFavoritesCollapsed);
-      FRecentHeader := AddShortcutSection(tskRecentHeader, 'Recent', ciRecent, FShortcuts.RecentServers, tskRecent, FRecentCollapsed);
+      FFavoritesHeader := AddShortcutSection(tskFavoritesHeader, _('Favorieten'), ciFavorites, FShortcuts.FavoriteServers, tskFavorite, FFavoritesCollapsed);
+      FRecentHeader := AddShortcutSection(tskRecentHeader, _('Recent'), ciRecent, FShortcuts.RecentServers, tskRecent, FRecentCollapsed);
     end;
   finally
     tvServers.Items.EndUpdate;
@@ -1816,9 +1855,11 @@ end;
 
 procedure TfrmMain.ShowOptions;
 var
+  lOldLanguage: TRdcLanguage;
   lOldTheme: TRdcTheme;
   lOptions: TRdcOptions;
 begin
+  lOptions.Language := RdcLanguageFromName(FAppSettings.Language);
   lOptions.RecentServerCount := FAppSettings.RecentServerCount;
   lOptions.Theme := RdcThemeFromName(FAppSettings.Theme);
   lOptions.AutoSave := FAppSettings.AutoSave;
@@ -1826,12 +1867,14 @@ begin
   lOptions.AutoLockMinutes := FAppSettings.AutoLockMinutes;
   lOptions.PingIntervalSec := FAppSettings.PingIntervalSec;
   lOldTheme := lOptions.Theme;
+  lOldLanguage := lOptions.Language;
   if not TfrmOptions.Execute(lOptions, FAppSettings.RememberPasswords and FVault.IsInitialized,
     procedure
     begin
       ChangeMasterPassword;
     end) then
     Exit;
+  FAppSettings.Language := cRdcLanguageNames[lOptions.Language];
   FAppSettings.RecentServerCount := lOptions.RecentServerCount;
   FAppSettings.AutoSave := lOptions.AutoSave;
   FAppSettings.AutoLockMinutes := lOptions.AutoLockMinutes;
@@ -1848,6 +1891,15 @@ begin
   RebuildShortcutNodes;
   if lOptions.Theme <> lOldTheme then
     SetTheme(lOptions.Theme);
+  if lOptions.Language <> lOldLanguage then
+    AnnounceLanguageChange(lOptions.Language);
+end;
+
+procedure TfrmMain.AnnounceLanguageChange(aLanguage: TRdcLanguage);
+begin
+  // The language is applied at startup only (forms translate while loading), like a theme with open sessions.
+  if ResolveLanguageCode(aLanguage) <> UiLanguageCode then
+    MessageDlg(_('De nieuwe taal wordt gebruikt vanaf de volgende start van RDCManagerX.'), mtInformation, [mbOK], 0);
 end;
 
 function TfrmMain.ApplyRememberPasswordsOption(aWanted: Boolean): Boolean;
@@ -2076,7 +2128,7 @@ begin
   lGroup := TargetGroup;
   if lGroup = nil then
     Exit;
-  lNewGroup := TRdcGroup.Create(cNewGroupName);
+  lNewGroup := TRdcGroup.Create(_('Nieuwe groep'));
   if TfrmProperties.Execute(lNewGroup, lGroup) then
     AddNodeToTree(lGroup, lNewGroup)
   else
@@ -2138,12 +2190,12 @@ begin
     if lNode is TRdcGroup then
     begin
       TRdcGroup(lNode).CollectServers(lServers);
-      lMessage := Format('Groep "%s" met %d server(s) verwijderen?', [lNode.Caption, lServers.Count]);
+      lMessage := Format(_('Groep "%s" met %d server(s) verwijderen?'), [lNode.Caption, lServers.Count]);
     end
     else
     begin
       lServers.Add(lNode);
-      lMessage := Format('Server "%s" verwijderen?', [lNode.Caption]);
+      lMessage := Format(_('Server "%s" verwijderen?'), [lNode.Caption]);
     end;
     if MessageDlg(lMessage, mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
       Exit;
@@ -2261,10 +2313,10 @@ begin
     Exit;
   try
     TRdcWakeOnLan.Send(lServer.Settings.Host.MacAddress, lServer.Settings.Host.WolBroadcast, lServer.Settings.Host.WolPort);
-    sbStatus.Panels[0].Text := Format('Wake-on-LAN verstuurd naar %s (%s via %s)', [lServer.Caption, lServer.Settings.Host.MacAddress, lServer.Settings.Host.WolBroadcast]);
+    sbStatus.Panels[0].Text := Format(_('Wake-on-LAN verstuurd naar %s (%s via %s)'), [lServer.Caption, lServer.Settings.Host.MacAddress, lServer.Settings.Host.WolBroadcast]);
   except
     on E: Exception do
-      MessageDlg(Format('Wake-on-LAN naar %s mislukt: %s', [lServer.Caption, E.Message]), mtError, [mbOK], 0);
+      MessageDlg(Format(_('Wake-on-LAN naar %s mislukt: %s'), [lServer.Caption, E.Message]), mtError, [mbOK], 0);
   end;
 end;
 
@@ -2488,7 +2540,7 @@ end;
 
 procedure TfrmMain.NewFile;
 begin
-  AddFile(TRdcFile.Create(cNewFileName));
+  AddFile(TRdcFile.Create(_('Nieuw bestand')));
 end;
 
 procedure TfrmMain.CloseUntouchedNewFiles;
@@ -2515,7 +2567,7 @@ begin
   if not FileExists(aFileName) then
   begin
     if not aQuiet then
-      MessageDlg(Format('Het bestand "%s" bestaat niet (meer).', [aFileName]), mtWarning, [mbOK], 0);
+      MessageDlg(Format(_('Het bestand "%s" bestaat niet (meer).'), [aFileName]), mtWarning, [mbOK], 0);
     Exit;
   end;
   try
@@ -2523,7 +2575,7 @@ begin
   except
     on E: Exception do
     begin
-      MessageDlg(Format('Kan "%s" niet openen:'#13#10#13#10'%s', [aFileName, E.Message]), mtError, [mbOK], 0);
+      MessageDlg(Format(_('Kan "%s" niet openen:'#13#10#13#10'%s'), [aFileName, E.Message]), mtError, [mbOK], 0);
       Exit(nil);
     end;
   end;
@@ -2544,8 +2596,8 @@ begin
     Exit;
   lWarnings := aFile.Warnings.Text;
   if aFile.Warnings.Count > cMaxShown then
-    lWarnings := string.Join(sLineBreak, Copy(aFile.Warnings.ToStringArray, 0, cMaxShown)) + sLineBreak + Format('... en nog %d melding(en).', [aFile.Warnings.Count - cMaxShown]);
-  MessageDlg(Format('Meldingen bij het openen van "%s":'#13#10#13#10'%s', [ExtractFileName(aFile.FileName), lWarnings]), mtInformation, [mbOK], 0);
+    lWarnings := string.Join(sLineBreak, Copy(aFile.Warnings.ToStringArray, 0, cMaxShown)) + sLineBreak + Format(_('... en nog %d melding(en).'), [aFile.Warnings.Count - cMaxShown]);
+  MessageDlg(Format(_('Meldingen bij het openen van "%s":'#13#10#13#10'%s'), [ExtractFileName(aFile.FileName), lWarnings]), mtInformation, [mbOK], 0);
 end;
 
 procedure TfrmMain.OpenFilesWithDialog;
@@ -2574,20 +2626,20 @@ var
 begin
   lDialog := TTaskDialog.Create(nil);
   try
-    lDialog.Caption := 'Bestand gewijzigd';
-    lDialog.Title := 'Het bestand is buiten RDCManX gewijzigd';
-    lDialog.Text := Format('"%s" is gewijzigd sinds het werd geopend (bijvoorbeeld in RDCMan).', [aFile.FileName]);
+    lDialog.Caption := _('Bestand gewijzigd');
+    lDialog.Title := _('Het bestand is buiten RDCManX gewijzigd');
+    lDialog.Text := Format(_('"%s" is gewijzigd sinds het werd geopend (bijvoorbeeld in RDCMan).'), [aFile.FileName]);
     lDialog.MainIcon := tdiWarning;
     lDialog.CommonButtons := [];
     lDialog.Flags := [tfAllowDialogCancellation];
     lButton := lDialog.Buttons.Add;
-    lButton.Caption := 'Herladen (mijn wijzigingen vervallen)';
+    lButton.Caption := _('Herladen (mijn wijzigingen vervallen)');
     lButton.ModalResult := cReload;
     lButton := lDialog.Buttons.Add;
-    lButton.Caption := 'Overschrijven';
+    lButton.Caption := _('Overschrijven');
     lButton.ModalResult := cOverwrite;
     lButton := lDialog.Buttons.Add;
-    lButton.Caption := 'Annuleren';
+    lButton.Caption := _('Annuleren');
     lButton.ModalResult := mrCancel;
     if not lDialog.Execute(Handle) then
       Exit(ecaCancel);
@@ -2644,7 +2696,7 @@ begin
   except
     on E: Exception do
     begin
-      MessageDlg(Format('Opslaan van "%s" mislukt:'#13#10#13#10'%s', [lFileName, E.Message]), mtError, [mbOK], 0);
+      MessageDlg(Format(_('Opslaan van "%s" mislukt:'#13#10#13#10'%s'), [lFileName, E.Message]), mtError, [mbOK], 0);
       Exit;
     end;
   end;
@@ -2683,7 +2735,7 @@ begin
   Result := True;
   if not aFile.Modified then
     Exit;
-  case MessageDlg(Format('Wijzigingen in "%s" opslaan?', [aFile.Caption]), mtConfirmation, [mbYes, mbNo, mbCancel], 0) of
+  case MessageDlg(Format(_('Wijzigingen in "%s" opslaan?'), [aFile.Caption]), mtConfirmation, [mbYes, mbNo, mbCancel], 0) of
     mrYes:
       Result := SaveFile(aFile, False);
     mrNo:
@@ -2808,7 +2860,7 @@ begin
     lRects[lPane] := FPanes.HostRect(lPane);
     if (lServers[lPane] <> nil) and FSessions.IsDetached(lServers[lPane]) then
     begin
-      FPanes.SetPaneNote(lPane, Format('%s staat in een eigen venster.'#13#10#13#10'Klik op de tab om het venster te tonen, of kies "Terugzetten in hoofdvenster" in het tab-menu.', [lServers[lPane].Caption]));
+      FPanes.SetPaneNote(lPane, Format(_('%s staat in een eigen venster.'#13#10#13#10'Klik op de tab om het venster te tonen, of kies "Terugzetten in hoofdvenster" in het tab-menu.'), [lServers[lPane].Caption]));
       lServers[lPane] := nil;
     end
     else
@@ -2892,11 +2944,11 @@ var
   lValues: array of string;
 begin
   lValues := [IntToStr(FPanes.Columns), IntToStr(FPanes.Rows)];
-  if not InputQuery('Indeling sessievakken', [Format('Kolommen (1-%d)', [cRdcMaxColumns]), Format('Rijen (1-%d)', [cRdcMaxRows])], lValues) then
+  if not InputQuery(_('Indeling sessievakken'), [Format(_('Kolommen (1-%d)'), [cRdcMaxColumns]), Format(_('Rijen (1-%d)'), [cRdcMaxRows])], lValues) then
     Exit;
   if not TryStrToInt(Trim(lValues[0]), lColumns) or not TryStrToInt(Trim(lValues[1]), lRows) or not InRange(lColumns, 1, cRdcMaxColumns) or not InRange(lRows, 1, cRdcMaxRows) then
   begin
-    MessageDlg(Format('Kies 1 tot %d kolommen en 1 tot %d rijen.', [cRdcMaxColumns, cRdcMaxRows]), mtWarning, [mbOK], 0);
+    MessageDlg(Format(_('Kies 1 tot %d kolommen en 1 tot %d rijen.'), [cRdcMaxColumns, cRdcMaxRows]), mtWarning, [mbOK], 0);
     Exit;
   end;
   SetGrid(lColumns, lRows);
@@ -2953,7 +3005,7 @@ begin
   if FPanes.TabCount > 0 then
   begin
     if aAnnounce then
-      MessageDlg('Het thema wordt toegepast bij de volgende start van het programma.'#13#10#13#10'Nu omschakelen zou de open sessies verbreken.', mtInformation, [mbOK], 0);
+      MessageDlg(_('Het thema wordt toegepast bij de volgende start van het programma.'#13#10#13#10'Nu omschakelen zou de open sessies verbreken.'), mtInformation, [mbOK], 0);
     Exit;
   end;
   if ApplyTheme(aTheme) then
@@ -3053,7 +3105,7 @@ begin
   // Opnieuw controleren: intussen kan de tab al gesloten of de server opnieuw verbonden zijn.
   if FClosing or not FPanes.Contains(aServer) or not FSessions.EndedNormally(aServer) then
     Exit;
-  sbStatus.Panels[0].Text := Format('Verbinding met %s verbroken (reden %d)%s', [aServer.Caption, FSessions.LastDisconnectReasonOf(aServer), IfThen(FSessions.LastDisconnectTextOf(aServer) <> '', ': ' + FSessions.LastDisconnectTextOf(aServer), '.')]);
+  sbStatus.Panels[0].Text := Format(_('Verbinding met %s verbroken (reden %d)%s'), [aServer.Caption, FSessions.LastDisconnectReasonOf(aServer), IfThen(FSessions.LastDisconnectTextOf(aServer) <> '', ': ' + FSessions.LastDisconnectTextOf(aServer), '.')]);
   CloseServerTab(aServer);
 end;
 
@@ -3122,7 +3174,7 @@ begin
   Result := False;
   if not HasRememberedPassword(aServer, aUserName, aDomain) then
     Exit;
-  if not EnsureVaultUnlocked(Format('Ontgrendel de wachtwoordkluis om met %s te verbinden.', [aServer.Caption])) then
+  if not EnsureVaultUnlocked(Format(_('Ontgrendel de wachtwoordkluis om met %s te verbinden.'), [aServer.Caption])) then
     Exit;
   lTarget := CredentialTargetFor(aServer, aUserName, aDomain);
   Result := FVault.TryLoad(lTarget, aPassword);
@@ -3139,9 +3191,9 @@ var
 begin
   if not FAppSettings.RememberPasswords or (Trim(aUserName) = '') or (aPassword = '') then
     Exit;
-  if not EnsureVaultUnlocked('Ontgrendel de wachtwoordkluis om het wachtwoord te onthouden.') then
+  if not EnsureVaultUnlocked(_('Ontgrendel de wachtwoordkluis om het wachtwoord te onthouden.')) then
   begin
-    sbStatus.Panels[0].Text := 'Wachtwoord niet onthouden (kluis niet ontgrendeld).';
+    sbStatus.Panels[0].Text := _('Wachtwoord niet onthouden (kluis niet ontgrendeld).');
     Exit;
   end;
   lTarget := CredentialTargetFor(aServer, aUserName, aDomain);
@@ -3160,7 +3212,7 @@ begin
   if (SelectedServer = nil) or not SelectedServer.ResolveLogon(lDomain, lUserName) then
     Exit;
   FVault.Delete(CredentialTargetFor(SelectedServer, lUserName, lDomain));
-  sbStatus.Panels[0].Text := Format('Onthouden wachtwoord vergeten voor %s', [AccountText(lUserName, lDomain)]);
+  sbStatus.Panels[0].Text := Format(_('Onthouden wachtwoord vergeten voor %s'), [AccountText(lUserName, lDomain)]);
 end;
 
 procedure TfrmMain.HandleRejectedPassword(aServer: TRdcServer);
@@ -3188,7 +3240,7 @@ begin
         begin
           FVault.Delete(lTarget);
           TRdcLog.Write(Format('%s: onthouden wachtwoord geweigerd en vergeten (%s)', [aServer.Caption, lTarget]));
-          sbStatus.Panels[0].Text := Format('%s: aanmelding geweigerd; het onthouden wachtwoord is vergeten.', [aServer.Caption]);
+          sbStatus.Panels[0].Text := Format(_('%s: aanmelding geweigerd; het onthouden wachtwoord is vergeten.'), [aServer.Caption]);
         end;
       end;
   end;
@@ -3202,7 +3254,7 @@ begin
   lCount := FVault.Count;
   if (lCount = 0) and not FVault.IsInitialized then
     Exit(True);
-  Result := MessageDlg(Format('Onthouden van wachtwoorden uitzetten?'#13#10#13#10'De wachtwoordkluis en %d onthouden wachtwoord(en) worden verwijderd.', [lCount]), mtConfirmation, [mbYes, mbNo], 0) = mrYes;
+  Result := MessageDlg(Format(_('Onthouden van wachtwoorden uitzetten?'#13#10#13#10'De wachtwoordkluis en %d onthouden wachtwoord(en) worden verwijderd.'), [lCount]), mtConfirmation, [mbYes, mbNo], 0) = mrYes;
   if Result then
     FVault.Reset;
 end;
@@ -3213,7 +3265,7 @@ var
   lPassword: string;
 begin
   Result := False;
-  if TfrmMasterPassword.Execute(mpmCreate, 'Stel een hoofdwachtwoord in voor de wachtwoordkluis. Onthouden wachtwoorden worden daarmee versleuteld.', lPassword, lOld) = mprOk then
+  if TfrmMasterPassword.Execute(mpmCreate, _('Stel een hoofdwachtwoord in voor de wachtwoordkluis. Onthouden wachtwoorden worden daarmee versleuteld.'), lPassword, lOld) = mprOk then
     Result := FVault.Initialize(lPassword);
   WipeString(lPassword);
   WipeString(lOld);
@@ -3241,7 +3293,7 @@ begin
             UpdateVaultStatus;
             Exit(True);
           end;
-          MessageDlg('Onjuist hoofdwachtwoord.', mtWarning, [mbOK], 0);
+          MessageDlg(_('Onjuist hoofdwachtwoord.'), mtWarning, [mbOK], 0);
         end;
       mprForgot:
         begin
@@ -3257,7 +3309,7 @@ end;
 procedure TfrmMain.ResetVaultAfterForgotten;
 begin
   // Het hoofdwachtwoord is niet te herstellen: alleen leegmaken en opnieuw beginnen.
-  if MessageDlg(Format('Hoofdwachtwoord vergeten?'#13#10#13#10'De kluis kan niet geopend worden zonder het hoofdwachtwoord. De %d onthouden wachtwoord(en) worden verwijderd; daarna stelt u een nieuw hoofdwachtwoord in.', [FVault.Count]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
+  if MessageDlg(Format(_('Hoofdwachtwoord vergeten?'#13#10#13#10'De kluis kan niet geopend worden zonder het hoofdwachtwoord. De %d onthouden wachtwoord(en) worden verwijderd; daarna stelt u een nieuw hoofdwachtwoord in.'), [FVault.Count]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
     Exit;
   FVault.Reset;
   if not CreateVault then
@@ -3273,7 +3325,7 @@ procedure TfrmMain.LockVault;
 begin
   FVault.Lock;
   UpdateVaultStatus;
-  sbStatus.Panels[0].Text := 'Wachtwoordkluis vergrendeld.';
+  sbStatus.Panels[0].Text := _('Wachtwoordkluis vergrendeld.');
 end;
 
 procedure TfrmMain.ChangeMasterPassword;
@@ -3281,13 +3333,13 @@ var
   lNew: string;
   lOld: string;
 begin
-  if TfrmMasterPassword.Execute(mpmChange, 'Wijzig het hoofdwachtwoord van de wachtwoordkluis.', lNew, lOld) <> mprOk then
+  if TfrmMasterPassword.Execute(mpmChange, _('Wijzig het hoofdwachtwoord van de wachtwoordkluis.'), lNew, lOld) <> mprOk then
     Exit;
   try
     if FVault.ChangeMasterPassword(lOld, lNew) then
-      sbStatus.Panels[0].Text := 'Hoofdwachtwoord gewijzigd; alle onthouden wachtwoorden zijn opnieuw versleuteld.'
+      sbStatus.Panels[0].Text := _('Hoofdwachtwoord gewijzigd; alle onthouden wachtwoorden zijn opnieuw versleuteld.')
     else
-      MessageDlg('Het huidige hoofdwachtwoord is onjuist; er is niets gewijzigd.', mtWarning, [mbOK], 0);
+      MessageDlg(_('Het huidige hoofdwachtwoord is onjuist; er is niets gewijzigd.'), mtWarning, [mbOK], 0);
   finally
     WipeString(lNew);
     WipeString(lOld);
@@ -3370,7 +3422,7 @@ begin
   lServers := SelectedGroupServers;
   if Length(lServers) = 0 then
     Exit;
-  if (Length(lServers) > cConfirmAbove) and (MessageDlg(Format('%d servers in "%s" verbinden?', [Length(lServers), lGroup.Caption]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
+  if (Length(lServers) > cConfirmAbove) and (MessageDlg(Format(_('%d servers in "%s" verbinden?'), [Length(lServers), lGroup.Caption]), mtConfirmation, [mbYes, mbNo], 0) <> mrYes) then
     Exit;
   // Eén keer vragen, met de aanmeldnaam van de eerste server als voorstel. Is er een onthouden wachtwoord voor dat
   // account, dan niet vragen: elke server haalt dan zelf zijn onthouden wachtwoord op (of vraagt het).
@@ -3385,7 +3437,7 @@ begin
     ShowActiveSession;
     Exit;
   end;
-  if not TfrmCredentialPrompt.Execute(Format('%d servers in "%s"', [Length(lServers), lGroup.Caption]), FBatchUserName, FBatchDomain, FBatchPassword, FAppSettings.RememberPasswords, FBatchRemember) then
+  if not TfrmCredentialPrompt.Execute(Format(_('%d servers in "%s"'), [Length(lServers), lGroup.Caption]), FBatchUserName, FBatchDomain, FBatchPassword, FAppSettings.RememberPasswords, FBatchRemember) then
     Exit;
   FBatchActive := True;
   try
@@ -3609,9 +3661,9 @@ begin
   lState := FSessions.StateOf(lServer);
   actConnect.Enabled := lServer <> nil;
   if (lServer <> nil) and (lState <> rssDisconnected) then
-    actConnect.Caption := 'Tonen'#9'Enter'
+    actConnect.Caption := _('Tonen'#9'Enter')
   else
-    actConnect.Caption := 'Verbinden'#9'Enter';
+    actConnect.Caption := _('Verbinden'#9'Enter');
   actDisconnect.Enabled := (lServer <> nil) and (lState in [rssConnecting, rssConnected, rssLoggedIn]);
   actNewServer.Enabled := TargetGroup <> nil;
   actNewGroup.Enabled := TargetGroup <> nil;
@@ -3626,16 +3678,16 @@ begin
   actConnectGroup.Enabled := lNode is TRdcGroup;
   actDisconnectGroup.Enabled := lNode is TRdcGroup;
   if FShortcuts.IsFavorite(lServer) then
-    actFavorite.Caption := 'Uit favorieten verwijderen'
+    actFavorite.Caption := _('Uit favorieten verwijderen')
   else
-    actFavorite.Caption := 'Aan favorieten toevoegen';
+    actFavorite.Caption := _('Aan favorieten toevoegen');
   actDelete.Enabled := (lNode <> nil) and not (lNode is TRdcFile);
   if (SelectedShortcut <> nil) and (SelectedShortcut.Kind = tskFavorite) then
-    actDelete.Caption := 'Uit favorieten verwijderen'#9'Del'
+    actDelete.Caption := _('Uit favorieten verwijderen'#9'Del')
   else if (SelectedShortcut <> nil) and (SelectedShortcut.Kind = tskRecent) then
-    actDelete.Caption := 'Uit recent verwijderen'#9'Del'
+    actDelete.Caption := _('Uit recent verwijderen'#9'Del')
   else
-    actDelete.Caption := 'Verwijderen'#9'Del';
+    actDelete.Caption := _('Verwijderen'#9'Del');
   actProperties.Enabled := lNode <> nil;
   actSave.Enabled := SelectedFile <> nil;
   actSaveAs.Enabled := SelectedFile <> nil;
@@ -3678,7 +3730,7 @@ begin
   try
     if GetFileVersionInfo(PChar(ParamStr(0)), 0, lSize, lInfo) and VerQueryValue(lInfo, '\', Pointer(lFixed), lFixedSize) then
       // Versieschema yyyy.mm.dd.xxx (xxx = buildnummer van die dag), zie Tools\NextVersion.ps1.
-      Result := Format('versie %d.%.2d.%.2d.%.3d', [HiWord(lFixed.dwFileVersionMS), LoWord(lFixed.dwFileVersionMS), HiWord(lFixed.dwFileVersionLS), LoWord(lFixed.dwFileVersionLS)]);
+      Result := Format(_('versie %d.%.2d.%.2d.%.3d'), [HiWord(lFixed.dwFileVersionMS), LoWord(lFixed.dwFileVersionMS), HiWord(lFixed.dwFileVersionLS), LoWord(lFixed.dwFileVersionLS)]);
   finally
     FreeMem(lInfo);
   end;
@@ -3714,20 +3766,20 @@ begin
   if lSession <> nil then
   begin
     lInfo := lSession.DisplayInfo;
-    sbStatus.Panels[0].Text := lServer.Caption + ': ' + cRdpSessionStateNames[lSession.State];
+    sbStatus.Panels[0].Text := Format('%s: %s', [lServer.Caption, RdpSessionStateText(lSession.State)]);
     // Dynamische resolutie alleen tonen in de modus "dynamisch"; anders de gekozen weergavemodus.
     if lInfo.SizeMode = rsmDynamic then
-      lDynamic := 'dynamisch: ' + cRdpDynamicSupportNames[lInfo.DynamicSupport]
+      lDynamic := Format(_('dynamisch: %s'), [RdpDynamicSupportText(lInfo.DynamicSupport)])
     else
-      lDynamic := 'weergave: ' + cRdpSizeModeNames[lInfo.SizeMode];
-    sbStatus.Panels[1].Text := Format('Paneel %dx%d · Remote %dx%d · schaal %d%% · %s', [lInfo.HostWidth, lInfo.HostHeight, lInfo.RemoteWidth, lInfo.RemoteHeight, lInfo.SentDesktopScale, lDynamic]);
+      lDynamic := Format(_('weergave: %s'), [RdpSizeModeText(lInfo.SizeMode)]);
+    sbStatus.Panels[1].Text := Format(_('Paneel %dx%d · Remote %dx%d · schaal %d%% · %s'), [lInfo.HostWidth, lInfo.HostHeight, lInfo.RemoteWidth, lInfo.RemoteHeight, lInfo.SentDesktopScale, lDynamic]);
   end
   else
   begin
     sbStatus.Panels[0].Text := '';
     sbStatus.Panels[1].Text := '';
   end;
-  sbStatus.Panels[2].Text := Format('%d actieve verbinding(en)', [FSessions.ActiveCount]);
+  sbStatus.Panels[2].Text := Format(_('%d actieve verbinding(en)'), [FSessions.ActiveCount]);
 end;
 
 end.

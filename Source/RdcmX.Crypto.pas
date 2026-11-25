@@ -46,6 +46,9 @@ procedure WipeBytes(var aBytes: TBytes);
 
 implementation
 
+uses
+  RdcmX.Lang;
+
 type
   NTSTATUS = Integer;
   BCRYPT_HANDLE = Pointer;
@@ -92,7 +95,7 @@ function CryptUnprotectMemory(pDataIn: Pointer; cbDataIn: DWORD; dwFlags: DWORD)
 procedure Check(aStatus: NTSTATUS; const aWhat: string);
 begin
   if aStatus <> STATUS_SUCCESS then
-    raise ERdcCryptoError.CreateFmt('%s mislukt (status $%.8x)', [aWhat, Cardinal(aStatus)]);
+    raise ERdcCryptoError.CreateFmt(_('%s mislukt (status $%.8x)'), [aWhat, Cardinal(aStatus)]);
 end;
 
 procedure WipeBytes(var aBytes: TBytes);
@@ -106,9 +109,9 @@ function OpenAesGcm: BCRYPT_HANDLE;
 const
   cChainingMode: string = 'ChainingModeGCM';
 begin
-  Check(BCryptOpenAlgorithmProvider(Result, 'AES', nil, 0), 'AES openen');
+  Check(BCryptOpenAlgorithmProvider(Result, 'AES', nil, 0), _('AES openen'));
   try
-    Check(BCryptSetProperty(Result, 'ChainingMode', PByte(PWideChar(cChainingMode)), (Length(cChainingMode) + 1) * SizeOf(WideChar), 0), 'GCM instellen');
+    Check(BCryptSetProperty(Result, 'ChainingMode', PByte(PWideChar(cChainingMode)), (Length(cChainingMode) + 1) * SizeOf(WideChar), 0), _('GCM instellen'));
   except
     BCryptCloseAlgorithmProvider(Result, 0);
     raise;
@@ -129,7 +132,7 @@ class function TRdcCrypto.RandomBytes(aCount: Integer): TBytes;
 begin
   SetLength(Result, aCount);
   if aCount > 0 then
-    Check(BCryptGenRandom(nil, @Result[0], aCount, BCRYPT_USE_SYSTEM_PREFERRED_RNG), 'Willekeurige bytes');
+    Check(BCryptGenRandom(nil, @Result[0], aCount, BCRYPT_USE_SYSTEM_PREFERRED_RNG), _('Willekeurige bytes'));
 end;
 
 class function TRdcCrypto.DeriveKey(const aPassword: string; const aSalt: TBytes; aIterations: Cardinal; aKeySize: Integer): TBytes;
@@ -140,7 +143,7 @@ begin
   SetLength(Result, aKeySize);
   lPassword := TEncoding.UTF8.GetBytes(aPassword);
   try
-    Check(BCryptOpenAlgorithmProvider(lAlgorithm, 'SHA256', nil, BCRYPT_ALG_HANDLE_HMAC_FLAG), 'HMAC-SHA256 openen');
+    Check(BCryptOpenAlgorithmProvider(lAlgorithm, 'SHA256', nil, BCRYPT_ALG_HANDLE_HMAC_FLAG), _('HMAC-SHA256 openen'));
     try
       Check(BCryptDeriveKeyPBKDF2(lAlgorithm, PointerOrNil(lPassword), Length(lPassword), PointerOrNil(aSalt), Length(aSalt), aIterations, @Result[0], aKeySize, 0), 'PBKDF2');
     finally
@@ -160,13 +163,13 @@ var
   lResultSize: ULONG;
 begin
   if Length(aKey) <> cRdcKeySize then
-    raise ERdcCryptoError.Create('Ongeldige sleutellengte');
+    raise ERdcCryptoError.Create(_('Ongeldige sleutellengte'));
   lNonce := RandomBytes(cRdcNonceSize);
   SetLength(Result, cRdcNonceSize + cRdcTagSize + Length(aPlain));
   Move(lNonce[0], Result[0], cRdcNonceSize);
   lAlgorithm := OpenAesGcm;
   try
-    Check(BCryptGenerateSymmetricKey(lAlgorithm, lKey, nil, 0, @aKey[0], Length(aKey), 0), 'Sleutel aanmaken');
+    Check(BCryptGenerateSymmetricKey(lAlgorithm, lKey, nil, 0, @aKey[0], Length(aKey), 0), _('Sleutel aanmaken'));
     try
       FillChar(lAuthInfo, SizeOf(lAuthInfo), 0);
       lAuthInfo.cbSize := SizeOf(lAuthInfo);
@@ -177,7 +180,7 @@ begin
       lAuthInfo.cbAuthData := Length(aAssociatedData);
       lAuthInfo.pbTag := @Result[cRdcNonceSize];
       lAuthInfo.cbTag := cRdcTagSize;
-      Check(BCryptEncrypt(lKey, PointerOrNil(aPlain), Length(aPlain), @lAuthInfo, nil, 0, PByte(@Result[0]) + cRdcNonceSize + cRdcTagSize, Length(aPlain), lResultSize, 0), 'Versleutelen');
+      Check(BCryptEncrypt(lKey, PointerOrNil(aPlain), Length(aPlain), @lAuthInfo, nil, 0, PByte(@Result[0]) + cRdcNonceSize + cRdcTagSize, Length(aPlain), lResultSize, 0), _('Versleutelen'));
     finally
       BCryptDestroyKey(lKey);
     end;
@@ -204,7 +207,7 @@ begin
   lTag := Copy(aSealed, cRdcNonceSize, cRdcTagSize);
   lAlgorithm := OpenAesGcm;
   try
-    Check(BCryptGenerateSymmetricKey(lAlgorithm, lKey, nil, 0, @aKey[0], Length(aKey), 0), 'Sleutel aanmaken');
+    Check(BCryptGenerateSymmetricKey(lAlgorithm, lKey, nil, 0, @aKey[0], Length(aKey), 0), _('Sleutel aanmaken'));
     try
       FillChar(lAuthInfo, SizeOf(lAuthInfo), 0);
       lAuthInfo.cbSize := SizeOf(lAuthInfo);
@@ -227,14 +230,14 @@ begin
   begin
     WipeBytes(aPlain);
     if lStatus <> STATUS_AUTH_TAG_MISMATCH then
-      Check(lStatus, 'Ontsleutelen');
+      Check(lStatus, _('Ontsleutelen'));
   end;
 end;
 
 class procedure TRdcCrypto.ProtectMemory(var aBuffer: TBytes);
 begin
   if Length(aBuffer) mod CRYPTPROTECTMEMORY_BLOCK_SIZE <> 0 then
-    raise ERdcCryptoError.Create('Buffer moet een veelvoud van 16 bytes zijn');
+    raise ERdcCryptoError.Create(_('Buffer moet een veelvoud van 16 bytes zijn'));
   if (Length(aBuffer) > 0) and not CryptProtectMemory(@aBuffer[0], Length(aBuffer), CRYPTPROTECTMEMORY_SAME_PROCESS) then
     RaiseLastOSError;
 end;

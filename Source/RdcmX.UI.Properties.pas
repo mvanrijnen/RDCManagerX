@@ -106,6 +106,8 @@ type
     procedure SaveLogonSection;
     procedure LoadFromNode;
     procedure SaveToNode;
+  protected
+    procedure DoCreate; override;
   public
     /// <summary>aContext: de groep waarvan geërfd wordt (bij een nieuwe node de toekomstige parent).</summary>
     class function Execute(aNode: TRdcNode; aContext: TRdcGroup): Boolean; static;
@@ -114,7 +116,7 @@ type
 implementation
 
 uses
-  RdcmX.WakeOnLan;
+  RdcmX.Lang, RdcmX.WakeOnLan;
 
 {$R *.dfm}
 
@@ -142,6 +144,13 @@ begin
   finally
     lForm.Free;
   end;
+end;
+
+procedure TfrmProperties.DoCreate;
+begin
+  // Translate the DFM texts before OnCreate runs.
+  TranslateComponent(Self);
+  inherited;
 end;
 
 procedure TfrmProperties.FormCreate(Sender: TObject);
@@ -226,9 +235,9 @@ end;
 function TfrmProperties.InheritCaption: string;
 begin
   if FContext = nil then
-    Result := 'Overnemen van standaardinstellingen'
+    Result := _('Overnemen van standaardinstellingen')
   else
-    Result := Format('Overnemen van bovenliggende groep (%s)', [FContext.Caption]);
+    Result := Format(_('Overnemen van bovenliggende groep (%s)'), [FContext.Caption]);
 end;
 
 function TfrmProperties.ProfilesFile: TRdcFile;
@@ -246,18 +255,18 @@ var
 begin
   lIsServer := FNode is TRdcServer;
   if FNode is TRdcFile then
-    Caption := 'Eigenschappen van bestand'
+    Caption := _('Eigenschappen van bestand')
   else if lIsServer then
-    Caption := 'Eigenschappen van server'
+    Caption := _('Eigenschappen van server')
   else
-    Caption := 'Eigenschappen van groep';
+    Caption := _('Eigenschappen van groep');
   lblServer.Visible := lIsServer;
   edtServer.Visible := lIsServer;
   gbWakeOnLan.Visible := lIsServer;
   // Server: "Naam" = weergavenaam (optioneel), "Servernaam" = hostnaam. Groep: "Naam" = groepsnaam.
   if lIsServer then
   begin
-    lblName.Caption := 'Weergavenaam';
+    lblName.Caption := _('Weergavenaam');
     edtName.Text := TRdcServer(FNode).DisplayName;
     edtServer.Text := FNode.Name;
     FServerFollowsName := FNode.Name = ''; // nieuwe server
@@ -329,41 +338,41 @@ begin
   // Uitleg (tooltip) bij elk veld van de generieke tabbladen.
   for lPage in FPages do
   begin
-    lPage.SetHint('port', 'TCP-poort van Extern bureaublad op de server (standaard 3389).');
-    lPage.SetHint('connectToConsole', 'Verbinden met de beheersessie (console) in plaats van een nieuwe sessie, zoals mstsc /admin.');
-    lPage.SetHint('startProgram', 'Programma dat na het aanmelden start in plaats van het bureaublad (alleen als de server dat toestaat).');
-    lPage.SetHint('workingDir', 'Map waarin het startprogramma begint.');
-    lPage.SetHint('loadBalanceInfo', 'Routeringsinformatie voor een RD Connection Broker (load balancing). Meestal leeg laten.');
-    lPage.SetHint('route', 'Hoe de server bereikt wordt: rechtstreeks (eventueel via de RDCMan-gateway hieronder), via een Tailscale-netwerk, of via een RDP-gateway uit de lijst.');
-    lPage.SetHint('tailnetId', 'Het Tailscale-netwerk waarlangs verbonden wordt (beheer via Bestand > Tailscale-netwerken).');
-    lPage.SetHint('tailnetHost', 'Naam of adres van de server in het tailnet: de machinenaam uit de Tailscale-console of het 100.x-adres. Leeg = de servernaam.');
-    lPage.SetHint('gatewayId', 'De RDP-gateway waarlangs verbonden wordt (beheer via Bestand > RDP-gateways).');
-    lPage.SetHint('ping', 'Op de achtergrond controleren of de server bereikbaar is (ping, anders de RDP-poort). In de boom: groen = bereikbaar, rood = niet bereikbaar, oranje = andere computer op dat adres. Interval: Bestand > Opties.');
-    lPage.SetHint('enabled', 'RDCMan-gatewayinstelling (staat in de .rdg): bij route Direct via deze gateway verbinden.');
-    lPage.SetHint('hostName', 'Naam van de RD Gateway-server, bijv. rdg.voorbeeld.nl.');
-    lPage.SetHint('logonMethod', 'Hoe je je bij de gateway aanmeldt: wachtwoord (NTLM), smartcard, of later kiezen.');
-    lPage.SetHint('localBypass', 'Servers in het lokale netwerk rechtstreeks benaderen, niet via de gateway.');
-    lPage.SetHint('credSharing', 'Voor de gateway dezelfde gebruikersnaam en hetzelfde wachtwoord gebruiken als voor de server.');
-    lPage.SetHint('userName', 'Gebruikersnaam voor de gateway (als de aanmeldgegevens niet gedeeld worden).');
-    lPage.SetHint('domain', 'Domein van de gateway-gebruiker.');
-    lPage.SetHint('displayMode', 'Dynamisch: de resolutie volgt het vak of venster. Venstergrootte: vast op de grootte bij verbinden. Vaste grootte: de afmeting hieronder. Of volledig scherm.');
-    lPage.SetHint('desktopScale', 'Schaal (DPI) in de sessie. Automatisch volgt de monitor waarop RDCManagerX staat. In dynamische modus meteen toegepast.');
-    lPage.SetHint('size', 'Afmeting bij "Vaste grootte", als breedte x hoogte (bijv. 1920 x 1080).');
-    lPage.SetHint('colorDepth', 'Kleurdiepte van de sessie; 32 bits is standaard.');
-    lPage.SetHint('smartSizeDockedWindows', 'Bij venstergrootte of vaste grootte de inhoud schalen zodat hij in het vak past (niet nodig bij dynamisch).');
-    lPage.SetHint('resizeDebounceMs', 'Hoe lang na het wijzigen van de venstergrootte gewacht wordt voordat de resolutie wordt aangepast.');
-    lPage.SetHint('reconnectOnResizeFallback', 'Ondersteunt de server geen dynamische resolutie, dan opnieuw verbinden met de nieuwe afmeting.');
-    lPage.SetHint('audioRedirection', 'Waar het geluid uit de sessie wordt afgespeeld.');
-    lPage.SetHint('audioRedirectionQuality', 'Geluidskwaliteit; hoger kost meer bandbreedte.');
-    lPage.SetHint('audioCaptureRedirection', 'De microfoon van deze pc in de sessie gebruiken.');
-    lPage.SetHint('keyboardHook', 'Waar Windows-toetscombinaties (zoals Alt+Tab en de Windows-toets) heengaan.');
-    lPage.SetHint('redirectClipboard', 'Kopiëren en plakken tussen deze pc en de sessie (tekst en bestanden). De server moet dit toestaan.');
-    lPage.SetHint('redirectDrives', 'Stations van deze pc beschikbaar maken in de sessie.');
-    lPage.SetHint('redirectPrinters', 'Printers van deze pc gebruiken in de sessie.');
-    lPage.SetHint('redirectPorts', 'COM- en LPT-poorten van deze pc doorgeven aan de sessie.');
-    lPage.SetHint('redirectSmartCards', 'Smartcards van deze pc gebruiken in de sessie (ook om aan te melden).');
-    lPage.SetHint('redirectPnpDevices', 'Plug-and-play-apparaten (bijv. camera of telefoon) doorgeven aan de sessie.');
-    lPage.SetHint('authentication', 'Wat te doen als het certificaat van de server niet geverifieerd kan worden: toch verbinden, niet verbinden, of waarschuwen (aanbevolen).');
+    lPage.SetHint('port', _('TCP-poort van Extern bureaublad op de server (standaard 3389).'));
+    lPage.SetHint('connectToConsole', _('Verbinden met de beheersessie (console) in plaats van een nieuwe sessie, zoals mstsc /admin.'));
+    lPage.SetHint('startProgram', _('Programma dat na het aanmelden start in plaats van het bureaublad (alleen als de server dat toestaat).'));
+    lPage.SetHint('workingDir', _('Map waarin het startprogramma begint.'));
+    lPage.SetHint('loadBalanceInfo', _('Routeringsinformatie voor een RD Connection Broker (load balancing). Meestal leeg laten.'));
+    lPage.SetHint('route', _('Hoe de server bereikt wordt: rechtstreeks (eventueel via de RDCMan-gateway hieronder), via een Tailscale-netwerk, of via een RDP-gateway uit de lijst.'));
+    lPage.SetHint('tailnetId', _('Het Tailscale-netwerk waarlangs verbonden wordt (beheer via Bestand > Tailscale-netwerken).'));
+    lPage.SetHint('tailnetHost', _('Naam of adres van de server in het tailnet: de machinenaam uit de Tailscale-console of het 100.x-adres. Leeg = de servernaam.'));
+    lPage.SetHint('gatewayId', _('De RDP-gateway waarlangs verbonden wordt (beheer via Bestand > RDP-gateways).'));
+    lPage.SetHint('ping', _('Op de achtergrond controleren of de server bereikbaar is (ping, anders de RDP-poort). In de boom: groen = bereikbaar, rood = niet bereikbaar, oranje = andere computer op dat adres. Interval: Bestand > Opties.'));
+    lPage.SetHint('enabled', _('RDCMan-gatewayinstelling (staat in de .rdg): bij route Direct via deze gateway verbinden.'));
+    lPage.SetHint('hostName', _('Naam van de RD Gateway-server, bijv. rdg.voorbeeld.nl.'));
+    lPage.SetHint('logonMethod', _('Hoe je je bij de gateway aanmeldt: wachtwoord (NTLM), smartcard, of later kiezen.'));
+    lPage.SetHint('localBypass', _('Servers in het lokale netwerk rechtstreeks benaderen, niet via de gateway.'));
+    lPage.SetHint('credSharing', _('Voor de gateway dezelfde gebruikersnaam en hetzelfde wachtwoord gebruiken als voor de server.'));
+    lPage.SetHint('userName', _('Gebruikersnaam voor de gateway (als de aanmeldgegevens niet gedeeld worden).'));
+    lPage.SetHint('domain', _('Domein van de gateway-gebruiker.'));
+    lPage.SetHint('displayMode', _('Dynamisch: de resolutie volgt het vak of venster. Venstergrootte: vast op de grootte bij verbinden. Vaste grootte: de afmeting hieronder. Of volledig scherm.'));
+    lPage.SetHint('desktopScale', _('Schaal (DPI) in de sessie. Automatisch volgt de monitor waarop RDCManagerX staat. In dynamische modus meteen toegepast.'));
+    lPage.SetHint('size', _('Afmeting bij "Vaste grootte", als breedte x hoogte (bijv. 1920 x 1080).'));
+    lPage.SetHint('colorDepth', _('Kleurdiepte van de sessie; 32 bits is standaard.'));
+    lPage.SetHint('smartSizeDockedWindows', _('Bij venstergrootte of vaste grootte de inhoud schalen zodat hij in het vak past (niet nodig bij dynamisch).'));
+    lPage.SetHint('resizeDebounceMs', _('Hoe lang na het wijzigen van de venstergrootte gewacht wordt voordat de resolutie wordt aangepast.'));
+    lPage.SetHint('reconnectOnResizeFallback', _('Ondersteunt de server geen dynamische resolutie, dan opnieuw verbinden met de nieuwe afmeting.'));
+    lPage.SetHint('audioRedirection', _('Waar het geluid uit de sessie wordt afgespeeld.'));
+    lPage.SetHint('audioRedirectionQuality', _('Geluidskwaliteit; hoger kost meer bandbreedte.'));
+    lPage.SetHint('audioCaptureRedirection', _('De microfoon van deze pc in de sessie gebruiken.'));
+    lPage.SetHint('keyboardHook', _('Waar Windows-toetscombinaties (zoals Alt+Tab en de Windows-toets) heengaan.'));
+    lPage.SetHint('redirectClipboard', _('Kopiëren en plakken tussen deze pc en de sessie (tekst en bestanden). De server moet dit toestaan.'));
+    lPage.SetHint('redirectDrives', _('Stations van deze pc beschikbaar maken in de sessie.'));
+    lPage.SetHint('redirectPrinters', _('Printers van deze pc gebruiken in de sessie.'));
+    lPage.SetHint('redirectPorts', _('COM- en LPT-poorten van deze pc doorgeven aan de sessie.'));
+    lPage.SetHint('redirectSmartCards', _('Smartcards van deze pc gebruiken in de sessie (ook om aan te melden).'));
+    lPage.SetHint('redirectPnpDevices', _('Plug-and-play-apparaten (bijv. camera of telefoon) doorgeven aan de sessie.'));
+    lPage.SetHint('authentication', _('Wat te doen als het certificaat van de server niet geverifieerd kan worden: toch verbinden, niet verbinden, of waarschuwen (aanbevolen).'));
   end;
 end;
 
@@ -380,42 +389,42 @@ begin
   // keuzelijsten komen uit de definities van het bestand (Bestand > Tailscale-netwerken / RDP-gateways). Bij een
   // nieuwe server/groep hangt die nog niet in het bestand: dan het bestand van de toekomstige parent.
   lFile := ProfilesFile;
-  lPage := AddPage('Route', TRdcxRouteSettings);
+  lPage := AddPage(_('Route'), TRdcxRouteSettings);
   lPage.AddSection(FWork.Gateway, InheritedGroup(TRdcGatewaySettings));
   lPage.UseSection(FWork.Route);
-  lPage.AddChoice('route', 'Verbindingsroute', cRdcRouteKindNames, ['Direct (eventueel via de gateway hieronder)', 'Via Tailscale-netwerk', 'Via RDP-gateway uit de lijst']);
+  lPage.AddChoice('route', _('Verbindingsroute'), cRdcRouteKindNames, [_('Direct (eventueel via de gateway hieronder)'), _('Via Tailscale-netwerk'), _('Via RDP-gateway uit de lijst')]);
   lIds := [''];
-  lCaptions := ['(geen)'];
+  lCaptions := [_('(geen)')];
   if lFile <> nil then
     for lTailnet in lFile.Tailnets do
     begin
       lIds := lIds + [lTailnet.Id];
       lCaptions := lCaptions + [lTailnet.Name];
     end;
-  lPage.AddChoice('tailnetId', 'Tailscale-netwerk', lIds, lCaptions);
-  lPage.AddText('tailnetHost', 'Adres in het tailnet');
+  lPage.AddChoice('tailnetId', _('Tailscale-netwerk'), lIds, lCaptions);
+  lPage.AddText('tailnetHost', _('Adres in het tailnet'));
   lIds := [''];
-  lCaptions := ['(geen)'];
+  lCaptions := [_('(geen)')];
   if lFile <> nil then
     for lGateway in lFile.Gateways do
     begin
       lIds := lIds + [lGateway.Id];
       lCaptions := lCaptions + [lGateway.Name];
     end;
-  lPage.AddChoice('gatewayId', 'RDP-gateway', lIds, lCaptions);
-  lPage.AddCheck('ping', 'Bereikbaarheid tonen in de boom (ping op de achtergrond, alleen bij Direct)');
-  lPage.AddHint('Adres in het tailnet: de machinenaam (MagicDNS) of het 100.x-adres van de server; leeg = de servernaam. Netwerken en gateways beheer je via Bestand > Tailscale-netwerken en Bestand > RDP-gateways.');
+  lPage.AddChoice('gatewayId', _('RDP-gateway'), lIds, lCaptions);
+  lPage.AddCheck('ping', _('Bereikbaarheid tonen in de boom (ping op de achtergrond, alleen bij Direct)'));
+  lPage.AddHint(_('Adres in het tailnet: de machinenaam (MagicDNS) of het 100.x-adres van de server; leeg = de servernaam. Netwerken en gateways beheer je via Bestand > Tailscale-netwerken en Bestand > RDP-gateways.'));
 
   // RDCMan-gateway (gatewaySettings in de .rdg): alleen bij route Direct.
   lPage.UseSection(FWork.Gateway);
-  lPage.AddCheck('enabled', 'Gateway gebruiken (RDCMan-instelling, bij Direct)');
-  lPage.AddText('hostName', 'Gatewayserver');
-  lPage.AddChoice('logonMethod', 'Aanmeldmethode', cRdcGatewayLogonMethodNames, ['Wachtwoord vragen (NTLM)', 'Smartcard', 'Later kiezen']);
-  lPage.AddCheck('localBypass', 'Gateway overslaan voor lokale adressen');
-  lPage.AddCheck('credSharing', 'Zelfde aanmeldgegevens gebruiken als voor de server');
-  lPage.AddText('userName', 'Gebruikersnaam gateway');
-  lPage.AddText('domain', 'Domein gateway');
-  lPage.AddHint('Deze gateway staat in de .rdg (RDCMan kan hem ook gebruiken); het wachtwoord wordt niet opgeslagen. Een gateway uit de lijst (route "Via RDP-gateway") kan dat wel, in de wachtwoordkluis.');
+  lPage.AddCheck('enabled', _('Gateway gebruiken (RDCMan-instelling, bij Direct)'));
+  lPage.AddText('hostName', _('Gatewayserver'));
+  lPage.AddChoice('logonMethod', _('Aanmeldmethode'), cRdcGatewayLogonMethodNames, [_('Wachtwoord vragen (NTLM)'), _('Smartcard'), _('Later kiezen')]);
+  lPage.AddCheck('localBypass', _('Gateway overslaan voor lokale adressen'));
+  lPage.AddCheck('credSharing', _('Zelfde aanmeldgegevens gebruiken als voor de server'));
+  lPage.AddText('userName', _('Gebruikersnaam gateway'));
+  lPage.AddText('domain', _('Domein gateway'));
+  lPage.AddHint(_('Deze gateway staat in de .rdg (RDCMan kan hem ook gebruiken); het wachtwoord wordt niet opgeslagen. Een gateway uit de lijst (route "Via RDP-gateway") kan dat wel, in de wachtwoordkluis.'));
 
   // Alleen de velden van de gekozen route zijn actief.
   lPage.FieldApplies :=
@@ -439,50 +448,50 @@ procedure TfrmProperties.BuildSectionPages;
 var
   lPage: TRdcSectionPage;
 begin
-  lPage := AddPage('Verbinding', TRdcConnectionSettings);
-  lPage.AddNumber('port', 'Poort', 1, 65535);
-  lPage.AddCheck('connectToConsole', 'Verbinden met de beheersessie (console)');
-  lPage.AddText('startProgram', 'Programma starten na aanmelden');
-  lPage.AddText('workingDir', 'Werkmap van dat programma');
-  lPage.AddText('loadBalanceInfo', 'Load-balancinginformatie');
-  lPage.AddHint('Een startprogramma werkt alleen als de server dat toestaat (groepsbeleid/RemoteApp).');
+  lPage := AddPage(_('Verbinding'), TRdcConnectionSettings);
+  lPage.AddNumber('port', _('Poort'), 1, 65535);
+  lPage.AddCheck('connectToConsole', _('Verbinden met de beheersessie (console)'));
+  lPage.AddText('startProgram', _('Programma starten na aanmelden'));
+  lPage.AddText('workingDir', _('Werkmap van dat programma'));
+  lPage.AddText('loadBalanceInfo', _('Load-balancinginformatie'));
+  lPage.AddHint(_('Een startprogramma werkt alleen als de server dat toestaat (groepsbeleid/RemoteApp).'));
 
   BuildRoutePage;
 
   // Weergave: één tabblad en één vinkje voor drie secties (rdcmx, remoteDesktop, displaySettings), zodat er geen
   // tegenstrijdige combinaties ontstaan. Miniatuur-instellingen staan er niet op (geen miniaturen in RDCManX);
   // ze gaan ongewijzigd mee voor RDCMan. sameSizeAsClientArea/fullScreen worden bij opslaan uit de modus afgeleid.
-  FDisplayPage := AddPage('Weergave', TRdcxSettings);
+  FDisplayPage := AddPage(_('Weergave'), TRdcxSettings);
   FDisplayPage.AddSection(FWork.RemoteDesktop, InheritedGroup(TRdcRemoteDesktopSettings));
   FDisplayPage.AddSection(FWork.Display, InheritedGroup(TRdcDisplaySettings));
   FDisplayPage.UseSection(FWork.Extras);
-  FDisplayPage.AddChoice('displayMode', 'Weergavemodus', cRdcDisplayModeNames, ['Dynamisch (volgt het venster)', 'Venstergrootte bij verbinden', 'Vaste grootte', 'Volledig scherm']);
-  FDisplayPage.AddChoice('desktopScale', 'Schaal in de sessie', ['0', '100', '125', '150', '175', '200', '250', '300'], ['Automatisch (volgt de monitor)', '100%', '125%', '150%', '175%', '200%', '250%', '300%']);
+  FDisplayPage.AddChoice('displayMode', _('Weergavemodus'), cRdcDisplayModeNames, [_('Dynamisch (volgt het venster)'), _('Venstergrootte bij verbinden'), _('Vaste grootte'), _('Volledig scherm')]);
+  FDisplayPage.AddChoice('desktopScale', _('Schaal in de sessie'), ['0', '100', '125', '150', '175', '200', '250', '300'], [_('Automatisch (volgt de monitor)'), '100%', '125%', '150%', '175%', '200%', '250%', '300%']);
   FDisplayPage.UseSection(FWork.RemoteDesktop);
-  FDisplayPage.AddSuggestions('size', 'Vaste grootte (breedte x hoogte)', ['1024 x 768', '1280 x 720', '1280 x 1024', '1366 x 768', '1600 x 900', '1920 x 1080', '1920 x 1200', '2560 x 1440']);
-  FDisplayPage.AddChoice('colorDepth', 'Kleurdiepte', ['15', '16', '24', '32'], ['15 bits', '16 bits', '24 bits', '32 bits']);
+  FDisplayPage.AddSuggestions('size', _('Vaste grootte (breedte x hoogte)'), ['1024 x 768', '1280 x 720', '1280 x 1024', '1366 x 768', '1600 x 900', '1920 x 1080', '1920 x 1200', '2560 x 1440']);
+  FDisplayPage.AddChoice('colorDepth', _('Kleurdiepte'), ['15', '16', '24', '32'], [_('15 bits'), _('16 bits'), _('24 bits'), _('32 bits')]);
   FDisplayPage.UseSection(FWork.Display);
-  FDisplayPage.AddChoice('smartSizeDockedWindows', 'Inhoud schalen (smart sizing)', cRdcSmartSizeNames, ['Nee', 'Ja, bij venstergrootte of vaste grootte']);
+  FDisplayPage.AddChoice('smartSizeDockedWindows', _('Inhoud schalen (smart sizing)'), cRdcSmartSizeNames, [_('Nee'), _('Ja, bij venstergrootte of vaste grootte')]);
   FDisplayPage.UseSection(FWork.Extras);
-  FDisplayPage.AddNumber('resizeDebounceMs', 'Wachttijd na formaatwijziging (ms)', 100, 5000);
-  FDisplayPage.AddCheck('reconnectOnResizeFallback', 'Opnieuw verbinden als dynamisch aanpassen niet werkt');
-  FDisplayPage.AddHint('Dynamisch: de resolutie volgt het vak of venster (schalen niet nodig). Vaste grootte gebruikt de opgegeven afmeting. Een gewijzigde schaal geldt direct voor open sessies; de andere instellingen bij de volgende verbinding.');
+  FDisplayPage.AddNumber('resizeDebounceMs', _('Wachttijd na formaatwijziging (ms)'), 100, 5000);
+  FDisplayPage.AddCheck('reconnectOnResizeFallback', _('Opnieuw verbinden als dynamisch aanpassen niet werkt'));
+  FDisplayPage.AddHint(_('Dynamisch: de resolutie volgt het vak of venster (schalen niet nodig). Vaste grootte gebruikt de opgegeven afmeting. Een gewijzigde schaal geldt direct voor open sessies; de andere instellingen bij de volgende verbinding.'));
 
-  lPage := AddPage('Lokale bronnen', TRdcLocalResources);
-  lPage.AddChoice('audioRedirection', 'Geluid', cRdcAudioRedirectionNames, ['Op deze computer afspelen', 'Op de externe computer afspelen', 'Niet afspelen']);
-  lPage.AddChoice('audioRedirectionQuality', 'Geluidskwaliteit', cRdcAudioQualityNames, ['Automatisch', 'Gemiddeld', 'Hoog']);
-  lPage.AddChoice('audioCaptureRedirection', 'Microfoon', cRdcAudioCaptureNames, ['Opnemen vanaf deze computer', 'Niet opnemen']);
-  lPage.AddChoice('keyboardHook', 'Windows-toetscombinaties', cRdcKeyboardHookNames, ['Op deze computer', 'Op de externe computer', 'Alleen bij volledig scherm']);
-  lPage.AddCheck('redirectClipboard', 'Klembord (tekst en bestanden kopiëren/plakken)');
-  lPage.AddCheck('redirectDrives', 'Stations van deze computer');
-  lPage.AddCheck('redirectPrinters', 'Printers');
-  lPage.AddCheck('redirectPorts', 'Poorten (COM/LPT)');
-  lPage.AddCheck('redirectSmartCards', 'Smartcards');
-  lPage.AddCheck('redirectPnpDevices', 'Plug-and-play-apparaten');
-  lPage.AddHint('Wijzigingen gelden bij de volgende verbinding.');
+  lPage := AddPage(_('Lokale bronnen'), TRdcLocalResources);
+  lPage.AddChoice('audioRedirection', _('Geluid'), cRdcAudioRedirectionNames, [_('Op deze computer afspelen'), _('Op de externe computer afspelen'), _('Niet afspelen')]);
+  lPage.AddChoice('audioRedirectionQuality', _('Geluidskwaliteit'), cRdcAudioQualityNames, [_('Automatisch'), _('Gemiddeld'), _('Hoog')]);
+  lPage.AddChoice('audioCaptureRedirection', _('Microfoon'), cRdcAudioCaptureNames, [_('Opnemen vanaf deze computer'), _('Niet opnemen')]);
+  lPage.AddChoice('keyboardHook', _('Windows-toetscombinaties'), cRdcKeyboardHookNames, [_('Op deze computer'), _('Op de externe computer'), _('Alleen bij volledig scherm')]);
+  lPage.AddCheck('redirectClipboard', _('Klembord (tekst en bestanden kopiëren/plakken)'));
+  lPage.AddCheck('redirectDrives', _('Stations van deze computer'));
+  lPage.AddCheck('redirectPrinters', _('Printers'));
+  lPage.AddCheck('redirectPorts', _('Poorten (COM/LPT)'));
+  lPage.AddCheck('redirectSmartCards', _('Smartcards'));
+  lPage.AddCheck('redirectPnpDevices', _('Plug-and-play-apparaten'));
+  lPage.AddHint(_('Wijzigingen gelden bij de volgende verbinding.'));
 
-  lPage := AddPage('Beveiliging', TRdcSecuritySettings);
-  lPage.AddChoice('authentication', 'Serverauthenticatie', cRdcAuthenticationNames, ['Verbinden zonder waarschuwing', 'Niet verbinden als verificatie mislukt', 'Waarschuwen als verificatie mislukt']);
+  lPage := AddPage(_('Beveiliging'), TRdcSecuritySettings);
+  lPage.AddChoice('authentication', _('Serverauthenticatie'), cRdcAuthenticationNames, [_('Verbinden zonder waarschuwing'), _('Niet verbinden als verificatie mislukt'), _('Waarschuwen als verificatie mislukt')]);
 
   for lPage in FPages do
     lPage.Refresh;
@@ -530,7 +539,7 @@ begin
   lChoice.Custom := True;
   lChoice.Available := True;
   FLogonChoices := FLogonChoices + [lChoice];
-  cbProfile.Items.Add('(eigen gebruikersnaam en domein)');
+  cbProfile.Items.Add(_('(eigen gebruikersnaam en domein)'));
 
   lFile := ProfilesFile;
   if lFile <> nil then
@@ -541,7 +550,7 @@ begin
       lChoice.ProfileName := lProfile.ProfileName;
       lChoice.Available := True;
       FLogonChoices := FLogonChoices + [lChoice];
-      cbProfile.Items.Add(Format('Profiel: %s', [lProfile.ProfileName]));
+      cbProfile.Items.Add(Format(_('Profiel: %s'), [lProfile.ProfileName]));
     end;
 
   // Verwijzing naar een profiel dat hier niet bestaat (extern RDCMan-profiel of verwijderd): toch tonen, zodat het blijft staan.
@@ -554,7 +563,7 @@ begin
       lChoice.Scope := aSettings.ProfileScope;
       lChoice.ProfileName := aSettings.ProfileName;
       FLogonChoices := FLogonChoices + [lChoice];
-      cbProfile.Items.Add(Format('%s (niet beschikbaar in RDCManX)', [aSettings.ProfileName]));
+      cbProfile.Items.Add(Format(_('%s (niet beschikbaar in RDCManX)'), [aSettings.ProfileName]));
     end;
   end;
 end;
@@ -574,7 +583,7 @@ var
   lProfile: TRdcCredentialProfile;
 begin
   lChoice := SelectedLogonChoice;
-  lblLogonHint.Caption := 'Wachtwoorden worden nooit opgeslagen; bij elke verbinding wordt erom gevraagd.';
+  lblLogonHint.Caption := _('Wachtwoorden staan nooit in het bestand; bij het verbinden wordt erom gevraagd, tenzij het in de wachtwoordkluis onthouden is.');
   if lChoice.Custom then
   begin
     edtUser.Text := aSettings.UserName;
@@ -589,13 +598,13 @@ begin
   begin
     edtUser.Text := lProfile.UserName;
     edtDomain.Text := lProfile.Domain;
-    lblLogonHint.Caption := 'Gebruikersnaam en domein komen uit het profiel (beheer: Bestand > Credential-profielen).' + sLineBreak + lblLogonHint.Caption;
+    lblLogonHint.Caption := _('Gebruikersnaam en domein komen uit het profiel (beheer: Bestand > Credential-profielen).') + sLineBreak + lblLogonHint.Caption;
   end
   else
   begin
     edtUser.Text := '';
     edtDomain.Text := '';
-    lblLogonHint.Caption := Format('Profiel "%s" is niet beschikbaar; bij verbinden wordt om de gebruikersnaam gevraagd.', [lChoice.ProfileName]);
+    lblLogonHint.Caption := Format(_('Profiel "%s" is niet beschikbaar; bij verbinden wordt om de gebruikersnaam gevraagd.'), [lChoice.ProfileName]);
   end;
 end;
 
@@ -728,31 +737,31 @@ begin
   // Bij een server is de weergavenaam optioneel (dan wordt de hostnaam getoond).
   if (Trim(edtName.Text) = '') and not (FNode is TRdcServer) then
   begin
-    ShowInvalid(tsGeneral, edtName, 'Vul een naam in.');
+    ShowInvalid(tsGeneral, edtName, _('Vul een naam in.'));
     Exit;
   end;
   if FNode is TRdcServer then
   begin
     if Trim(edtServer.Text) = '' then
     begin
-      ShowInvalid(tsGeneral, edtServer, 'Vul de servernaam of het IP-adres in.');
+      ShowInvalid(tsGeneral, edtServer, _('Vul de servernaam of het IP-adres in.'));
       Exit;
     end;
     if Trim(edtMac.Text) <> '' then
     begin
       if not TRdcWakeOnLan.TryParseMac(edtMac.Text, lMac) then
       begin
-        ShowInvalid(tsGeneral, edtMac, 'Ongeldig MAC-adres. Voorbeeld: 00-11-22-33-44-55.');
+        ShowInvalid(tsGeneral, edtMac, _('Ongeldig MAC-adres. Voorbeeld: 00-11-22-33-44-55.'));
         Exit;
       end;
       if Trim(edtWolBroadcast.Text) = '' then
       begin
-        ShowInvalid(tsGeneral, edtWolBroadcast, 'Vul het broadcastadres in (meestal 255.255.255.255).');
+        ShowInvalid(tsGeneral, edtWolBroadcast, _('Vul het broadcastadres in (meestal 255.255.255.255).'));
         Exit;
       end;
       if not TryStrToInt(edtWolPort.Text, lPort) or (lPort < 1) or (lPort > 65535) then
       begin
-        ShowInvalid(tsGeneral, edtWolPort, 'De UDP-poort moet een getal tussen 1 en 65535 zijn (meestal 9 of 7).');
+        ShowInvalid(tsGeneral, edtWolPort, _('De UDP-poort moet een getal tussen 1 en 65535 zijn (meestal 9 of 7).'));
         Exit;
       end;
     end;
@@ -777,7 +786,7 @@ begin
     end;
   if FDisplayPage.IsOwn and not TryParseDesktopSize(FDisplayPage.FieldValue('size'), lWidth, lHeight) then
   begin
-    ShowInvalid(FDisplayPage.Sheet, nil, 'Ongeldige vaste grootte. Gebruik breedte x hoogte, bijvoorbeeld 1920 x 1080.');
+    ShowInvalid(FDisplayPage.Sheet, nil, _('Ongeldige vaste grootte. Gebruik breedte x hoogte, bijvoorbeeld 1920 x 1080.'));
     Exit;
   end;
   Result := True;

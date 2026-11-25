@@ -2,6 +2,8 @@
 
 [English](README.md) | **Nederlands**
 
+![RDCManagerX met het fictieve demobestand Contoso](Docs/images/screenshot-nl.png)
+
 Een RDP-verbindingsbeheerder in de stijl van Microsoft Remote Desktop Connection Manager (RDCMan). Het programma
 leest en schrijft `.rdg`-bestanden van RDCMan en heeft een eigen formaat, `.rdcx`.
 

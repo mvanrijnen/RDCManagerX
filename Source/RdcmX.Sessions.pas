@@ -133,6 +133,7 @@ implementation
 
 uses
   System.StrUtils,
+  RdcmX.Lang,
   RdcmX.Log;
 
 const
@@ -275,7 +276,7 @@ begin
     lGateway := aServer.RdcFile.FindGateway(aServer.EffectiveRoute.GatewayId);
   if (lGateway = nil) or (Trim(lGateway.HostName) = '') then
   begin
-    aError := 'De route "Via RDP-gateway" verwijst naar een gateway die niet (meer) in dit bestand staat. Kies in Eigenschappen > Route een gateway.';
+    aError := _('De route "Via RDP-gateway" verwijst naar een gateway die niet (meer) in dit bestand staat. Kies in Eigenschappen > Route een gateway.');
     Exit(False);
   end;
   aSettings.GatewayEnabled := True;
@@ -295,7 +296,7 @@ begin
         aSettings.GatewayDomain := lGateway.Domain;
         // Zonder opgeslagen wachtwoord (of als de kluis dicht blijft) vraagt Windows er zelf om.
         // Het wachtwoord is gebonden aan id én host:poort: een bestand dat de host heeft veranderd krijgt het niet.
-        if (FSecrets <> nil) and FSecrets.HasSecret(TRdcPasswordVault.GatewayTarget(lGateway.Id, lGateway.Address)) and FSecrets.LoadSecret(TRdcPasswordVault.GatewayTarget(lGateway.Id, lGateway.Address), Format('Gateway "%s" gebruikt een wachtwoord uit de wachtwoordkluis.', [lGateway.Name]), lPassword) then
+        if (FSecrets <> nil) and FSecrets.HasSecret(TRdcPasswordVault.GatewayTarget(lGateway.Id, lGateway.Address)) and FSecrets.LoadSecret(TRdcPasswordVault.GatewayTarget(lGateway.Id, lGateway.Address), Format(_('Gateway "%s" gebruikt een wachtwoord uit de wachtwoordkluis.'), [lGateway.Name]), lPassword) then
         begin
           aSettings.GatewayPassword := lPassword;
           WipeString(lPassword);
@@ -328,15 +329,15 @@ begin
   lDef := nil;
   if aServer.RdcFile <> nil then
     lDef := aServer.RdcFile.FindTailnet(lRoute.TailnetId);
-  aSession.BeginPrepare('Verbinden via Tailscale...');
+  aSession.BeginPrepare(_('Verbinden via Tailscale...'));
   if lDef = nil then
   begin
-    aSession.PrepareFailed('De route "Via Tailscale-netwerk" verwijst naar een netwerk dat niet (meer) in dit bestand staat. Kies in Eigenschappen > Route een netwerk.');
+    aSession.PrepareFailed(_('De route "Via Tailscale-netwerk" verwijst naar een netwerk dat niet (meer) in dit bestand staat. Kies in Eigenschappen > Route een netwerk.'));
     Exit;
   end;
   if (FTailnets = nil) or not TRdcTsBridge.Available then
   begin
-    aSession.PrepareFailed('Verbinden via Tailscale is niet beschikbaar: ' + TRdcTsBridge.LoadError);
+    aSession.PrepareFailed(Format(_('Verbinden via Tailscale is niet beschikbaar: %s'), [TRdcTsBridge.LoadError]));
     Exit;
   end;
   lHost := Trim(lRoute.TailnetHost);
@@ -344,7 +345,7 @@ begin
     lHost := aServer.Name;
   if Pos('@', lHost) > 0 then
   begin
-    aSession.PrepareFailed(Format('"%s" is een e-mailadres (het Tailscale-account), geen apparaat. Vul in Eigenschappen > Route bij "Adres in het tailnet" de machinenaam in (adminconsole > Machines, bijv. thuis-pc) of het 100.x-adres.', [lHost]));
+    aSession.PrepareFailed(Format(_('"%s" is een e-mailadres (het Tailscale-account), geen apparaat. Vul in Eigenschappen > Route bij "Adres in het tailnet" de machinenaam in (adminconsole > Machines, bijv. thuis-pc) of het 100.x-adres.'), [lHost]));
     Exit;
   end;
   lTarget := RdcTailnetTarget(lHost, aSession.Settings.Port);
@@ -369,7 +370,7 @@ begin
 
   if not RdcBuildTailnetConfig(lDef, FSecrets, '', lConfig, lError) then
   begin
-    aSession.PrepareFailed(Format('Tailscale-netwerk "%s": %s', [lDef.Name, lError]));
+    aSession.PrepareFailed(Format(_('Tailscale-netwerk "%s": %s'), [lDef.Name, lError]));
     Exit;
   end;
   lTunnel := TRdcTunnel.Create;
@@ -380,7 +381,7 @@ begin
   lTunnel.Guard := RdcNewCallbackGuard;
   FTunnels.Add(aSession, lTunnel);
   lGuard := lTunnel.Guard;
-  aSession.BeginPrepare(Format('Verbinden met Tailscale-netwerk "%s"...', [lDef.Name]));
+  aSession.BeginPrepare(Format(_('Verbinden met Tailscale-netwerk "%s"...'), [lDef.Name]));
   TRdcLog.Write(Format('%s: via Tailscale "%s" naar %s', [aServer.Caption, lDef.Name, lTarget]));
   // Acquire wist lConfig (geheimen); het resultaat komt via de message queue.
   FTailnets.Acquire(lConfig,
@@ -402,7 +403,7 @@ begin
   if not aSuccess then
   begin
     ReleaseTunnel(aSession);
-    aSession.PrepareFailed(Format('Het Tailscale-netwerk "%s" kon niet worden gestart: %s', [lTunnel.TailnetName, aError]));
+    aSession.PrepareFailed(Format(_('Het Tailscale-netwerk "%s" kon niet worden gestart: %s'), [lTunnel.TailnetName, aError]));
     Exit;
   end;
   // Doel offline of niet in het tailnet: nu een duidelijke melding, in plaats van straks een algemene RDP-fout.
@@ -463,7 +464,7 @@ begin
         lPair.Value.AuthUrlOpened := lStatus.AuthUrl;
         if not RdcOpenAuthUrl(lStatus.AuthUrl) then
           Continue;
-        lPair.Key.Host.StatusText := Format('Inloggen bij Tailscale-netwerk "%s": de login-pagina is in de browser geopend.'#13#10#13#10'%s', [lPair.Value.TailnetName, lStatus.AuthUrl]);
+        lPair.Key.Host.StatusText := Format(_('Inloggen bij Tailscale-netwerk "%s": de login-pagina is in de browser geopend.'#13#10#13#10'%s'), [lPair.Value.TailnetName, lStatus.AuthUrl]);
       end;
     end;
   if not lPending then

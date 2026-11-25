@@ -1,0 +1,2409 @@
+# English UI texts for RDCManagerX. The msgid is the Dutch source text.
+# Maintained with Tools/i18n.py (update/check); embedded via Source/Lang.rc.
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm Source/RdcmX.UI.Properties.dfm
+msgid "Aanmelden"
+msgstr "Logon"
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Verbinden met"
+msgstr "Connect to"
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Gebruikersnaam voor deze server; mag ook als DOMEIN\\gebruiker of gebruiker@domein."
+msgstr "User name for this server; DOMAIN\\user or user@domain is also allowed."
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm
+msgid "Gebruikersnaam"
+msgstr "User name"
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Domein van de gebruiker; leeg bij een lokaal account op de server."
+msgstr "Domain of the user; empty for a local account on the server."
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm
+msgid "Domein"
+msgstr "Domain"
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Wachtwoord voor deze verbinding. Het wordt na gebruik uit het geheugen gewist."
+msgstr "Password for this connection. It is wiped from memory after use."
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm Source/RdcmX.UI.Gateways.dfm
+msgid "Wachtwoord"
+msgstr "Password"
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm Source/RdcmX.UI.CredentialPrompt.pas
+msgid "Het wachtwoord wordt niet opgeslagen."
+msgstr "The password is not stored."
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Het wachtwoord versleuteld in de wachtwoordkluis bewaren, zodat het de volgende keer niet gevraagd wordt."
+msgstr "Keep the password encrypted in the password vault, so it is not asked next time."
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Wachtwoord onthouden"
+msgstr "Remember password"
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Verbinden met deze aanmeldgegevens."
+msgstr "Connect with these credentials."
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Verbinden"
+msgstr "Connect"
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Niet verbinden."
+msgstr "Do not connect."
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.MasterPassword.dfm Source/RdcmX.UI.Options.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Tailnets.dfm Source/RdcmX.UI.Main.pas
+msgid "Annuleren"
+msgstr "Cancel"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "RDP-gateways"
+msgstr "RDP gateways"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Naam voor jezelf. Je kiest de gateway op deze naam bij de route."
+msgstr "A name for yourself. You pick the gateway by this name in the route."
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Tailnets.dfm
+msgid "Naam"
+msgstr "Name"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Naam van de RD Gateway-server, zonder poort (bijv. rdg.voorbeeld.nl)."
+msgstr "Name of the RD Gateway server, without port (e.g. rdg.example.com)."
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Properties.pas
+msgid "Gatewayserver"
+msgstr "Gateway server"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Poort van de gateway. Leeg = 443."
+msgstr "Port of the gateway. Empty = 443."
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Properties.pas
+msgid "Poort"
+msgstr "Port"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Altijd via de gateway, automatisch detecteren, of altijd behalve voor adressen in het lokale netwerk."
+msgstr "Always via the gateway, detect automatically, or always except for addresses in the local network."
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Gebruiken"
+msgstr "Usage"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Welke aanmeldgegevens de gateway krijgt: die van de sessie, eigen gegevens (wachtwoord in de kluis), vragen bij verbinden, of smartcard."
+msgstr "Which credentials the gateway gets: those of the session, own credentials (password in the vault), ask when connecting, or smart card."
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Aanmeldgegevens"
+msgstr "Credentials"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Aanmeldmethode bij de gateway: wachtwoord (NTLM), smartcard of automatisch."
+msgstr "Logon method at the gateway: password (NTLM), smart card or automatic."
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Properties.pas
+msgid "Aanmeldmethode"
+msgstr "Logon method"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Gebruikersnaam voor de gateway (bij eigen aanmeldgegevens)."
+msgstr "User name for the gateway (with own credentials)."
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Properties.pas
+msgid "Domein van de gateway-gebruiker."
+msgstr "Domain of the gateway user."
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Wachtwoord voor de gateway; wordt alleen in de wachtwoordkluis bewaard. Leeg = vragen bij verbinden."
+msgstr "Password for the gateway; stored only in the password vault. Empty = ask when connecting."
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "De gateway-instellingen horen bij dit bestand; het wachtwoord staat alleen in de wachtwoordkluis van deze pc. Kies per server of groep de route \"Via RDP-gateway\" in Eigenschappen > Route."
+msgstr "The gateway settings belong to this file; the password is stored only in the password vault on this PC. Choose the route \"Via RDP gateway\" per server or group in Properties > Route."
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "RDP-gateways van dit bestand. Kies er een per server of groep via Eigenschappen > Route."
+msgstr "RDP gateways of this file. Choose one per server or group in Properties > Route."
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Een nieuwe gateway toevoegen."
+msgstr "Add a new gateway."
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Tailnets.dfm
+msgid "Nieuw"
+msgstr "New"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "De geselecteerde gateway verwijderen (alleen als geen route er nog naar verwijst)."
+msgstr "Delete the selected gateway (only if no route refers to it any more)."
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Tailnets.dfm
+msgid "Verwijderen"
+msgstr "Delete"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "rdg.voorbeeld.nl"
+msgstr "rdg.example.com"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Altijd gebruiken"
+msgstr "Always use"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Automatisch detecteren"
+msgstr "Detect automatically"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Altijd, behalve voor lokale adressen"
+msgstr "Always, except for local addresses"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Dezelfde als voor de sessie"
+msgstr "Same as for the session"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Eigen aanmeldgegevens voor de gateway"
+msgstr "Own credentials for the gateway"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Vragen bij verbinden"
+msgstr "Ask when connecting"
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Gateways.pas Source/RdcmX.UI.Properties.pas
+msgid "Smartcard"
+msgstr "Smart card"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Wachtwoord (NTLM)"
+msgstr "Password (NTLM)"
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Properties.pas
+msgid "Automatisch"
+msgstr "Automatic"
+
+#: Source/RdcmX.UI.Gateways.dfm
+msgid "Het opgeslagen gateway-wachtwoord verwijderen."
+msgstr "Delete the stored gateway password."
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Tailnets.dfm
+msgid "Wissen"
+msgstr "Clear"
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Tailnets.dfm
+msgid "Wijzigingen opslaan."
+msgstr "Save changes."
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.MasterPassword.dfm Source/RdcmX.UI.Options.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Tailnets.dfm
+msgid "OK"
+msgstr "OK"
+
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Options.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Tailnets.dfm
+msgid "Sluiten zonder op te slaan."
+msgstr "Close without saving."
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "RDCManagerX"
+msgstr "RDCManagerX"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Menu"
+msgstr "Menu"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Zoeken  (Ctrl+F)"
+msgstr "Search  (Ctrl+F)"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "&Bestand"
+msgstr "&File"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "&Recente bestanden"
+msgstr "&Recent files"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "&Server"
+msgstr "&Server"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "&Beeld"
+msgstr "&View"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Options.dfm
+msgid "Thema"
+msgstr "Theme"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "&Help"
+msgstr "&Help"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Main.pas
+msgid "Verbinden\tEnter"
+msgstr "Connect\tEnter"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Verbreken\tCtrl+D"
+msgstr "Disconnect\tCtrl+D"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Nieuwe server...\tCtrl+N"
+msgstr "New server...\tCtrl+N"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Nieuwe groep...\tCtrl+G"
+msgstr "New group...\tCtrl+G"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Naam wijzigen\tF2"
+msgstr "Rename\tF2"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Main.pas
+msgid "Verwijderen\tDel"
+msgstr "Delete\tDel"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Eigenschappen...\tAlt+Enter"
+msgstr "Properties...\tAlt+Enter"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Afsluiten"
+msgstr "Exit"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "&Nieuw bestand"
+msgstr "&New file"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "&Openen...\tCtrl+O"
+msgstr "&Open...\tCtrl+O"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Op&slaan\tCtrl+S"
+msgstr "&Save\tCtrl+S"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Opslaan &als..."
+msgstr "Save &as..."
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Alles opslaan"
+msgstr "Save all"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Bestand s&luiten"
+msgstr "&Close file"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Credential-profielen..."
+msgstr "Credential profiles..."
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Tailscale-netwerken..."
+msgstr "Tailscale networks..."
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "RDP-gateways..."
+msgstr "RDP gateways..."
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Wake-on-LAN-signaal versturen"
+msgstr "Send Wake-on-LAN packet"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "In een eigen venster"
+msgstr "In a separate window"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Properties.pas Source/RdcmX.UI.SessionWindow.pas
+msgid "Volledig scherm"
+msgstr "Full screen"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.SessionWindow.pas
+msgid "Terugzetten in hoofdvenster"
+msgstr "Dock in main window"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Alle servers verbinden"
+msgstr "Connect all servers"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Alle servers verbreken"
+msgstr "Disconnect all servers"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Onthouden wachtwoord vergeten"
+msgstr "Forget remembered password"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Main.pas
+msgid "Aan favorieten toevoegen"
+msgstr "Add to favorites"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Wachtwoordkluis vergrendelen"
+msgstr "Lock password vault"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Options.dfm
+msgid "Hoofdwachtwoord wijzigen..."
+msgstr "Change master password..."
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Opties..."
+msgstr "Options..."
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Handleiding\tF1"
+msgstr "Manual\tF1"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "1 vak (niet splitsen)"
+msgstr "1 pane (no split)"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "2 naast elkaar"
+msgstr "2 side by side"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "3 naast elkaar"
+msgstr "3 side by side"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "4 naast elkaar"
+msgstr "4 side by side"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "2 boven elkaar"
+msgstr "2 stacked"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "2 x 2"
+msgstr "2 x 2"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "3 x 2"
+msgstr "3 x 2"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "4 x 2"
+msgstr "4 x 2"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Aangepast..."
+msgstr "Custom..."
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Gelijk verdelen"
+msgstr "Distribute evenly"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Options.dfm
+msgid "Systeem (volgt Windows)"
+msgstr "System (follows Windows)"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Options.dfm
+msgid "Licht"
+msgstr "Light"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Options.dfm
+msgid "Donker"
+msgstr "Dark"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Naar het volgende vak verplaatsen"
+msgstr "Move to next pane"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Opnieuw verbinden"
+msgstr "Reconnect"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Verbreken"
+msgstr "Disconnect"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Tab sluiten\tMiddelklik"
+msgstr "Close tab\tMiddle-click"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Schaal"
+msgstr "Scale"
+
+#: Source/RdcmX.UI.Main.dfm Source/RdcmX.UI.Properties.pas
+msgid "Automatisch (volgt de monitor)"
+msgstr "Automatic (follows the monitor)"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Verbindingsbestanden (*.rdg;*.rdcx)|*.rdg;*.rdcx|RDCMan-bestanden (*.rdg)|*.rdg|RDCManX-bestanden (*.rdcx)|*.rdcx|Alle bestanden (*.*)|*.*"
+msgstr "Connection files (*.rdg;*.rdcx)|*.rdg;*.rdcx|RDCMan files (*.rdg)|*.rdg|RDCManX files (*.rdcx)|*.rdcx|All files (*.*)|*.*"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Bestand openen"
+msgstr "Open file"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "RDCMan-bestand (*.rdg)|*.rdg|RDCManX-bestand (*.rdcx)|*.rdcx"
+msgstr "RDCMan file (*.rdg)|*.rdg|RDCManX file (*.rdcx)|*.rdcx"
+
+#: Source/RdcmX.UI.Main.dfm
+msgid "Bestand opslaan als"
+msgstr "Save file as"
+
+#: Source/RdcmX.UI.MasterPassword.dfm Source/RdcmX.UI.MasterPassword.pas
+msgid "Hoofdwachtwoord"
+msgstr "Master password"
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Wachtwoordkluis"
+msgstr "Password vault"
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Het huidige hoofdwachtwoord van de wachtwoordkluis."
+msgstr "The current master password of the password vault."
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Huidig hoofdwachtwoord"
+msgstr "Current master password"
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Hoofdwachtwoord van de kluis, minimaal 10 tekens. Het wordt nergens opgeslagen en is niet te herstellen: onthoud het goed."
+msgstr "Master password of the vault, at least 10 characters. It is not stored anywhere and cannot be recovered: remember it well."
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Hetzelfde hoofdwachtwoord nogmaals, ter controle."
+msgstr "The same master password again, to check it."
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Nogmaals invoeren"
+msgstr "Enter again"
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Het hoofdwachtwoord wordt niet opgeslagen."
+msgstr "The master password is not stored."
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Hoofdwachtwoord vergeten: de kluis legen (alle onthouden wachtwoorden verdwijnen) en een nieuw hoofdwachtwoord instellen."
+msgstr "Forgot the master password: empty the vault (all remembered passwords are lost) and set a new master password."
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Vergeten..."
+msgstr "Forgot..."
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Bevestigen."
+msgstr "Confirm."
+
+#: Source/RdcmX.UI.MasterPassword.dfm
+msgid "Annuleren."
+msgstr "Cancel."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Opties"
+msgstr "Options"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Taal van de schermen en meldingen: volgt Windows, English of Nederlands. Een wijziging geldt bij de volgende start."
+msgstr "Language of the screens and messages: follows Windows, English or Nederlands (Dutch). A change applies at the next start."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Taal"
+msgstr "Language"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "English"
+msgstr "English"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Nederlands"
+msgstr "Nederlands"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Hoeveel laatst verbonden servers bovenaan de boom onder Recent staan (0 = Recent niet tonen)."
+msgstr "How many recently connected servers are listed at the top of the tree under Recent (0 = do not show Recent)."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Aantal recente servers in de boom"
+msgstr "Number of recent servers in the tree"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "De laatst verbonden servers staan bovenaan de boom onder Recent. 0 = geen lijst Recent."
+msgstr "The most recently connected servers are listed at the top of the tree under Recent. 0 = no Recent list."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Uiterlijk: volgt Windows, licht of donker. Zijn er sessies open, dan geldt een wijziging bij de volgende start."
+msgstr "Appearance: follows Windows, light or dark. If sessions are open, a change applies at the next start."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Zijn er sessies open, dan wordt een ander thema pas bij de volgende start toegepast (omschakelen zou de sessies verbreken)."
+msgstr "If sessions are open, a different theme is only applied at the next start (switching would disconnect the sessions)."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Elke wijziging wordt kort daarna opgeslagen. Uit: bij sluiten wordt gevraagd om wijzigingen op te slaan. Een nieuw, nog nooit opgeslagen bestand wordt altijd bij sluiten gevraagd."
+msgstr "Every change is saved shortly afterwards. Off: you are asked to save changes when closing. A new file that has never been saved is always asked about when closing."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Alleen als dit aan staat, verschijnt bij het aanmelden het vinkje \"Wachtwoord onthouden\" (standaard uit). Versleuteld met een hoofdwachtwoord (AES-256) in Windows Referentiebeheer, nooit in het bestand. Uitzetten wist alles."
+msgstr "Only when this is on does the logon prompt show the \"Remember password\" checkbox (off by default). Encrypted with a master password (AES-256) in Windows Credential Manager, never in the file. Turning it off erases everything."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Wachtwoorden versleuteld onthouden in de wachtwoordkluis (met een hoofdwachtwoord). Uitzetten wist de kluis en alle onthouden wachtwoorden."
+msgstr "Remember passwords encrypted in the password vault (with a master password). Turning it off erases the vault and all remembered passwords."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Onthouden van wachtwoorden toestaan"
+msgstr "Allow remembering passwords"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Wijzigingen in bestanden na 2 seconden automatisch opslaan. Uit: bij het sluiten wordt gevraagd of je wilt opslaan."
+msgstr "Save changes to files automatically after 2 seconds. Off: you are asked whether to save when closing."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Wijzigingen in bestanden automatisch opslaan"
+msgstr "Save changes to files automatically"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Na zoveel minuten zonder gebruik vergrendelt de kluis; daarna wordt het hoofdwachtwoord opnieuw gevraagd (0 = nooit)."
+msgstr "After this many minutes without use the vault locks; the master password is then asked again (0 = never)."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Kluis vergrendelen na (minuten, 0 = nooit)"
+msgstr "Lock vault after (minutes, 0 = never)"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Het hoofdwachtwoord van de kluis wijzigen. Alle onthouden wachtwoorden worden met het nieuwe opnieuw versleuteld."
+msgstr "Change the master password of the vault. All remembered passwords are re-encrypted with the new one."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Hoe vaak servers met \"Bereikbaarheid tonen\" (Eigenschappen > Route) gecontroleerd worden: 5 tot 3600 seconden."
+msgstr "How often servers with \"Show reachability\" (Properties > Route) are checked: 5 to 3600 seconds."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Bereikbaarheid controleren elke (seconden)"
+msgstr "Check reachability every (seconds)"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Instellingen opslaan."
+msgstr "Save settings."
+
+#: Source/RdcmX.UI.Profiles.dfm
+msgid "Credential-profielen"
+msgstr "Credential profiles"
+
+#: Source/RdcmX.UI.Profiles.dfm
+msgid "Naam van het profiel. Hernoemen past alle verwijzingen in het bestand aan."
+msgstr "Name of the profile. Renaming updates all references in the file."
+
+#: Source/RdcmX.UI.Profiles.dfm
+msgid "Gebruikersnaam voor dit profiel; mag ook als DOMEIN\\gebruiker."
+msgstr "User name for this profile; DOMAIN\\user is also allowed."
+
+#: Source/RdcmX.UI.Profiles.dfm
+msgid "Domein voor dit profiel."
+msgstr "Domain for this profile."
+
+#: Source/RdcmX.UI.Profiles.dfm
+msgid "Wachtwoorden staan nooit in het bestand; bij het verbinden wordt erom gevraagd, tenzij het in de wachtwoordkluis onthouden is. Hernoemen past alle verwijzingen in het bestand aan."
+msgstr "Passwords are never stored in the file; you are asked for them when connecting, unless they are remembered in the password vault. Renaming updates all references in the file."
+
+#: Source/RdcmX.UI.Profiles.dfm
+msgid "Credential-profielen van dit bestand. Servers en groepen kunnen ernaar verwijzen (Eigenschappen > Aanmelden)."
+msgstr "Credential profiles of this file. Servers and groups can refer to them (Properties > Logon)."
+
+#: Source/RdcmX.UI.Profiles.dfm
+msgid "Een nieuw profiel toevoegen."
+msgstr "Add a new profile."
+
+#: Source/RdcmX.UI.Profiles.dfm
+msgid "Het geselecteerde profiel verwijderen (alleen als geen server of groep er nog naar verwijst)."
+msgstr "Delete the selected profile (only if no server or group refers to it any more)."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Eigenschappen"
+msgstr "Properties"
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Algemeen"
+msgstr "General"
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Weergavenaam in de boom en op de tab. Bij een server optioneel: leeg = de servernaam."
+msgstr "Display name in the tree and on the tab. Optional for a server: empty = the server name."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Hostnaam, volledige naam (FQDN) of IP-adres van de server."
+msgstr "Host name, fully qualified name (FQDN) or IP address of the server."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Servernaam of IP"
+msgstr "Server name or IP"
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Vrije opmerking, bijv. waarvoor de server dient. Zichtbaar in de tooltip in de boom."
+msgstr "Free comment, e.g. what the server is for. Shown in the tooltip in the tree."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Opmerking"
+msgstr "Comment"
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Wake-on-LAN"
+msgstr "Wake-on-LAN"
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "MAC-adres van de netwerkkaart, nodig voor Wake-on-LAN (Server > Wake-on-LAN-signaal versturen). Bijv. 00-11-22-33-44-55."
+msgstr "MAC address of the network adapter, needed for Wake-on-LAN (Server > Send Wake-on-LAN packet). E.g. 00-11-22-33-44-55."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "MAC-adres"
+msgstr "MAC address"
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Broadcastadres waarheen het wekpakket gaat: 255.255.255.255, of het broadcastadres van het subnet van de server."
+msgstr "Broadcast address the wake-up packet is sent to: 255.255.255.255, or the broadcast address of the server's subnet."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Broadcastadres"
+msgstr "Broadcast address"
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "UDP-poort voor het wekpakket (meestal 9, soms 7)."
+msgstr "UDP port for the wake-up packet (usually 9, sometimes 7)."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "UDP-poort"
+msgstr "UDP port"
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Leeg = geen Wake-on-LAN. Voor een ander subnet het broadcastadres van dat subnet invullen (bijv. 192.168.10.255)."
+msgstr "Empty = no Wake-on-LAN. For another subnet, enter the broadcast address of that subnet (e.g. 192.168.10.255)."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Eigen aanmeldgegevens, of een credential-profiel van dit bestand (beheer via Bestand > Credential-profielen)."
+msgstr "Own credentials, or a credential profile of this file (manage via File > Credential profiles)."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Profiel"
+msgstr "Profile"
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Gebruikersnaam; mag ook als DOMEIN\\gebruiker of gebruiker@domein."
+msgstr "User name; DOMAIN\\user or user@domain is also allowed."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Domein van de gebruiker. Leeg bij een lokaal account op de server, of als het domein al in de gebruikersnaam staat."
+msgstr "Domain of the user. Empty for a local account on the server, or if the domain is already part of the user name."
+
+#: Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Properties.pas
+msgid "Wachtwoorden staan nooit in het bestand; bij het verbinden wordt erom gevraagd, tenzij het in de wachtwoordkluis onthouden is."
+msgstr "Passwords are never stored in the file; you are asked for them when connecting, unless they are remembered in the password vault."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Aan: de aanmeldgegevens van de bovenliggende groep gebruiken. Uit: eigen aanmeldgegevens voor deze server of groep."
+msgstr "On: use the credentials of the parent group. Off: own credentials for this server or group."
+
+#: Source/RdcmX.UI.Properties.dfm
+msgid "Overnemen van bovenliggende groep"
+msgstr "Inherit from parent group"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Tailscale-netwerken"
+msgstr "Tailscale networks"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Naam voor jezelf, bijv. Thuis of Klant X. Je kiest het netwerk op deze naam bij de route."
+msgstr "A name for yourself, e.g. Home or Customer X. You pick the network by this name in the route."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Naam waaronder RDCManagerX als apparaat in het tailnet verschijnt. Leeg = rdpclient-<computernaam>."
+msgstr "Name under which RDCManagerX appears as a device in the tailnet. Empty = rdpclient-<computername>."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Naam in het tailnet"
+msgstr "Name in the tailnet"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Auth key uit de Tailscale-adminconsole (tskey-auth-...). Leeg = inloggen via de browser. Wordt alleen in de wachtwoordkluis bewaard."
+msgstr "Auth key from the Tailscale admin console (tskey-auth-...). Empty = log in through the browser. Stored only in the password vault."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Auth key"
+msgstr "Auth key"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Eigen control server (bijv. Headscale), alleen via https. Leeg = Tailscale zelf."
+msgstr "Own control server (e.g. Headscale), https only. Empty = Tailscale itself."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Control URL"
+msgstr "Control URL"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Lokaal adres (127.x.x.x) voor de doorverwijzing naar het tailnet. Leeg = 127.0.0.2."
+msgstr "Local address (127.x.x.x) for the forward into the tailnet. Empty = 127.0.0.2."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Lokaal adres"
+msgstr "Local address"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "De auth key en de sleutels van een niet-ephemeral netwerk staan alleen in de wachtwoordkluis van deze pc (niet in het bestand). Zonder auth key log je eenmalig in via de browser; zet Ephemeral dan uit, anders moet dat bij elke start opnieuw. \"Naam in het tailnet\" is de naam waaronder RDCManagerX zelf als apparaat in je tailnet verschijnt (leeg = rdpclient-<computernaam>)."
+msgstr "The auth key and the keys of a non-ephemeral network are stored only in the password vault on this PC (not in the file). Without an auth key you log in once through the browser; turn Ephemeral off then, otherwise you have to do that at every start. \"Name in the tailnet\" is the name under which RDCManagerX itself appears as a device in your tailnet (empty = rdpclient-<computername>)."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Tailscale-netwerken van dit bestand. Kies er een per server of groep via Eigenschappen > Route."
+msgstr "Tailscale networks of this file. Choose one per server or group in Properties > Route."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Ephemeral"
+msgstr "Ephemeral"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Een nieuw Tailscale-netwerk toevoegen."
+msgstr "Add a new Tailscale network."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Het geselecteerde netwerk verwijderen; de auth key en sleutels op deze pc worden ook gewist."
+msgstr "Delete the selected network; the auth key and keys on this PC are deleted as well."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "De opgeslagen auth key van dit netwerk verwijderen."
+msgstr "Delete the stored auth key of this network."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Aan: het apparaat verdwijnt uit het tailnet na afsluiten en er blijft niets op schijf. Uit: eenmalig inloggen; de sleutels blijven versleuteld bewaard."
+msgstr "On: the device disappears from the tailnet after exit and nothing stays on disk. Off: log in once; the keys are kept encrypted."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Ephemeral (verdwijnt uit het tailnet na afsluiten; niets op schijf)"
+msgstr "Ephemeral (disappears from the tailnet after exit; nothing on disk)"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "standaard (Tailscale)"
+msgstr "default (Tailscale)"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Het netwerk opstarten, het adres in het tailnet tonen en weer sluiten. Zonder auth key opent de login-pagina in de browser."
+msgstr "Start the network, show the address in the tailnet and shut it down again. Without an auth key the login page opens in the browser."
+
+#: Source/RdcmX.UI.Tailnets.dfm Source/RdcmX.UI.Tailnets.pas
+msgid "Test verbinding"
+msgstr "Test connection"
+
+#: Source/RdcmX.Crypto.pas
+msgid "%s mislukt (status $%.8x)"
+msgstr "%s failed (status $%.8x)"
+
+#: Source/RdcmX.Crypto.pas
+msgid "AES openen"
+msgstr "Opening AES"
+
+#: Source/RdcmX.Crypto.pas
+msgid "GCM instellen"
+msgstr "Setting GCM"
+
+#: Source/RdcmX.Crypto.pas
+msgid "Willekeurige bytes"
+msgstr "Random bytes"
+
+#: Source/RdcmX.Crypto.pas
+msgid "HMAC-SHA256 openen"
+msgstr "Opening HMAC-SHA256"
+
+#: Source/RdcmX.Crypto.pas
+msgid "Ongeldige sleutellengte"
+msgstr "Invalid key length"
+
+#: Source/RdcmX.Crypto.pas
+msgid "Sleutel aanmaken"
+msgstr "Creating key"
+
+#: Source/RdcmX.Crypto.pas
+msgid "Versleutelen"
+msgstr "Encrypting"
+
+#: Source/RdcmX.Crypto.pas
+msgid "Ontsleutelen"
+msgstr "Decrypting"
+
+#: Source/RdcmX.Crypto.pas
+msgid "Buffer moet een veelvoud van 16 bytes zijn"
+msgstr "Buffer must be a multiple of 16 bytes"
+
+#: Source/RdcmX.Model.pas
+msgid "Onbekende instellingsgroep %s"
+msgstr "Unknown settings group %s"
+
+#: Source/RdcmX.Model.pas
+msgid "Node zit al in een groep; gebruik MoveHere."
+msgstr "Node is already in a group; use MoveHere."
+
+#: Source/RdcmX.Model.pas
+msgid "Een groep kan niet in zichzelf of een eigen subgroep worden geplaatst."
+msgstr "A group cannot be placed inside itself or one of its own subgroups."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Bezig met verbinden"
+msgstr "Connecting"
+
+#: Source/RdcmX.Rdp.Session.pas Source/RdcmX.UI.Main.pas
+msgid "Verbonden"
+msgstr "Connected"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Ingelogd"
+msgstr "Logged in"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Bezig met verbreken"
+msgstr "Disconnecting"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Niet verbonden"
+msgstr "Not connected"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "werkt"
+msgstr "works"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "niet ondersteund (opnieuw verbinden bij formaatwijziging)"
+msgstr "not supported (reconnect on resize)"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "nog niet getest (volgt bij de eerste formaatwijziging)"
+msgstr "not tested yet (follows at the first resize)"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "venstergrootte bij verbinden"
+msgstr "window size at connect"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "vaste grootte"
+msgstr "fixed size"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "volledig scherm"
+msgstr "full screen"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "dynamisch"
+msgstr "dynamic"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Geen bruikbare Remote Desktop ActiveX-control (mstscax.dll) gevonden."
+msgstr "No usable Remote Desktop ActiveX control (mstscax.dll) found."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "De Remote Desktop ActiveX-control ondersteunt IMsRdpClient niet."
+msgstr "The Remote Desktop ActiveX control does not support IMsRdpClient."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "deze versie van de Remote Desktop-client kan geen gateway instellen (IMsRdpClient5 ontbreekt)."
+msgstr "this version of the Remote Desktop client cannot set a gateway (IMsRdpClient5 is missing)."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "deze versie van de Remote Desktop-client (mstscax.dll) ondersteunt geen Extern bureaublad-gateway."
+msgstr "this version of the Remote Desktop client (mstscax.dll) does not support Remote Desktop Gateway."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Geen server opgegeven."
+msgstr "No server specified."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Verbinden mislukt: %s"
+msgstr "Connecting failed: %s"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Verbinding verbroken."
+msgstr "Disconnected."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Opnieuw verbinden met nieuwe afmeting..."
+msgstr "Reconnecting with the new size..."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid ""
+"De server ondersteunt geen dynamische resolutie, en opnieuw verbinden met de nieuwe afmeting is mislukt (%s).\r\n"
+"\r\n"
+"Verbind opnieuw: de sessie houdt dan een vaste afmeting."
+msgstr ""
+"The server does not support dynamic resolution, and reconnecting with the new size failed (%s).\r\n"
+"\r\n"
+"Connect again: the session then keeps a fixed size."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid ""
+"De server ondersteunt geen dynamische resolutie, en opnieuw verbinden met de nieuwe afmeting is mislukt.\r\n"
+"\r\n"
+"Verbind opnieuw: de sessie houdt dan een vaste afmeting."
+msgstr ""
+"The server does not support dynamic resolution, and reconnecting with the new size failed.\r\n"
+"\r\n"
+"Connect again: the session then keeps a fixed size."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid ""
+"Verbinding verbroken: %s\r\n"
+"\r\n"
+"(code %d, uitgebreid %d)"
+msgstr ""
+"Disconnected: %s\r\n"
+"\r\n"
+"(code %d, extended %d)"
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Verbinding verbroken (code %d, uitgebreid %d)."
+msgstr "Disconnected (code %d, extended %d)."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Fatale fout in de RDP-control (code %d)."
+msgstr "Fatal error in the RDP control (code %d)."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Automatisch opnieuw verbinden (poging %d van %d)..."
+msgstr "Reconnecting automatically (attempt %d of %d)..."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Verbinden met %s..."
+msgstr "Connecting to %s..."
+
+#: Source/RdcmX.Rdp.Session.pas
+msgid "Verbinding verbreken..."
+msgstr "Disconnecting..."
+
+#: Source/RdcmX.Sessions.pas
+msgid "De route \"Via RDP-gateway\" verwijst naar een gateway die niet (meer) in dit bestand staat. Kies in Eigenschappen > Route een gateway."
+msgstr "The route \"Via RDP gateway\" refers to a gateway that is not (or no longer) in this file. Choose a gateway in Properties > Route."
+
+#: Source/RdcmX.Sessions.pas
+msgid "Gateway \"%s\" gebruikt een wachtwoord uit de wachtwoordkluis."
+msgstr "Gateway \"%s\" uses a password from the password vault."
+
+#: Source/RdcmX.Sessions.pas
+msgid "Verbinden via Tailscale..."
+msgstr "Connecting via Tailscale..."
+
+#: Source/RdcmX.Sessions.pas
+msgid "De route \"Via Tailscale-netwerk\" verwijst naar een netwerk dat niet (meer) in dit bestand staat. Kies in Eigenschappen > Route een netwerk."
+msgstr "The route \"Via Tailscale network\" refers to a network that is not (or no longer) in this file. Choose a network in Properties > Route."
+
+#: Source/RdcmX.Sessions.pas
+msgid "Verbinden via Tailscale is niet beschikbaar: %s"
+msgstr "Connecting via Tailscale is not available: %s"
+
+#: Source/RdcmX.Sessions.pas
+msgid "\"%s\" is een e-mailadres (het Tailscale-account), geen apparaat. Vul in Eigenschappen > Route bij \"Adres in het tailnet\" de machinenaam in (adminconsole > Machines, bijv. thuis-pc) of het 100.x-adres."
+msgstr "\"%s\" is an e-mail address (the Tailscale account), not a device. In Properties > Route, enter the machine name (admin console > Machines, e.g. home-pc) or the 100.x address in \"Address in the tailnet\"."
+
+#: Source/RdcmX.Sessions.pas
+msgid "Tailscale-netwerk \"%s\": %s"
+msgstr "Tailscale network \"%s\": %s"
+
+#: Source/RdcmX.Sessions.pas
+msgid "Verbinden met Tailscale-netwerk \"%s\"..."
+msgstr "Connecting to Tailscale network \"%s\"..."
+
+#: Source/RdcmX.Sessions.pas
+msgid "Het Tailscale-netwerk \"%s\" kon niet worden gestart: %s"
+msgstr "The Tailscale network \"%s\" could not be started: %s"
+
+#: Source/RdcmX.Sessions.pas
+msgid ""
+"Inloggen bij Tailscale-netwerk \"%s\": de login-pagina is in de browser geopend.\r\n"
+"\r\n"
+"%s"
+msgstr ""
+"Logging in to Tailscale network \"%s\": the login page has been opened in the browser.\r\n"
+"\r\n"
+"%s"
+
+#: Source/RdcmX.Storage.Json.pas
+msgid "Onbekende instellingsgroep \"%s\" bij \"%s\" genegeerd."
+msgstr "Unknown settings group \"%s\" at \"%s\" ignored."
+
+#: Source/RdcmX.Storage.Json.pas
+msgid "%s is gemaakt met een nieuwere versie van RDCManX (formatVersion %d); deze versie ondersteunt t/m formatVersion %d."
+msgstr "%s was created with a newer version of RDCManX (formatVersion %d); this version supports up to formatVersion %d."
+
+#: Source/RdcmX.Storage.Json.pas
+msgid "%s is geen geldig .rdcx-bestand (formatVersion ontbreekt)."
+msgstr "%s is not a valid .rdcx file (formatVersion is missing)."
+
+#: Source/RdcmX.Storage.Json.pas
+msgid "%s bevat geen \"root\"."
+msgstr "%s contains no \"root\"."
+
+#: Source/RdcmX.Storage.Json.pas Source/RdcmX.Storage.Rdg.pas
+msgid "Pad \"%s\" verwijst niet naar een bestaande node; wordt ongewijzigd bewaard."
+msgstr "Path \"%s\" does not refer to an existing node; it is kept unchanged."
+
+#: Source/RdcmX.Storage.Json.pas
+msgid "%s is geen geldig JSON-object."
+msgstr "%s is not a valid JSON object."
+
+#: Source/RdcmX.Storage.Rdg.pas
+msgid "Leeg XML-document."
+msgstr "Empty XML document."
+
+#: Source/RdcmX.Storage.Rdg.pas
+msgid "Opgeslagen wachtwoord genegeerd bij %s; RDCManX slaat geen wachtwoorden op en schrijft het niet terug."
+msgstr "Stored password ignored for %s; RDCManX does not store passwords and does not write it back."
+
+#: Source/RdcmX.Storage.Rdg.pas
+msgid "Onbekend element <%s> in credentialsProfiles genegeerd."
+msgstr "Unknown element <%s> in credentialsProfiles ignored."
+
+#: Source/RdcmX.Storage.Rdg.pas
+msgid "%s is geen RDCMan-bestand (root-element <%s>)."
+msgstr "%s is not an RDCMan file (root element <%s>)."
+
+#: Source/RdcmX.Storage.Rdg.pas
+msgid "%s heeft schemaVersion %s; alleen schemaVersion 3 (RDCMan 2.7 en nieuwer) wordt ondersteund."
+msgstr "%s has schemaVersion %s; only schemaVersion 3 (RDCMan 2.7 and newer) is supported."
+
+#: Source/RdcmX.Storage.Rdg.pas
+msgid "%s bevat geen <file>-element."
+msgstr "%s contains no <file> element."
+
+#: Source/RdcmX.Storage.Sidecar.pas
+msgid "Sidecar-bestand is geen geldige JSON en is genegeerd."
+msgstr "Sidecar file is not valid JSON and has been ignored."
+
+#: Source/RdcmX.Storage.Sidecar.pas
+msgid "Sidecar-bestand heeft een nieuwere formatVersion en is genegeerd."
+msgstr "Sidecar file has a newer formatVersion and has been ignored."
+
+#: Source/RdcmX.Storage.Sidecar.pas
+msgid "Sidecar-entry \"%s\" hoort bij geen bestaande node; wordt bewaard."
+msgstr "Sidecar entry \"%s\" does not belong to an existing node; it is kept."
+
+#: Source/RdcmX.Storage.pas
+msgid "Onbekend bestandstype \"%s\" (verwacht .rdg of .rdcx)."
+msgstr "Unknown file type \"%s\" (expected .rdg or .rdcx)."
+
+#: Source/RdcmX.Storage.pas
+msgid "Geen bestandsnaam om naar op te slaan."
+msgstr "No file name to save to."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "De control URL \"%s\" is niet toegestaan: gebruik https:// (http:// alleen naar localhost)."
+msgstr "The control URL \"%s\" is not allowed: use https:// (http:// only to localhost)."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "Tailscale-netwerk \"%s\" gebruikt geheimen uit de wachtwoordkluis."
+msgstr "Tailscale network \"%s\" uses secrets from the password vault."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "De auth key in de wachtwoordkluis kon niet worden gelezen: het hoofdwachtwoord is niet ingevoerd, of \"Wachtwoorden onthouden\" staat uit (Bestand > Opties)."
+msgstr "The auth key in the password vault could not be read: the master password was not entered, or \"Remember passwords\" is off (File > Options)."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "De sleutel van dit netwerk staat in de wachtwoordkluis, maar kon niet worden gelezen: het hoofdwachtwoord is niet ingevoerd, of \"Wachtwoorden onthouden\" staat uit (Bestand > Opties)."
+msgstr "The key of this network is in the password vault, but could not be read: the master password was not entered, or \"Remember passwords\" is off (File > Options)."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "Een niet-ephemeral netwerk bewaart zijn sleutels versleuteld met een sleutel uit de wachtwoordkluis. Zet \"Wachtwoorden onthouden\" aan in Opties, of maak het netwerk ephemeral."
+msgstr "A non-ephemeral network stores its keys encrypted with a key from the password vault. Turn on \"Remember passwords\" in Options, or make the network ephemeral."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "De oude (onleesbare) state van dit netwerk kon niet worden verwijderd: %s"
+msgstr "The old (unreadable) state of this network could not be deleted: %s"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "De sleutel van dit netwerk kon niet in de wachtwoordkluis worden opgeslagen."
+msgstr "The key of this network could not be stored in the password vault."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "%s mist de functie %s (verkeerde versie?)."
+msgstr "%s lacks the function %s (wrong version?)."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "De ingebouwde %s kon niet worden uitgepakt naar %s: %s"
+msgstr "The embedded %s could not be extracted to %s: %s"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "%s staat niet naast RDCManagerX.exe; verbinden via Tailscale is niet beschikbaar."
+msgstr "%s is not next to RDCManagerX.exe; connecting via Tailscale is not available."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "%s kon niet worden geopend: %s"
+msgstr "%s could not be opened: %s"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "De uitgepakte %s is tussentijds gewijzigd (controlesom klopt niet); verbinden via Tailscale is uitgeschakeld. Start RDCManagerX opnieuw."
+msgstr "The extracted %s was changed in the meantime (checksum does not match); connecting via Tailscale is disabled. Restart RDCManagerX."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "%s hoort niet bij deze versie van RDCManagerX (controlesom klopt niet); verbinden via Tailscale is uitgeschakeld. Zet de tsbridge.dll van dezelfde build ernaast."
+msgstr "%s does not belong to this version of RDCManagerX (checksum does not match); connecting via Tailscale is disabled. Put the tsbridge.dll of the same build next to it."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "%s kon niet worden geladen: %s"
+msgstr "%s could not be loaded: %s"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "gelukt"
+msgstr "succeeded"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "onbekend netwerk"
+msgstr "unknown network"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "ongeldige instellingen"
+msgstr "invalid settings"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "time-out"
+msgstr "timeout"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "geannuleerd of gesloten"
+msgstr "cancelled or closed"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "niet gevonden"
+msgstr "not found"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "apparaat is offline"
+msgstr "device is offline"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "fout %d"
+msgstr "error %d"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "Tailscale-netwerk kon niet worden aangemaakt: %s"
+msgstr "Tailscale network could not be created: %s"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "Tailscale-netwerk is gesloten."
+msgstr "Tailscale network is closed."
+
+#: Source/RdcmX.Tailscale.pas
+msgid "Doorsturen naar %s via Tailscale is mislukt: %s"
+msgstr "Forwarding to %s via Tailscale failed: %s"
+
+#: Source/RdcmX.Tailscale.pas
+msgid "Tailscale-netwerk is niet verbonden."
+msgstr "Tailscale network is not connected."
+
+#: Source/RdcmX.UI.CredentialPrompt.pas
+msgid "Verbinden met %s"
+msgstr "Connect to %s"
+
+#: Source/RdcmX.UI.CredentialPrompt.pas
+msgid "Onthouden: versleuteld in Windows Referentiebeheer, nooit in het bestand."
+msgstr "Remembered: encrypted in Windows Credential Manager, never in the file."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Sessie"
+msgstr "Session"
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Eigen"
+msgstr "Own"
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Vragen"
+msgstr "Ask"
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "RDP-gateways - %s"
+msgstr "RDP gateways - %s"
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "server gewijzigd: opgeslagen wachtwoord wordt gewist"
+msgstr "server changed: stored password will be deleted"
+
+#: Source/RdcmX.UI.Gateways.pas Source/RdcmX.UI.Tailnets.pas
+msgid "opgeslagen in de wachtwoordkluis"
+msgstr "stored in the password vault"
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "leeg = vragen bij verbinden"
+msgstr "empty = ask when connecting"
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Nieuwe gateway"
+msgstr "New gateway"
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Gateway \"%s\" wordt nog gebruikt door %d route(s) in dit bestand. Kies daar eerst een andere route."
+msgstr "Gateway \"%s\" is still used by %d route(s) in this file. Choose a different route there first."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Elke gateway moet een naam hebben."
+msgstr "Every gateway must have a name."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Er zijn twee gateways met de naam \"%s\"."
+msgstr "There are two gateways named \"%s\"."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Vul de gatewayserver in."
+msgstr "Enter the gateway server."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Vul bij de gatewayserver alleen de naam in; de poort heeft een eigen veld."
+msgstr "Enter only the name for the gateway server; the port has its own field."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "De poort moet tussen 1 en 65535 liggen (leeg = 443)."
+msgstr "The port must be between 1 and 65535 (empty = 443)."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Vul de gebruikersnaam voor de gateway in."
+msgstr "Enter the user name for the gateway."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Het gateway-wachtwoord kan alleen in de wachtwoordkluis worden bewaard. Zet \"Wachtwoorden onthouden\" aan in Opties, of laat het veld leeg (dan wordt erom gevraagd bij verbinden)."
+msgstr "The gateway password can only be stored in the password vault. Turn on \"Remember passwords\" in Options, or leave the field empty (then it is asked when connecting)."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid ""
+"De server van gateway \"%s\" is gewijzigd.\r\n"
+"\r\n"
+"Het opgeslagen wachtwoord hoort bij de oude server en wordt gewist. Doorgaan?"
+msgstr ""
+"The server of gateway \"%s\" has changed.\r\n"
+"\r\n"
+"The stored password belongs to the old server and will be deleted. Continue?"
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Het wachtwoord voor gateway \"%s\" wordt in de wachtwoordkluis opgeslagen."
+msgstr "The password for gateway \"%s\" will be stored in the password vault."
+
+#: Source/RdcmX.UI.Gateways.pas
+msgid "Het wachtwoord voor gateway \"%s\" kon niet in de wachtwoordkluis worden opgeslagen."
+msgstr "The password for gateway \"%s\" could not be stored in the password vault."
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Geen open sessies.\r\n"
+"\r\n"
+"Dubbelklik op een server in de boom (of selecteer hem en druk op Enter) om te verbinden."
+msgstr ""
+"No open sessions.\r\n"
+"\r\n"
+"Double-click a server in the tree (or select it and press Enter) to connect."
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Leeg vak\r\n"
+"\r\n"
+"Sleep een tab hierheen of klik hier en dubbelklik op een server."
+msgstr ""
+"Empty pane\r\n"
+"\r\n"
+"Drag a tab here, or click here and double-click a server."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Favoriete servers (Server > Aan favorieten toevoegen)"
+msgstr "Favorite servers (Server > Add to favorites)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Laatst verbonden servers, nieuwste bovenaan (aantal: Bestand > Opties)"
+msgstr "Last connected servers, newest first (number: File > Options)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"%s\r\n"
+"%d server(s)"
+msgstr ""
+"%s\r\n"
+"%d server(s)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Nog niet opgeslagen"
+msgstr "Not saved yet"
+
+#: Source/RdcmX.UI.Main.pas
+msgid ", %d bereikbaar"
+msgstr ", %d reachable"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Verbinden..."
+msgstr "Connecting..."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Aangemeld"
+msgstr "Logged on"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Verbreken..."
+msgstr "Disconnecting..."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Server: %s"
+msgstr "Server: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Sessie: %s"
+msgstr "Session: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Sessie: fout bij de laatste verbinding"
+msgstr "Session: error at the last connection"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Bereikbaarheid: niet gecontroleerd (route via Tailscale of gateway)"
+msgstr "Reachability: not checked (route via Tailscale or gateway)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Bereikbaarheid: niet gecontroleerd (zet aan via Eigenschappen > Route)"
+msgstr "Reachability: not checked (turn on via Properties > Route)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Bereikbaarheid: nog niet gecontroleerd"
+msgstr "Reachability: not checked yet"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Bereikbaarheid: op %s antwoordt %s, niet deze server (DNS-record verouderd?)"
+msgstr "Reachability: %s is answered by %s, not this server (stale DNS record?)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Bereikbaarheid: online (%d ms, %s)"
+msgstr "Reachability: online (%d ms, %s)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Bereikbaarheid: niet bereikbaar sinds %s"
+msgstr "Reachability: not reachable since %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Bereikbaarheid: niet bereikbaar"
+msgstr "Reachability: not reachable"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Laatst gezien: %s"
+msgstr "Last seen: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Laatst gezien: niet sinds de start van RDCManagerX"
+msgstr "Last seen: not since RDCManagerX started"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Laatste controle: %s"
+msgstr "Last check: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Opmerking: %s"
+msgstr "Comment: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Op %s antwoordt %s, niet %s (DNS-record verouderd?)"
+msgstr "%s is answered by %s, not %s (stale DNS record?)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%s is online (%d ms)"
+msgstr "%s is online (%d ms)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%s is niet bereikbaar (sinds %s)"
+msgstr "%s is not reachable (since %s)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%s is niet bereikbaar"
+msgstr "%s is not reachable"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "De handleiding kon niet worden geopend: %s"
+msgstr "The manual could not be opened: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "  ... en nog %d"
+msgstr "  ... and %d more"
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Er zijn nog %d open sessie(s):%s\r\n"
+"\r\n"
+"Weet u zeker dat u RDCManagerX wilt afsluiten? Alle sessies worden verbroken (niet afgemeld)."
+msgstr ""
+"There are still %d open session(s):%s\r\n"
+"\r\n"
+"Are you sure you want to exit RDCManagerX? All sessions will be disconnected (not logged off)."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Favorieten"
+msgstr "Favorites"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Recent"
+msgstr "Recent"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "De nieuwe taal wordt gebruikt vanaf de volgende start van RDCManagerX."
+msgstr "The new language will be used from the next start of RDCManagerX."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Nieuwe groep"
+msgstr "New group"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Groep \"%s\" met %d server(s) verwijderen?"
+msgstr "Delete group \"%s\" with %d server(s)?"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Server \"%s\" verwijderen?"
+msgstr "Delete server \"%s\"?"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Wake-on-LAN verstuurd naar %s (%s via %s)"
+msgstr "Wake-on-LAN sent to %s (%s via %s)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Wake-on-LAN naar %s mislukt: %s"
+msgstr "Wake-on-LAN to %s failed: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Nieuw bestand"
+msgstr "New file"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Het bestand \"%s\" bestaat niet (meer)."
+msgstr "The file \"%s\" does not exist (any more)."
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Kan \"%s\" niet openen:\r\n"
+"\r\n"
+"%s"
+msgstr ""
+"Cannot open \"%s\":\r\n"
+"\r\n"
+"%s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "... en nog %d melding(en)."
+msgstr "... and %d more message(s)."
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Meldingen bij het openen van \"%s\":\r\n"
+"\r\n"
+"%s"
+msgstr ""
+"Messages while opening \"%s\":\r\n"
+"\r\n"
+"%s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Bestand gewijzigd"
+msgstr "File changed"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Het bestand is buiten RDCManX gewijzigd"
+msgstr "The file was changed outside RDCManX"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "\"%s\" is gewijzigd sinds het werd geopend (bijvoorbeeld in RDCMan)."
+msgstr "\"%s\" has changed since it was opened (for example in RDCMan)."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Herladen (mijn wijzigingen vervallen)"
+msgstr "Reload (my changes are lost)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Overschrijven"
+msgstr "Overwrite"
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Opslaan van \"%s\" mislukt:\r\n"
+"\r\n"
+"%s"
+msgstr ""
+"Saving \"%s\" failed:\r\n"
+"\r\n"
+"%s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Wijzigingen in \"%s\" opslaan?"
+msgstr "Save changes to \"%s\"?"
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"%s staat in een eigen venster.\r\n"
+"\r\n"
+"Klik op de tab om het venster te tonen, of kies \"Terugzetten in hoofdvenster\" in het tab-menu."
+msgstr ""
+"%s is in a separate window.\r\n"
+"\r\n"
+"Click the tab to show the window, or choose \"Dock in main window\" in the tab menu."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Indeling sessievakken"
+msgstr "Session pane layout"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Kolommen (1-%d)"
+msgstr "Columns (1-%d)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Rijen (1-%d)"
+msgstr "Rows (1-%d)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Kies 1 tot %d kolommen en 1 tot %d rijen."
+msgstr "Choose 1 to %d columns and 1 to %d rows."
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Het thema wordt toegepast bij de volgende start van het programma.\r\n"
+"\r\n"
+"Nu omschakelen zou de open sessies verbreken."
+msgstr ""
+"The theme will be applied the next time the program starts.\r\n"
+"\r\n"
+"Switching now would disconnect the open sessions."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Verbinding met %s verbroken (reden %d)%s"
+msgstr "Connection to %s ended (reason %d)%s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Ontgrendel de wachtwoordkluis om met %s te verbinden."
+msgstr "Unlock the password vault to connect to %s."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Ontgrendel de wachtwoordkluis om het wachtwoord te onthouden."
+msgstr "Unlock the password vault to remember the password."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Wachtwoord niet onthouden (kluis niet ontgrendeld)."
+msgstr "Password not remembered (vault not unlocked)."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Onthouden wachtwoord vergeten voor %s"
+msgstr "Remembered password forgotten for %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%s: aanmelding geweigerd; het onthouden wachtwoord is vergeten."
+msgstr "%s: logon rejected; the remembered password has been forgotten."
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Onthouden van wachtwoorden uitzetten?\r\n"
+"\r\n"
+"De wachtwoordkluis en %d onthouden wachtwoord(en) worden verwijderd."
+msgstr ""
+"Turn off remembering passwords?\r\n"
+"\r\n"
+"The password vault and %d remembered password(s) will be deleted."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Stel een hoofdwachtwoord in voor de wachtwoordkluis. Onthouden wachtwoorden worden daarmee versleuteld."
+msgstr "Set a master password for the password vault. Remembered passwords are encrypted with it."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Onjuist hoofdwachtwoord."
+msgstr "Incorrect master password."
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Hoofdwachtwoord vergeten?\r\n"
+"\r\n"
+"De kluis kan niet geopend worden zonder het hoofdwachtwoord. De %d onthouden wachtwoord(en) worden verwijderd; daarna stelt u een nieuw hoofdwachtwoord in."
+msgstr ""
+"Forgot your master password?\r\n"
+"\r\n"
+"The vault cannot be opened without the master password. The %d remembered password(s) will be deleted; after that you set a new master password."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Wachtwoordkluis vergrendeld."
+msgstr "Password vault locked."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Wijzig het hoofdwachtwoord van de wachtwoordkluis."
+msgstr "Change the master password of the password vault."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Hoofdwachtwoord gewijzigd; alle onthouden wachtwoorden zijn opnieuw versleuteld."
+msgstr "Master password changed; all remembered passwords have been re-encrypted."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Het huidige hoofdwachtwoord is onjuist; er is niets gewijzigd."
+msgstr "The current master password is incorrect; nothing has been changed."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%d servers in \"%s\" verbinden?"
+msgstr "Connect %d servers in \"%s\"?"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%d servers in \"%s\""
+msgstr "%d servers in \"%s\""
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Tonen\tEnter"
+msgstr "Show\tEnter"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Uit favorieten verwijderen"
+msgstr "Remove from favorites"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Uit favorieten verwijderen\tDel"
+msgstr "Remove from favorites\tDel"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Uit recent verwijderen\tDel"
+msgstr "Remove from recent\tDel"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "versie %d.%.2d.%.2d.%.3d"
+msgstr "version %d.%.2d.%.2d.%.3d"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "dynamisch: %s"
+msgstr "dynamic: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "weergave: %s"
+msgstr "display: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Paneel %dx%d · Remote %dx%d · schaal %d%% · %s"
+msgstr "Pane %dx%d · Remote %dx%d · scale %d%% · %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%d actieve verbinding(en)"
+msgstr "%d active connection(s)"
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Wachtwoordkluis ontgrendelen"
+msgstr "Unlock password vault"
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Ontgrendelen"
+msgstr "Unlock"
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Het hoofdwachtwoord wordt niet opgeslagen. Vergeten? Dan kan de kluis alleen leeggemaakt worden."
+msgstr "The master password is not stored. Forgotten? Then the vault can only be emptied."
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Hoofdwachtwoord instellen"
+msgstr "Set master password"
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Nieuw hoofdwachtwoord"
+msgstr "New master password"
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Instellen"
+msgstr "Set"
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Minimaal %d tekens. Het hoofdwachtwoord wordt nergens opgeslagen en is niet te herstellen: vergeten = alle onthouden wachtwoorden kwijt."
+msgstr "At least %d characters. The master password is not stored anywhere and cannot be recovered: forgotten = all remembered passwords lost."
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Hoofdwachtwoord wijzigen"
+msgstr "Change master password"
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Wijzigen"
+msgstr "Change"
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Minimaal %d tekens. Alle onthouden wachtwoorden worden opnieuw versleuteld."
+msgstr "At least %d characters. All remembered passwords are re-encrypted."
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Vul het huidige hoofdwachtwoord in."
+msgstr "Enter the current master password."
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "Het hoofdwachtwoord moet minimaal %d tekens lang zijn."
+msgstr "The master password must be at least %d characters long."
+
+#: Source/RdcmX.UI.MasterPassword.pas
+msgid "De twee nieuwe hoofdwachtwoorden zijn niet gelijk."
+msgstr "The two new master passwords do not match."
+
+#: Source/RdcmX.UI.Profiles.pas
+msgid "Credential-profielen - %s"
+msgstr "Credential profiles - %s"
+
+#: Source/RdcmX.UI.Profiles.pas
+msgid "Nieuw profiel"
+msgstr "New profile"
+
+#: Source/RdcmX.UI.Profiles.pas
+msgid "Profiel \"%s\" wordt nog gebruikt door %d instelling(en) in dit bestand. Kies daar eerst een ander profiel of eigen aanmeldgegevens."
+msgstr "Profile \"%s\" is still used by %d setting(s) in this file. First choose another profile or own credentials there."
+
+#: Source/RdcmX.UI.Profiles.pas
+msgid "Elk profiel moet een naam hebben."
+msgstr "Every profile must have a name."
+
+#: Source/RdcmX.UI.Profiles.pas
+msgid "Er zijn twee profielen met de naam \"%s\"."
+msgstr "There are two profiles named \"%s\"."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Overnemen van standaardinstellingen"
+msgstr "Inherit from default settings"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Overnemen van bovenliggende groep (%s)"
+msgstr "Inherit from parent group (%s)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Eigenschappen van bestand"
+msgstr "File properties"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Eigenschappen van server"
+msgstr "Server properties"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Eigenschappen van groep"
+msgstr "Group properties"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Weergavenaam"
+msgstr "Display name"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "TCP-poort van Extern bureaublad op de server (standaard 3389)."
+msgstr "TCP port of Remote Desktop on the server (default 3389)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Verbinden met de beheersessie (console) in plaats van een nieuwe sessie, zoals mstsc /admin."
+msgstr "Connect to the administrative session (console) instead of a new session, like mstsc /admin."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Programma dat na het aanmelden start in plaats van het bureaublad (alleen als de server dat toestaat)."
+msgstr "Program that starts after logon instead of the desktop (only if the server allows it)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Map waarin het startprogramma begint."
+msgstr "Folder in which the start program begins."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Routeringsinformatie voor een RD Connection Broker (load balancing). Meestal leeg laten."
+msgstr "Routing information for an RD Connection Broker (load balancing). Usually left empty."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Hoe de server bereikt wordt: rechtstreeks (eventueel via de RDCMan-gateway hieronder), via een Tailscale-netwerk, of via een RDP-gateway uit de lijst."
+msgstr "How the server is reached: directly (optionally via the RDCMan gateway below), via a Tailscale network, or via an RDP gateway from the list."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Het Tailscale-netwerk waarlangs verbonden wordt (beheer via Bestand > Tailscale-netwerken)."
+msgstr "The Tailscale network used to connect (manage via File > Tailscale networks)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Naam of adres van de server in het tailnet: de machinenaam uit de Tailscale-console of het 100.x-adres. Leeg = de servernaam."
+msgstr "Name or address of the server in the tailnet: the machine name from the Tailscale console or the 100.x address. Empty = the server name."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "De RDP-gateway waarlangs verbonden wordt (beheer via Bestand > RDP-gateways)."
+msgstr "The RDP gateway used to connect (manage via File > RDP gateways)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Op de achtergrond controleren of de server bereikbaar is (ping, anders de RDP-poort). In de boom: groen = bereikbaar, rood = niet bereikbaar, oranje = andere computer op dat adres. Interval: Bestand > Opties."
+msgstr "Check in the background whether the server is reachable (ping, otherwise the RDP port). In the tree: green = reachable, red = not reachable, orange = a different computer at that address. Interval: File > Options."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "RDCMan-gatewayinstelling (staat in de .rdg): bij route Direct via deze gateway verbinden."
+msgstr "RDCMan gateway setting (stored in the .rdg): connect through this gateway with route Direct."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Naam van de RD Gateway-server, bijv. rdg.voorbeeld.nl."
+msgstr "Name of the RD Gateway server, e.g. rdg.example.com."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Hoe je je bij de gateway aanmeldt: wachtwoord (NTLM), smartcard, of later kiezen."
+msgstr "How you log on to the gateway: password (NTLM), smart card, or choose later."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Servers in het lokale netwerk rechtstreeks benaderen, niet via de gateway."
+msgstr "Reach servers on the local network directly, not through the gateway."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Voor de gateway dezelfde gebruikersnaam en hetzelfde wachtwoord gebruiken als voor de server."
+msgstr "Use the same user name and password for the gateway as for the server."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Gebruikersnaam voor de gateway (als de aanmeldgegevens niet gedeeld worden)."
+msgstr "User name for the gateway (if the credentials are not shared)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Dynamisch: de resolutie volgt het vak of venster. Venstergrootte: vast op de grootte bij verbinden. Vaste grootte: de afmeting hieronder. Of volledig scherm."
+msgstr "Dynamic: the resolution follows the pane or window. Window size: fixed at the size when connecting. Fixed size: the size below. Or full screen."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Schaal (DPI) in de sessie. Automatisch volgt de monitor waarop RDCManagerX staat. In dynamische modus meteen toegepast."
+msgstr "Scale (DPI) in the session. Automatic follows the monitor RDCManagerX is on. Applied immediately in dynamic mode."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Afmeting bij \"Vaste grootte\", als breedte x hoogte (bijv. 1920 x 1080)."
+msgstr "Size for \"Fixed size\", as width x height (e.g. 1920 x 1080)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Kleurdiepte van de sessie; 32 bits is standaard."
+msgstr "Colour depth of the session; 32 bits is the default."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Bij venstergrootte of vaste grootte de inhoud schalen zodat hij in het vak past (niet nodig bij dynamisch)."
+msgstr "With window size or fixed size, scale the contents so they fit the pane (not needed with dynamic)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Hoe lang na het wijzigen van de venstergrootte gewacht wordt voordat de resolutie wordt aangepast."
+msgstr "How long to wait after the window size changes before the resolution is adjusted."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Ondersteunt de server geen dynamische resolutie, dan opnieuw verbinden met de nieuwe afmeting."
+msgstr "If the server does not support dynamic resolution, reconnect with the new size."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Waar het geluid uit de sessie wordt afgespeeld."
+msgstr "Where the sound from the session is played."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Geluidskwaliteit; hoger kost meer bandbreedte."
+msgstr "Sound quality; higher uses more bandwidth."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "De microfoon van deze pc in de sessie gebruiken."
+msgstr "Use the microphone of this PC in the session."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Waar Windows-toetscombinaties (zoals Alt+Tab en de Windows-toets) heengaan."
+msgstr "Where Windows key combinations (such as Alt+Tab and the Windows key) go."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Kopiëren en plakken tussen deze pc en de sessie (tekst en bestanden). De server moet dit toestaan."
+msgstr "Copy and paste between this PC and the session (text and files). The server must allow this."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Stations van deze pc beschikbaar maken in de sessie."
+msgstr "Make the drives of this PC available in the session."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Printers van deze pc gebruiken in de sessie."
+msgstr "Use the printers of this PC in the session."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "COM- en LPT-poorten van deze pc doorgeven aan de sessie."
+msgstr "Pass the COM and LPT ports of this PC to the session."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Smartcards van deze pc gebruiken in de sessie (ook om aan te melden)."
+msgstr "Use the smart cards of this PC in the session (also to log on)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Plug-and-play-apparaten (bijv. camera of telefoon) doorgeven aan de sessie."
+msgstr "Pass plug and play devices (e.g. a camera or phone) to the session."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Wat te doen als het certificaat van de server niet geverifieerd kan worden: toch verbinden, niet verbinden, of waarschuwen (aanbevolen)."
+msgstr "What to do when the server certificate cannot be verified: connect anyway, do not connect, or warn (recommended)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Route"
+msgstr "Route"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Verbindingsroute"
+msgstr "Connection route"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Direct (eventueel via de gateway hieronder)"
+msgstr "Direct (optionally via the gateway below)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Via Tailscale-netwerk"
+msgstr "Via Tailscale network"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Via RDP-gateway uit de lijst"
+msgstr "Via RDP gateway from the list"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "(geen)"
+msgstr "(none)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Tailscale-netwerk"
+msgstr "Tailscale network"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Adres in het tailnet"
+msgstr "Address in the tailnet"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "RDP-gateway"
+msgstr "RDP gateway"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Bereikbaarheid tonen in de boom (ping op de achtergrond, alleen bij Direct)"
+msgstr "Show reachability in the tree (background ping, Direct only)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Adres in het tailnet: de machinenaam (MagicDNS) of het 100.x-adres van de server; leeg = de servernaam. Netwerken en gateways beheer je via Bestand > Tailscale-netwerken en Bestand > RDP-gateways."
+msgstr "Address in the tailnet: the machine name (MagicDNS) or the 100.x address of the server; empty = the server name. Manage networks and gateways via File > Tailscale networks and File > RDP gateways."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Gateway gebruiken (RDCMan-instelling, bij Direct)"
+msgstr "Use gateway (RDCMan setting, with Direct)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Wachtwoord vragen (NTLM)"
+msgstr "Ask for password (NTLM)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Later kiezen"
+msgstr "Choose later"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Gateway overslaan voor lokale adressen"
+msgstr "Bypass gateway for local addresses"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Zelfde aanmeldgegevens gebruiken als voor de server"
+msgstr "Use the same credentials as for the server"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Gebruikersnaam gateway"
+msgstr "Gateway user name"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Domein gateway"
+msgstr "Gateway domain"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Deze gateway staat in de .rdg (RDCMan kan hem ook gebruiken); het wachtwoord wordt niet opgeslagen. Een gateway uit de lijst (route \"Via RDP-gateway\") kan dat wel, in de wachtwoordkluis."
+msgstr "This gateway is stored in the .rdg (RDCMan can use it too); the password is not stored. A gateway from the list (route \"Via RDP gateway\") can store it, in the password vault."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Verbinding"
+msgstr "Connection"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Verbinden met de beheersessie (console)"
+msgstr "Connect to the administrative session (console)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Programma starten na aanmelden"
+msgstr "Start program after logon"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Werkmap van dat programma"
+msgstr "Working folder of that program"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Load-balancinginformatie"
+msgstr "Load balancing information"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Een startprogramma werkt alleen als de server dat toestaat (groepsbeleid/RemoteApp)."
+msgstr "A start program only works if the server allows it (group policy/RemoteApp)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Weergave"
+msgstr "Display"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Weergavemodus"
+msgstr "Display mode"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Dynamisch (volgt het venster)"
+msgstr "Dynamic (follows the window)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Venstergrootte bij verbinden"
+msgstr "Window size at connect"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Vaste grootte"
+msgstr "Fixed size"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Schaal in de sessie"
+msgstr "Scale in the session"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Vaste grootte (breedte x hoogte)"
+msgstr "Fixed size (width x height)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Kleurdiepte"
+msgstr "Colour depth"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "15 bits"
+msgstr "15 bits"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "16 bits"
+msgstr "16 bits"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "24 bits"
+msgstr "24 bits"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "32 bits"
+msgstr "32 bits"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Inhoud schalen (smart sizing)"
+msgstr "Scale contents (smart sizing)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Nee"
+msgstr "No"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Ja, bij venstergrootte of vaste grootte"
+msgstr "Yes, with window size or fixed size"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Wachttijd na formaatwijziging (ms)"
+msgstr "Delay after resize (ms)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Opnieuw verbinden als dynamisch aanpassen niet werkt"
+msgstr "Reconnect if dynamic resizing does not work"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Dynamisch: de resolutie volgt het vak of venster (schalen niet nodig). Vaste grootte gebruikt de opgegeven afmeting. Een gewijzigde schaal geldt direct voor open sessies; de andere instellingen bij de volgende verbinding."
+msgstr "Dynamic: the resolution follows the pane or window (no scaling needed). Fixed size uses the given size. A changed scale applies immediately to open sessions; the other settings at the next connection."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Lokale bronnen"
+msgstr "Local resources"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Geluid"
+msgstr "Sound"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Op deze computer afspelen"
+msgstr "Play on this computer"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Op de externe computer afspelen"
+msgstr "Play on the remote computer"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Niet afspelen"
+msgstr "Do not play"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Geluidskwaliteit"
+msgstr "Sound quality"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Gemiddeld"
+msgstr "Medium"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Hoog"
+msgstr "High"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Microfoon"
+msgstr "Microphone"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Opnemen vanaf deze computer"
+msgstr "Record from this computer"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Niet opnemen"
+msgstr "Do not record"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Windows-toetscombinaties"
+msgstr "Windows key combinations"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Op deze computer"
+msgstr "On this computer"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Op de externe computer"
+msgstr "On the remote computer"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Alleen bij volledig scherm"
+msgstr "Only in full screen"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Klembord (tekst en bestanden kopiëren/plakken)"
+msgstr "Clipboard (copy/paste text and files)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Stations van deze computer"
+msgstr "Drives of this computer"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Printers"
+msgstr "Printers"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Poorten (COM/LPT)"
+msgstr "Ports (COM/LPT)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Smartcards"
+msgstr "Smart cards"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Plug-and-play-apparaten"
+msgstr "Plug and play devices"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Wijzigingen gelden bij de volgende verbinding."
+msgstr "Changes apply at the next connection."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Beveiliging"
+msgstr "Security"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Serverauthenticatie"
+msgstr "Server authentication"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Verbinden zonder waarschuwing"
+msgstr "Connect without warning"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Niet verbinden als verificatie mislukt"
+msgstr "Do not connect if authentication fails"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Waarschuwen als verificatie mislukt"
+msgstr "Warn if authentication fails"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "(eigen gebruikersnaam en domein)"
+msgstr "(own user name and domain)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Profiel: %s"
+msgstr "Profile: %s"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "%s (niet beschikbaar in RDCManX)"
+msgstr "%s (not available in RDCManX)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Gebruikersnaam en domein komen uit het profiel (beheer: Bestand > Credential-profielen)."
+msgstr "User name and domain come from the profile (manage: File > Credential profiles)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Profiel \"%s\" is niet beschikbaar; bij verbinden wordt om de gebruikersnaam gevraagd."
+msgstr "Profile \"%s\" is not available; you are asked for the user name when connecting."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Vul een naam in."
+msgstr "Enter a name."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Vul de servernaam of het IP-adres in."
+msgstr "Enter the server name or IP address."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Ongeldig MAC-adres. Voorbeeld: 00-11-22-33-44-55."
+msgstr "Invalid MAC address. Example: 00-11-22-33-44-55."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Vul het broadcastadres in (meestal 255.255.255.255)."
+msgstr "Enter the broadcast address (usually 255.255.255.255)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "De UDP-poort moet een getal tussen 1 en 65535 zijn (meestal 9 of 7)."
+msgstr "The UDP port must be a number between 1 and 65535 (usually 9 or 7)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Ongeldige vaste grootte. Gebruik breedte x hoogte, bijvoorbeeld 1920 x 1080."
+msgstr "Invalid fixed size. Use width x height, for example 1920 x 1080."
+
+#: Source/RdcmX.UI.SectionPage.pas
+msgid "Aan: deze instellingen komen van de bovenliggende groep (of de standaard). Uit: eigen instellingen voor deze server of groep."
+msgstr "On: these settings come from the parent group (or the defaults). Off: own settings for this server or group."
+
+#: Source/RdcmX.UI.SectionPage.pas
+msgid "\"%s\" moet een getal tussen %d en %d zijn."
+msgstr "\"%s\" must be a number between %d and %d."
+
+#: Source/RdcmX.UI.SessionWindow.pas
+msgid "Venster"
+msgstr "Window"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Tailscale-netwerken - %s"
+msgstr "Tailscale networks - %s"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "ja"
+msgstr "yes"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "nee"
+msgstr "no"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "nieuw"
+msgstr "new"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "in de kluis"
+msgstr "in the vault"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "geen (browser)"
+msgstr "none (browser)"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "control URL gewijzigd: opgeslagen key wordt gewist"
+msgstr "control URL changed: stored key will be deleted"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "tskey-auth-... (leeg = inloggen via de browser)"
+msgstr "tskey-auth-... (empty = log in through the browser)"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Test stoppen"
+msgstr "Stop test"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Nieuw netwerk"
+msgstr "New network"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Netwerk \"%s\" wordt nog gebruikt door %d route(s) in dit bestand. Kies daar eerst een andere route."
+msgstr "Network \"%s\" is still used by %d route(s) in this file. Choose a different route there first."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Netwerk \"%s\" is in gebruik door een open sessie. Sluit die eerst."
+msgstr "Network \"%s\" is in use by an open session. Close it first."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid ""
+"Netwerk \"%s\" verwijderen?\r\n"
+"\r\n"
+"De auth key en de sleutels van dit netwerk worden van deze pc gewist."
+msgstr ""
+"Delete network \"%s\"?\r\n"
+"\r\n"
+"The auth key and the keys of this network will be deleted from this PC."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Elk netwerk moet een naam hebben."
+msgstr "Every network must have a name."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Er zijn twee netwerken met de naam \"%s\"."
+msgstr "There are two networks named \"%s\"."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "De naam in het tailnet mag alleen kleine letters, cijfers en streepjes bevatten (max. 63 tekens, niet beginnen of eindigen met een streepje)."
+msgstr "The name in the tailnet may only contain lowercase letters, digits and hyphens (max. 63 characters, not starting or ending with a hyphen)."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Een auth key begint met \"tskey-\" (bijv. tskey-auth-...)."
+msgstr "An auth key starts with \"tskey-\" (e.g. tskey-auth-...)."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "De control URL moet met https:// beginnen (http:// alleen naar localhost): anders kan de auth key onderweg worden onderschept."
+msgstr "The control URL must start with https:// (http:// only to localhost): otherwise the auth key could be intercepted in transit."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Het lokale adres moet een loopback-adres zijn (127.x.x.x), bijv. 127.0.0.2."
+msgstr "The local address must be a loopback address (127.x.x.x), e.g. 127.0.0.2."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Een auth key kan alleen in de wachtwoordkluis worden bewaard. Zet \"Wachtwoorden onthouden\" aan in Opties, of laat het veld leeg (dan log je in via de browser)."
+msgstr "An auth key can only be stored in the password vault. Turn on \"Remember passwords\" in Options, or leave the field empty (then you log in through the browser)."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid ""
+"De control URL van \"%s\" is gewijzigd.\r\n"
+"\r\n"
+"De opgeslagen auth key en sleutels horen bij de oude server en worden gewist; daarna is een nieuwe auth key of opnieuw inloggen nodig. Doorgaan?"
+msgstr ""
+"The control URL of \"%s\" has changed.\r\n"
+"\r\n"
+"The stored auth key and keys belong to the old server and will be deleted; after that a new auth key or logging in again is needed. Continue?"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "De auth key van \"%s\" wordt in de wachtwoordkluis opgeslagen."
+msgstr "The auth key of \"%s\" will be stored in the password vault."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "De auth key van \"%s\" kon niet in de wachtwoordkluis worden opgeslagen."
+msgstr "The auth key of \"%s\" could not be stored in the password vault."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Test gestopt."
+msgstr "Test stopped."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Dit netwerk is al actief voor een open sessie; status ophalen..."
+msgstr "This network is already active for an open session; getting status..."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Verbinden met het tailnet..."
+msgstr "Connecting to the tailnet..."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "De control server gaf een ongeldig login-adres (geen https); niet geopend."
+msgstr "The control server returned an invalid login address (not https); not opened."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid ""
+"Inloggen nodig: de login-pagina is in de browser geopend.\r\n"
+"%s"
+msgstr ""
+"Login required: the login page has been opened in the browser.\r\n"
+"%s"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Verbinden met het tailnet... (%s)"
+msgstr "Connecting to the tailnet... (%s)"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Verbonden. Adres in het tailnet: %s"
+msgstr "Connected. Address in the tailnet: %s"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Naam: %s"
+msgstr "Name: %s"
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Verbonden."
+msgstr "Connected."
+
+#: Source/RdcmX.UI.Tailnets.pas
+msgid "Niet gelukt: %s"
+msgstr "Failed: %s"
+
+#: Source/RdcmX.WakeOnLan.pas
+msgid "Ongeldig MAC-adres \"%s\"."
+msgstr "Invalid MAC address \"%s\"."
+
+#: Source/RdcmX.WakeOnLan.pas
+msgid "Ongeldige WOL-poort %d."
+msgstr "Invalid WOL port %d."
+
+#: Source/RdcmX.WakeOnLan.pas
+msgid "Ongeldig broadcastadres \"%s\" (verwacht een IPv4-adres)."
+msgstr "Invalid broadcast address \"%s\" (expected an IPv4 address)."
+

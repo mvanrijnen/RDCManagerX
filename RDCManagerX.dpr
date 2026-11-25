@@ -6,6 +6,7 @@ uses
   RdcmX.AppSettings in 'Source\RdcmX.AppSettings.pas',
   RdcmX.Credentials in 'Source\RdcmX.Credentials.pas',
   RdcmX.Crypto in 'Source\RdcmX.Crypto.pas',
+  RdcmX.Lang in 'Source\RdcmX.Lang.pas',
   RdcmX.Log in 'Source\RdcmX.Log.pas',
   RdcmX.Model in 'Source\RdcmX.Model.pas',
   RdcmX.Rdp.Host in 'Source\RdcmX.Rdp.Host.pas',
@@ -41,6 +42,7 @@ uses
 {$R 'TsBridge.res' 'Source\TsBridge.rc'}
 {$R 'Help.res' 'Source\Help.rc'}
 {$R 'HelpChm.res' 'Source\HelpChm.rc'}
+{$R 'Lang.res' 'Source\Lang.rc'}
 
 begin
   {$IFDEF DEBUG}
@@ -52,6 +54,8 @@ begin
   Application.Title := 'RDCManagerX';
   // Thema vóór het eerste venster: later wisselen maakt alle vensters (en dus RDP-sessies) opnieuw aan.
   ApplyStartupTheme;
+  // Language before the first window as well: forms translate their DFM texts while loading.
+  ApplyStartupLanguage;
   Application.CreateForm(TfrmMain, frmMain);
   Application.Run;
 end.
