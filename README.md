@@ -2,6 +2,8 @@
 
 **English** | [Nederlands](README.nl.md)
 
+📖 **Manual (English / Dutch, HTML and PDF): [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/)**
+
 ![RDCManagerX with the fictional Contoso demo file](Docs/images/screenshot-en.png)
 
 An RDP connection manager in the style of Microsoft Remote Desktop Connection Manager (RDCMan). It reads and writes
@@ -12,8 +14,6 @@ RDCManagerX also has a password vault, a split session view, Wake-on-LAN, an opt
 tree, and routes via **Tailscale** or an **RD Gateway**.
 
 Windows, 64-bit. Built with Delphi 12.
-
-**Manual:** [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/) (English and Dutch, HTML and PDF).
 
 > [!NOTE]
 > The user interface is available in English and Dutch (**File > Options > Language**; by default it follows the

@@ -2,6 +2,8 @@
 
 [English](README.md) | **Nederlands**
 
+📖 **Handleiding (Nederlands / Engels, HTML en PDF): [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/nl/)**
+
 ![RDCManagerX met het fictieve demobestand Contoso](Docs/images/screenshot-nl.png)
 
 Een RDP-verbindingsbeheerder in de stijl van Microsoft Remote Desktop Connection Manager (RDCMan). Het programma
@@ -12,8 +14,6 @@ Daarnaast heeft RDCManagerX een wachtwoordkluis, gesplitste weergave, Wake-on-LA
 **bereikbaarheidscontrole** in de boom, en routes via **Tailscale** of een **RD Gateway**.
 
 Windows, 64-bit. Gebouwd met Delphi 12.
-
-**Handleiding:** [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/nl/) (Nederlands en Engels, HTML en PDF).
 
 **Trefwoorden:** Delphi, Delphi 12, VCL, Object Pascal, RDP, Remote Desktop, Remote Desktop Protocol, RDP client,
 RDP manager, RDCMan, Remote Desktop Connection Manager, RDCMan alternative, mstsc, mstscax, RD Gateway,
