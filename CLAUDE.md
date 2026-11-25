@@ -144,7 +144,7 @@ User docs: `README.md`. Manual test plan: `TESTPLAN.md`.
 - **Main form:**
   - `UpdatePingTargets` runs on open/close/`MarkModified`, and only pushes when the target set changed.
   - `PingResultsArrived` updates the icons.
-  - A server not in a session has a tinted server icon (`TintedPixels`; user request): blue `ciServer` means no ping or no result yet, green `ciServerOnline` means reachable, red `ciServerOffline` means not reachable. Orange `ciServerWrongHost` means reachable by name, but the NetBIOS node status (UDP 137, `RdcNetBiosName`, like `nbtstat -A`) on that address returns a different computer name. That points to a stale DNS A record: DHCP runs on the firewall and DNS scavenging is off. With no NetBIOS answer the identity is not checked, and servers entered by IP are skipped. Sessions keep the untinted icon with a coloured dot.
+  - A server not in a session has a tinted server icon (`TintedPixels`; user request): blue `ciServer` means no ping or no result yet, green `ciServerOnline` means reachable, red `ciServerOffline` means not reachable. Orange `ciServerWrongHost` means reachable by name, but the NetBIOS node status (UDP 137, `RdcNetBiosName`, like `nbtstat -A`) on that address returns a different computer name. That points to a stale DNS A record (typical when DHCP hands the address to another device and DNS scavenging is off). With no NetBIOS answer the identity is not checked, and servers entered by IP are skipped. Sessions keep the untinted icon with a coloured dot.
   - The status bar shows "online (n ms)" or "niet bereikbaar (sinds hh:nn)" for the selected server.
 
 
