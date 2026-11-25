@@ -298,3 +298,10 @@ int TsBridgeVersion(char* buf, int buflen);
 
 De DLL wordt nooit ontladen, omdat de Go-runtime dat niet ondersteunt. Ontbreekt hij, dan werkt de app gewoon en is
 alleen de Tailscale-route niet beschikbaar.
+
+---
+
+## Totstandkoming
+
+Ontwikkeld door Maurits van Rijnen met hulp van [Claude](https://www.anthropic.com/claude) (Anthropic) via
+[Claude Code](https://claude.com/claude-code). Claude staat als co-auteur in de commits.
