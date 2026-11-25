@@ -1,0 +1,64 @@
+# Publishes the manual (English and Dutch, HTML and PDF) to GitHub Pages.
+# Source: Docs\RDCManagerX-Manual.html, Docs\RDCManagerX-Handleiding.html, their PDFs and Docs\site\index.html.
+# One-time setup: Settings > Pages > Build and deployment > Source: "GitHub Actions".
+name: Pages (manual)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "Docs/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Assemble site
+        run: |
+          set -euo pipefail
+          mkdir -p site/en site/nl
+          cp Docs/site/index.html site/index.html
+          cp Docs/RDCManagerX-Manual.html site/en/index.html
+          cp Docs/RDCManagerX-Manual.pdf site/en/
+          cp Docs/RDCManagerX-Handleiding.html site/nl/index.html
+          cp Docs/RDCManagerX-Handleiding.pdf site/nl/
+          # Language switch and PDF link at the top of each manual (only on the site, not in the app's copy).
+          sed -i 's|<div class="page">|<div class="page"><p style="text-align:right;margin:0 0 8px"><a href="../">Home</a> \&middot; <strong>English</strong> \&middot; <a href="../nl/">Nederlands</a> \&middot; <a href="RDCManagerX-Manual.pdf">PDF</a></p>|' site/en/index.html
+          sed -i 's|<div class="page">|<div class="page"><p style="text-align:right;margin:0 0 8px"><a href="../">Home</a> \&middot; <a href="../en/">English</a> \&middot; <strong>Nederlands</strong> \&middot; <a href="RDCManagerX-Handleiding.pdf">PDF</a></p>|' site/nl/index.html
+          touch site/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

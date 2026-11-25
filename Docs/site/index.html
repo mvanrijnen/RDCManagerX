@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RDCManagerX - Manual / Handleiding</title>
+<meta name="description" content="RDCManagerX: RDP connection manager for Windows (Delphi), RDCMan-compatible, with dynamic resolution, password vault, RD Gateway and Tailscale routes.">
+<style>
+  :root { --text: #1f2328; --muted: #57606a; --line: #d0d7de; --bg: #ffffff; --panel: #f6f8fa; --accent: #2f7fd8; }
+  @media (prefers-color-scheme: dark) { :root { --text: #e6edf3; --muted: #9da7b3; --line: #30363d; --bg: #0d1117; --panel: #161b22; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 "Segoe UI", system-ui, sans-serif; }
+  .page { max-width: 760px; margin: 0 auto; padding: 48px 16px 64px; }
+  header { border-bottom: 3px solid var(--accent); padding-bottom: 16px; margin-bottom: 28px; }
+  h1 { font-size: 34px; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--muted); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+  .card h2 { font-size: 20px; margin: 0 0 6px; }
+  .card p { margin: 0 0 12px; color: var(--muted); }
+  .card a { color: var(--accent); text-decoration: none; font-weight: 600; margin-right: 14px; }
+  .card a:hover { text-decoration: underline; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 14px; }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>RDCManagerX</h1>
+    <p>RDP connection manager for Windows &middot; RDP-verbindingsbeheer voor Windows</p>
+  </header>
+  <div class="cards">
+    <div class="card">
+      <h2>English</h2>
+      <p>Administrator manual</p>
+      <a href="en/">Read online</a><a href="en/RDCManagerX-Manual.pdf">PDF</a>
+    </div>
+    <div class="card">
+      <h2>Nederlands</h2>
+      <p>Handleiding voor beheerders</p>
+      <a href="nl/">Online lezen</a><a href="nl/RDCManagerX-Handleiding.pdf">PDF</a>
+    </div>
+  </div>
+  <footer>
+    Source code, build instructions and Tailscale setup: <a href="https://github.com/mvanrijnen/RDCManagerX">github.com/mvanrijnen/RDCManagerX</a>
+  </footer>
+</div>
+</body>
+</html>

@@ -22,3 +22,6 @@ Samples/
 # Go bridge: only the compressed DLL is needed (embedded in the exe)
 Bridge/bin/**/*.dll
 Bridge/bin/**/*.h
+
+# IDE desktop state
+*.dsk

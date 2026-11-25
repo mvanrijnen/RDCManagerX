@@ -11,6 +11,8 @@ Daarnaast heeft RDCManagerX een wachtwoordkluis, gesplitste weergave, Wake-on-LA
 
 Windows, 64-bit. Gebouwd met Delphi 12.
 
+**Handleiding:** [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/nl/) (Nederlands en Engels, HTML en PDF).
+
 **Trefwoorden:** Delphi, Delphi 12, VCL, Object Pascal, RDP, Remote Desktop, Remote Desktop Protocol, RDP client,
 RDP manager, RDCMan, Remote Desktop Connection Manager, RDCMan alternative, mstsc, mstscax, RD Gateway,
 RDP Gateway, Remote Desktop Gateway, Tailscale, tsnet, WireGuard, dynamic resolution, Wake-on-LAN, Windows.

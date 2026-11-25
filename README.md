@@ -11,6 +11,8 @@ tree, and routes via **Tailscale** or an **RD Gateway**.
 
 Windows, 64-bit. Built with Delphi 12.
 
+**Manual:** [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/) (English and Dutch, HTML and PDF).
+
 > [!NOTE]
 > The user interface is currently in Dutch. Menu paths below are given in English, with the Dutch label in
 > parentheses, e.g. **Properties > Route** (*Eigenschappen > Route*).
