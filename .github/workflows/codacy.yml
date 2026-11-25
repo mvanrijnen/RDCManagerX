@@ -40,7 +40,24 @@ jobs:
           # Never fail the build on findings; they are reviewed in the Security tab.
           max-allowed-issues: 2147483647
 
-      - name: Upload SARIF results file
+      # Codacy writes one SARIF run per tool into a single file, but code scanning accepts only one run per
+      # category. Split it into one file per tool, each with its own category (automationDetails.id).
+      - name: Split SARIF per tool
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          data = json.load(open('results.sarif', encoding='utf-8'))
+          os.makedirs('sarif', exist_ok=True)
+          for index, run in enumerate(data.get('runs', [])):
+              tool = run.get('tool', {}).get('driver', {}).get('name') or f'tool{index}'
+              slug = re.sub(r'[^A-Za-z0-9_-]+', '-', tool).strip('-').lower() or f'tool{index}'
+              run['automationDetails'] = {'id': f'codacy-{slug}/'}
+              part = dict(data, runs=[run])
+              json.dump(part, open(f'sarif/{index:02d}-{slug}.sarif', 'w', encoding='utf-8'))
+              print(f'{tool}: {len(run.get("results", []))} results')
+          PY
+
+      - name: Upload SARIF results
         uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
-          sarif_file: results.sarif
+          sarif_file: sarif
