@@ -307,5 +307,10 @@ alleen de Tailscale-route niet beschikbaar.
 
 ## Totstandkoming
 
+Het idee is afgeleid van [Remote Desktop Connection Manager (RDCMan)](https://learn.microsoft.com/sysinternals/downloads/rdcman)
+van Microsoft Sysinternals: de opzet met een boom van groepen en servers, overerfbare instellingen en het
+`.rdg`-bestandsformaat. Het is een eigen implementatie: er is geen code van RDCMan gebruikt. RDCManagerX is niet
+verbonden aan Microsoft of Sysinternals.
+
 Ontwikkeld door Maurits van Rijnen met hulp van [Claude](https://www.anthropic.com/claude) (Anthropic) via
 [Claude Code](https://claude.com/claude-code). Claude staat als co-auteur in de commits.
