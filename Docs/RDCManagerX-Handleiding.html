@@ -206,6 +206,7 @@ ping &eacute;&eacute;n keer in voor een hele groep.</p>
 </table>
 <p>Netwerken en gateways horen bij het bestand; auth keys en wachtwoorden staan alleen in de kluis van je eigen pc. Via
 Tailscale verschijnt een certificaatwaarschuwing (naam <code>127.0.0.2</code>); de verbinding zelf is door Tailscale versleuteld.</p>
+<div class="note warn"><strong>Tailscale alleen met een ACL.</strong> Het standaardbeleid van Tailscale staat &aacute;lles toe: elk apparaat in het tailnet mag elk ander apparaat bereiken. Stel daarom in de Tailscale-adminconsole (Access controls) een ACL in die RDP (TCP 3389) alleen toestaat van de RDCManagerX-node (<code>tag:rdpclient</code>) naar de doel-pc's (<code>tag:rdpserver</code>), en haal de regel weg die alles toestaat. Zet ook MFA en device approval aan. Het voorbeeld staat in <code>README.md</code>.</div>
 
 <h2 id="ping">11. Bereikbaarheid (ping)</h2>
 <p>Zet op een bestand, groep of server: Eigenschappen &gt; Route &gt; <em>Bereikbaarheid tonen in de boom</em>
@@ -271,7 +272,8 @@ Set-DnsServerScavenging -ScavengingState $true -ScavengingInterval 1.00:00:00 -A
 geheugen, dan kan alleen de kluis worden geleegd.</p>
 <h3>Tailscale</h3>
 <ul>
-  <li>Op de doel-pc moet Tailscale draaien, en de firewall moet RDP (TCP 3389) toestaan vanaf <code>100.64.0.0/10</code>.</li>
+  <li>Op de doel-pc moet Tailscale draaien, en de firewall moet RDP (TCP 3389) toestaan vanaf <code>100.64.0.0/10</code> op de adapter <code>Tailscale</code>.</li>
+  <li>Lukt verbinden niet sinds de ACL? Controleer of de doel-pc de tag <code>tag:rdpserver</code> heeft en de auth key de tag <code>tag:rdpclient</code>.</li>
   <li>Vul bij <em>Adres in het tailnet</em> de machinenaam of het 100.x-adres in, niet het e-mailadres van het account.</li>
   <li><em>Test verbinding</em> in Bestand &gt; Tailscale-netwerken laat zien of het netwerk opstart.</li>
 </ul>

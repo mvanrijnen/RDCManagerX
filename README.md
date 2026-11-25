@@ -23,7 +23,7 @@ instellingen erft de route van de bovenliggende groep.
 | Route | Wat er gebeurt |
 |---|---|
 | **Direct** (standaard) | Hetzelfde gedrag als vroeger. Ook de instellingen op de tab *Gateway* (RDCMan-compatibel) blijven gelden. |
-| **Via Tailscale-netwerk** | RDCManagerX wordt zelf, tijdelijk, een apparaat in je tailnet en stuurt alleen zijn eigen RDP-verkeer daarover. Tailscale hoeft op deze pc niet geïnstalleerd te zijn. |
+| **Via Tailscale-netwerk** | RDCManagerX wordt zelf, tijdelijk, een apparaat in je tailnet en stuurt alleen zijn eigen RDP-verkeer daarover. Tailscale hoeft op deze pc niet geïnstalleerd te zijn. ⚠️ **Alleen veilig met een ACL in je tailnet** (zie [Tailscale](#tailscale)). |
 | **Via RDP-gateway** | Verbinden via een Microsoft RD Gateway uit de lijst van het bestand. |
 
 De **definities** van netwerken en gateways horen bij het bestand. Bij een `.rdg` staan ze in de sidecar
@@ -86,6 +86,17 @@ oude record staat nog in de DNS. Verwijder het oude record en zet DNS-scavenging
 
 ## Tailscale
 
+> [!CAUTION]
+> **Stel eerst een ACL in voordat je RDP via Tailscale gebruikt. Dit is verplicht, niet optioneel.**
+>
+> Het standaardbeleid van Tailscale staat **álles toe**: elk apparaat in je tailnet mag elk ander apparaat bereiken,
+> op elke poort. Zet je RDP open voor Tailscale zonder ACL, dan kan **elk** apparaat in je tailnet (een oude
+> telefoon, een gedeelde laptop, een gehackt apparaat) RDP doen naar je pc. Alleen het Windows-wachtwoord houdt
+> het dan nog tegen.
+>
+> Beperk RDP met een ACL tot de RDCManagerX-node(s) en de doel-pc's, haal de regel weg die alles toestaat, en
+> controleer het met een `tests`-blok. Zie [Toegang beperken met een ACL](#toegang-beperken-met-een-acl-verplicht).
+
 ### Hoe het werkt
 
 - **`tsbridge.dll`** zit ingebouwd in `RDCManagerX.exe` (gecomprimeerd); alleen de exe hoeft verspreid te worden.
@@ -139,35 +150,75 @@ Ga in de Tailscale-adminconsole naar **Settings > Keys > Generate auth key**:
 **Auth keys verlopen**, standaard na 90 dagen. Daarna krijg je bij het verbinden een foutmelding over een ongeldige
 of verlopen key. Maak dan een nieuwe aan en vul die in bij Tailscale-netwerken.
 
-### Toegang beperken (ACL)
+### Toegang beperken met een ACL (verplicht)
 
-> ⚠️ **Het standaardbeleid van Tailscale staat álles toe**: elk apparaat mag elk ander apparaat bereiken. Scherp dat
-> aan, zodat de RDCManagerX-node alleen RDP naar de doel-pc's mag.
+> [!WARNING]
+> **Zonder ACL is RDP via Tailscale niet veilig.** Het standaardbeleid van Tailscale staat álles toe: elk apparaat
+> mag elk ander apparaat bereiken. Een ACL zorgt dat alleen de RDCManagerX-node RDP naar de doel-pc's mag, en verder
+> niemand.
 
-Voorbeeld (Access controls in de adminconsole):
+Stel dit in onder **Access controls** in de adminconsole. Geef de doel-pc's de tag `tag:rdpserver` (adminconsole,
+apparaat > *Edit ACL tags*) en gebruik voor RDCManagerX een auth key met de tag `tag:rdpclient`:
 
 ```json
 {
-  "tagOwners": { "tag:rdpclient": ["autogroup:admin"] },
-  "hosts":     { "thuis-pc": "100.x.y.z" },
+  "tagOwners": {
+    "tag:rdpclient": ["autogroup:admin"],
+    "tag:rdpserver": ["autogroup:admin"]
+  },
   "grants": [
-    { "src": ["tag:rdpclient"], "dst": ["thuis-pc"], "ip": ["tcp:3389"] }
+    { "src": ["tag:rdpclient"], "dst": ["tag:rdpserver"], "ip": ["tcp:3389"] }
+  ],
+  "tests": [
+    { "src": "tag:rdpclient", "accept": ["tag:rdpserver:3389"], "deny": ["tag:rdpserver:22", "tag:rdpserver:445"] }
   ]
 }
 ```
 
-Haal daarbij de standaardregel weg die alles toestaat. Gebruik je zelf ook andere apparaten in het tailnet, geef die
-dan eigen regels.
+Controleer daarna:
+
+- **De regel die alles toestaat is weg.** Er mag geen grant of ACL meer staan met `"src": ["*"]` en `"dst": ["*"]`
+  (of `"*:*"`). Zolang die er nog staat, voegt de regel hierboven niets toe.
+- **Het `tests`-blok klopt.** De adminconsole weigert het opslaan als de regels iets anders doen dan de tests
+  verwachten. Zo merk je een fout meteen.
+- **Je eigen apparaten.** Een getagd apparaat hoort niet meer bij je gebruikersaccount. Wil je vanaf je eigen
+  apparaten ook bij de doel-pc's, of bij elkaar, dan geef je die een eigen, zo klein mogelijke regel.
+
+Liever een vast adres dan een tag? Dan kan het ook met `"hosts": { "thuis-pc": "100.x.y.z" }` en `"dst": ["thuis-pc"]`.
+
+**Beveilig ook het tailnet zelf:**
+
+- **MFA** op het account waarmee je bij Tailscale inlogt (Apple, Google, Microsoft, GitHub…). Dat account is de
+  sleutel tot je hele tailnet.
+- **Device approval** (*Settings > Device management*): een nieuw apparaat komt pas in het tailnet als jij het
+  goedkeurt. Gebruik dan auth keys met *Pre-approved*.
+- **Ephemeral auth keys met een tag** en een vervaldatum (zie hierboven).
 
 ### Op de doel-pc
 
 - **Tailscale moet draaien**, gewoon geïnstalleerd, en Extern bureaublad moet aan staan.
-- **De Windows Firewall moet RDP toestaan vanaf de Tailscale-adapter.** De standaardregel *Extern bureaublad*
-  geldt vaak alleen voor het profiel *Privé/Domein*. Sta TCP 3389 toe vanaf `100.64.0.0/10`, bijvoorbeeld zo:
+- **De Windows Firewall moet RDP toestaan vanaf de Tailscale-adapter, en alleen daar.** De standaardregel
+  *Extern bureaublad* geldt vaak alleen voor het profiel *Privé/Domein*. Sta TCP 3389 toe vanaf `100.64.0.0/10` op
+  de adapter `Tailscale` (PowerShell als beheerder):
 
   ```powershell
-  New-NetFirewallRule -DisplayName "RDP via Tailscale" -Direction Inbound -Protocol TCP -LocalPort 3389 -RemoteAddress 100.64.0.0/10 -Action Allow
+  New-NetFirewallRule -DisplayName "RDP via Tailscale" -Direction Inbound -Protocol TCP -LocalPort 3389 -RemoteAddress 100.64.0.0/10 -InterfaceAlias Tailscale -Action Allow
   ```
+
+  - Zonder `-InterfaceAlias` geldt de regel op elke adapter. `100.64.0.0/10` is ook de CGNAT-reeks die sommige
+    providers gebruiken.
+  - Windows koppelt de regel aan die specifieke adapter. Installeer je Tailscale opnieuw, voer het commando dan
+    opnieuw uit.
+  - Controleer dat de standaardregels *Extern bureaublad* niet aan staan voor het profiel *Openbaar*:
+    `Get-NetFirewallRule -Group '@FirewallAPI.dll,-28752' | Select-Object DisplayName, Enabled, Profile`
+  - Test vanaf een apparaat buiten het tailnet: `Test-NetConnection <ip-van-doel-pc> -Port 3389` hoort
+    `TcpTestSucceeded : False` te geven, tenzij je RDP binnen het LAN bewust toestaat.
+- **NLA aan** (*Instellingen > Systeem > Extern bureaublad > Netwerkverificatie vereisen*), zodat er pas een
+  aanmeldscherm komt na een geldige aanmelding.
+- **Accountvergrendeling aan**, zodat wachtwoorden niet eindeloos geprobeerd kunnen worden. Controleer met
+  `net accounts`. Staat de drempel op *Never*:
+  `net accounts /lockoutthreshold:10 /lockoutduration:15 /lockoutwindow:15`.
+- **Een sterk wachtwoord**, en alleen de nodige accounts in *Administrators* en *Extern bureaublad-gebruikers*.
 
 ### Certificaat en aanmelding
 
