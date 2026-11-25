@@ -172,8 +172,12 @@ func TestEmptyTargetRejected(t *testing.T) {
 }
 
 func TestRedactSecrets(t *testing.T) {
-	r := newRedactor("tskey-auth-kABC123-XYZsecret")
-	got := r.redact("login met tskey-auth-kABC123-XYZsecret en tskey-client-other-999 klaar")
+	// Nep-keys, in stukken opgebouwd zodat secret scanners (GitHub) ze niet voor echte keys aanzien.
+	prefix := "tsk" + "ey-"
+	fakeAuth := prefix + "auth-kABC123-XYZsecret"
+	fakeClient := prefix + "client-other-999"
+	r := newRedactor(fakeAuth)
+	got := r.redact("login met " + fakeAuth + " en " + fakeClient + " klaar")
 	if strings.Contains(got, "XYZsecret") || strings.Contains(got, "other-999") {
 		t.Fatalf("secret niet gefilterd: %q", got)
 	}

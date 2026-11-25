@@ -87,7 +87,8 @@ oude record staat nog in de DNS. Verwijder het oude record en zet DNS-scavenging
 ## Tailscale
 
 > [!CAUTION]
-> **Stel eerst een ACL in voordat je RDP via Tailscale gebruikt. Dit is verplicht, niet optioneel.**
+> **Stel eerst een ACL in je tailnet in voordat je RDP via Tailscale gebruikt.** RDCManagerX kan dat niet voor je
+> controleren (de ACL staat in de adminconsole van Tailscale), maar zonder ACL is deze route niet veilig.
 >
 > Het standaardbeleid van Tailscale staat **álles toe**: elk apparaat in je tailnet mag elk ander apparaat bereiken,
 > op elke poort. Zet je RDP open voor Tailscale zonder ACL, dan kan **elk** apparaat in je tailnet (een oude
@@ -95,7 +96,7 @@ oude record staat nog in de DNS. Verwijder het oude record en zet DNS-scavenging
 > het dan nog tegen.
 >
 > Beperk RDP met een ACL tot de RDCManagerX-node(s) en de doel-pc's, haal de regel weg die alles toestaat, en
-> controleer het met een `tests`-blok. Zie [Toegang beperken met een ACL](#toegang-beperken-met-een-acl-verplicht).
+> controleer het met een `tests`-blok. Zie [Toegang beperken met een ACL](#toegang-beperken-met-een-acl).
 
 ### Hoe het werkt
 
@@ -150,7 +151,7 @@ Ga in de Tailscale-adminconsole naar **Settings > Keys > Generate auth key**:
 **Auth keys verlopen**, standaard na 90 dagen. Daarna krijg je bij het verbinden een foutmelding over een ongeldige
 of verlopen key. Maak dan een nieuwe aan en vul die in bij Tailscale-netwerken.
 
-### Toegang beperken met een ACL (verplicht)
+### Toegang beperken met een ACL
 
 > [!WARNING]
 > **Zonder ACL is RDP via Tailscale niet veilig.** Het standaardbeleid van Tailscale staat álles toe: elk apparaat
