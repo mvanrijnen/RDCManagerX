@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Versienummer yyyy.mm.dd.xxx: vóór het compileren van de resources (BrccCompile) genereert Tools\NextVersion.ps1
+  Source\Version.rc en hoogt het buildnummer van de dag op. Een PreBuildEvent is te laat: die draait pas na BrccCompile.
+  Niet bij de achtergrondcompilatie van de IDE (Kibitz/Code Insight).
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Target Name="RdcmxNextVersion" BeforeTargets="BrccCompile" Condition="'$(KibitzCompile)'==''">
+        <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\Tools\NextVersion.ps1&quot; -ProjectDir &quot;$(MSBuildProjectDirectory)&quot;"/>
+    </Target>
+</Project>

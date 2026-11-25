@@ -1,0 +1,2 @@
+// Windows-help (CHM), gemaakt door Tools\build-help.ps1. De app pakt hem uit en opent hem via Help.
+HELPCHM RCDATA "Docs\\help\\RDCManagerX.chm"

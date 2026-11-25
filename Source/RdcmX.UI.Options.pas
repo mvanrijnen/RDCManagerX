@@ -1,0 +1,137 @@
+﻿unit RdcmX.UI.Options;
+
+{
+  Opties-dialoog (Bestand > Opties...): app-instellingen per gebruiker (settings.json), niet per bestand.
+  De dialoog werkt op een TRdcOptions-record; het hoofdvenster past de gekozen waarden toe.
+}
+
+interface
+
+uses
+  Winapi.Messages, Winapi.Windows,
+  System.Classes, System.SysUtils, System.UITypes,
+  Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Graphics, Vcl.Samples.Spin, Vcl.StdCtrls,
+  RdcmX.UI.Theme;
+
+type
+  TRdcOptions = record
+    RecentServerCount: Integer;
+    Theme: TRdcTheme;
+    AutoSave: Boolean;
+    RememberPasswords: Boolean;
+    AutoLockMinutes: Integer;
+    /// <summary>Bereikbaarheid controleren elke zoveel seconden.</summary>
+    PingIntervalSec: Integer;
+  end;
+
+  TfrmOptions = class(TForm)
+    lblRecentCount: TLabel;
+    seRecentCount: TSpinEdit;
+    lblRecentHint: TLabel;
+    lblTheme: TLabel;
+    cbTheme: TComboBox;
+    lblThemeHint: TLabel;
+    chkAutoSave: TCheckBox;
+    lblAutoSaveHint: TLabel;
+    chkRememberPasswords: TCheckBox;
+    lblRememberHint: TLabel;
+    lblAutoLock: TLabel;
+    seAutoLock: TSpinEdit;
+    btnChangeMasterPassword: TButton;
+    lblPingInterval: TLabel;
+    sePingInterval: TSpinEdit;
+    pnlButtons: TPanel;
+    btnOk: TButton;
+    btnCancel: TButton;
+    procedure FormShow(Sender: TObject);
+    procedure btnChangeMasterPasswordClick(Sender: TObject);
+    procedure chkRememberPasswordsClick(Sender: TObject);
+  private
+    FChangeMasterPassword: TProc;
+    FVaultExists: Boolean;
+    procedure UpdateMasterPasswordButton;
+    procedure ChangeMasterPassword;
+    procedure FocusFirstField;
+    procedure LoadOptions(const aOptions: TRdcOptions);
+    procedure SaveOptions(var aOptions: TRdcOptions);
+  public
+    /// <summary>aChangeMasterPassword: wijzigt het hoofdwachtwoord (knop; alleen als de kluis bestaat).</summary>
+    class function Execute(var aOptions: TRdcOptions; aVaultExists: Boolean; const aChangeMasterPassword: TProc): Boolean; static;
+  end;
+
+implementation
+
+{$R *.dfm}
+
+class function TfrmOptions.Execute(var aOptions: TRdcOptions; aVaultExists: Boolean; const aChangeMasterPassword: TProc): Boolean;
+var
+  lForm: TfrmOptions;
+begin
+  lForm := TfrmOptions.Create(Application);
+  try
+    lForm.FVaultExists := aVaultExists;
+    lForm.FChangeMasterPassword := aChangeMasterPassword;
+    lForm.LoadOptions(aOptions);
+    lForm.UpdateMasterPasswordButton;
+    Result := lForm.ShowModal = mrOk;
+    if Result then
+      lForm.SaveOptions(aOptions);
+  finally
+    lForm.Free;
+  end;
+end;
+
+procedure TfrmOptions.FormShow(Sender: TObject);
+begin
+  FocusFirstField;
+end;
+
+procedure TfrmOptions.btnChangeMasterPasswordClick(Sender: TObject);
+begin
+  ChangeMasterPassword;
+end;
+
+procedure TfrmOptions.chkRememberPasswordsClick(Sender: TObject);
+begin
+  UpdateMasterPasswordButton;
+end;
+
+procedure TfrmOptions.UpdateMasterPasswordButton;
+begin
+  // Alleen met een bestaande kluis, en niet als het onthouden net wordt uitgezet (dan wordt de kluis gewist).
+  btnChangeMasterPassword.Enabled := FVaultExists and chkRememberPasswords.Checked and Assigned(FChangeMasterPassword);
+end;
+
+procedure TfrmOptions.ChangeMasterPassword;
+begin
+  if Assigned(FChangeMasterPassword) then
+    FChangeMasterPassword();
+end;
+
+procedure TfrmOptions.FocusFirstField;
+begin
+  ActiveControl := seRecentCount;
+end;
+
+procedure TfrmOptions.LoadOptions(const aOptions: TRdcOptions);
+begin
+  seRecentCount.Value := aOptions.RecentServerCount;
+  cbTheme.ItemIndex := Ord(aOptions.Theme);
+  chkAutoSave.Checked := aOptions.AutoSave;
+  chkRememberPasswords.Checked := aOptions.RememberPasswords;
+  seAutoLock.Value := aOptions.AutoLockMinutes;
+  sePingInterval.Value := aOptions.PingIntervalSec;
+end;
+
+procedure TfrmOptions.SaveOptions(var aOptions: TRdcOptions);
+begin
+  aOptions.RecentServerCount := seRecentCount.Value;
+  if cbTheme.ItemIndex >= 0 then
+    aOptions.Theme := TRdcTheme(cbTheme.ItemIndex);
+  aOptions.AutoSave := chkAutoSave.Checked;
+  aOptions.RememberPasswords := chkRememberPasswords.Checked;
+  aOptions.AutoLockMinutes := seAutoLock.Value;
+  aOptions.PingIntervalSec := sePingInterval.Value;
+end;
+
+end.

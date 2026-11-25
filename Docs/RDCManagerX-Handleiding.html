@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RDCManagerX - Handleiding</title>
+<style>
+  :root {
+    --text: #1f2328; --muted: #57606a; --line: #d0d7de; --bg: #ffffff; --panel: #f6f8fa;
+    --accent: #2f7fd8; --green: #2ea043; --red: #d73a49; --orange: #e8870e; --amber: #e8a317;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --text: #e6edf3; --muted: #9da7b3; --line: #30363d; --bg: #0d1117; --panel: #161b22; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 "Segoe UI", system-ui, sans-serif; }
+  .page { max-width: 880px; margin: 0 auto; padding: 32px 24px 64px; }
+  header.cover { border-bottom: 3px solid var(--accent); padding-bottom: 20px; margin-bottom: 28px; }
+  header.cover h1 { font-size: 34px; margin: 0 0 4px; letter-spacing: -0.5px; }
+  header.cover p { margin: 0; color: var(--muted); font-size: 17px; }
+  h2 { font-size: 23px; margin: 40px 0 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 17px; margin: 24px 0 6px; }
+  p, li { max-width: 72ch; }
+  code, kbd { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13.5px; }
+  code { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; white-space: nowrap; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; }
+  pre code { border: 0; padding: 0; background: none; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { background: var(--panel); font-weight: 600; }
+  nav.toc { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 18px; margin-bottom: 8px; }
+  nav.toc ol { margin: 6px 0; padding-left: 22px; columns: 2; column-gap: 32px; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  .note { border-left: 4px solid var(--accent); background: var(--panel); padding: 8px 14px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+  .warn { border-left-color: var(--orange); }
+  .dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+  .blue { background: var(--accent); } .green { background: var(--green); } .red { background: var(--red); }
+  .orange { background: var(--orange); } .amber { background: var(--amber); }
+  footer { margin-top: 48px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 10px; }
+  @media (max-width: 640px) { nav.toc ol { columns: 1; } .page { padding: 20px 16px 48px; } }
+  @media print {
+    :root, :root:not([data-theme="light"]) { --text: #1f2328; --muted: #57606a; --line: #d0d7de; --bg: #ffffff; --panel: #f6f8fa; }
+    body { font-size: 10.5pt; }
+    .page { max-width: none; padding: 0; }
+    h2, h3 { break-after: avoid; }
+    table, pre, .note, nav.toc { break-inside: avoid; }
+    h2#route, h2#problemen { break-before: page; }
+    a { color: inherit; text-decoration: none; }
+    @page { margin: 18mm 16mm; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <h1>RDCManagerX</h1>
+  <p>Handleiding voor beheerders: verbindingsbeheer voor Extern bureaublad (RDP)</p>
+</header>
+
+<nav class="toc">
+  <strong>Inhoud</strong>
+  <ol>
+    <li><a href="#wat">Wat is RDCManagerX?</a></li>
+    <li><a href="#start">Starten</a></li>
+    <li><a href="#bestanden">Bestanden</a></li>
+    <li><a href="#boom">De boom</a></li>
+    <li><a href="#zoeken">Zoeken</a></li>
+    <li><a href="#verbinden">Verbinden en sessies</a></li>
+    <li><a href="#weergave">Weergave en schaal</a></li>
+    <li><a href="#eigenschappen">Eigenschappen en overerving</a></li>
+    <li><a href="#aanmelden">Aanmelden en wachtwoordkluis</a></li>
+    <li><a href="#route">Route: direct, gateway, Tailscale</a></li>
+    <li><a href="#ping">Bereikbaarheid (ping)</a></li>
+    <li><a href="#wol">Wake-on-LAN</a></li>
+    <li><a href="#opties">Opties</a></li>
+    <li><a href="#toetsen">Sneltoetsen</a></li>
+    <li><a href="#problemen">Problemen oplossen</a></li>
+  </ol>
+</nav>
+
+<h2 id="wat" class="keep">1. Wat is RDCManagerX?</h2>
+<p>RDCManagerX is een verbindingsbeheerder voor Extern bureaublad, vergelijkbaar met Microsoft Remote Desktop Connection
+Manager (RDCMan). Je beheert servers in groepen, verbindt met een dubbelklik en werkt met meerdere sessies in tabs.</p>
+<ul>
+  <li><strong>Werkt met je bestaande RDCMan-bestanden</strong> (<code>.rdg</code>): openen zonder conversie, en ze blijven in RDCMan bruikbaar.</li>
+  <li><strong>Dynamische resolutie:</strong> de sessie past zich aan het venster of vak aan, zonder opnieuw te verbinden.</li>
+  <li><strong>Bereikbaarheid in de boom:</strong> zie in een oogopslag welke servers online zijn, inclusief verouderde DNS-records.</li>
+  <li><strong>Wachtwoordkluis</strong> met hoofdwachtwoord (AES-256), standaard uit.</li>
+  <li><strong>Routes</strong> via een RD Gateway of een Tailscale-netwerk, per server of groep.</li>
+  <li><strong>E&eacute;n exe, geen installatie.</strong></li>
+</ul>
+
+<h2 id="start">2. Starten</h2>
+<p>Start <code>RDCManagerX.exe</code>. Er is geen installatie nodig; je beheerder zet de exe op een netwerkshare of verspreidt hem via een launcher. Bij het starten worden de bestanden die bij het afsluiten open
+stonden weer geopend. Alles staat dan ingeklapt, behalve <em>Recent</em> en <em>Favorieten</em>.</p>
+<table>
+  <tr><th>Wat</th><th>Waar</th></tr>
+  <tr><td>App-instellingen (venster, recente bestanden, opties)</td><td><code>%APPDATA%\RDCManagerX\settings.json</code></td></tr>
+  <tr><td>Onthouden wachtwoorden en geheimen</td><td>Windows Referentiebeheer, versleuteld met je hoofdwachtwoord</td></tr>
+  <tr><td>Debuglog (alleen met <code>/debuglog</code>)</td><td><code>%LOCALAPPDATA%\RDCManagerX\debug.log</code></td></tr>
+</table>
+<p>Een bestand openen vanaf de opdrachtregel kan ook: <code>RDCManagerX.exe pad\naar\bestand.rdg</code>.</p>
+
+<h2 id="bestanden">3. Bestanden</h2>
+<table>
+  <tr><th>Formaat</th><th>Toelichting</th></tr>
+  <tr><td><code>.rdg</code></td><td>Het formaat van RDCMan. RDCManagerX leest en schrijft het zonder iets te veranderen aan wat RDCMan kent.
+    Extra instellingen van RDCManagerX (weergave, route, ping, Wake-on-LAN) komen in een apart bestand ernaast:
+    <code>&lt;bestand&gt;.rdg.rdcx.json</code>.</td></tr>
+  <tr><td><code>.rdcx</code></td><td>Eigen formaat (JSON) met alles in &eacute;&eacute;n bestand. Standaard bij een nieuw bestand.</td></tr>
+</table>
+<ul>
+  <li>Je kunt <strong>meerdere bestanden tegelijk</strong> open hebben, bijvoorbeeld "Werk" en "Priv&eacute;"; elk bestand is een eigen knoop in de boom.</li>
+  <li><strong>Opslaan als</strong> zet een bestand om tussen <code>.rdg</code> en <code>.rdcx</code>.</li>
+  <li>Een <code>*</code> achter de bestandsnaam betekent: niet-opgeslagen wijzigingen. <em>Automatisch opslaan</em> kan aan in Opties.</li>
+  <li><strong>Wachtwoorden staan nooit in een bestand.</strong> Wachtwoorden in een <code>.rdg</code> van RDCMan worden bij het openen genegeerd.</li>
+</ul>
+
+<h2 id="boom">4. De boom</h2>
+<p>Links staat de boom met bestanden, groepen en servers, alfabetisch met groepen eerst. Bovenaan staan
+<strong>Recent</strong> (laatst verbonden servers, nieuwste eerst) en <strong>Favorieten</strong> (via <em>Server &gt;
+Aan favorieten toevoegen</em>).</p>
+<h3>Kleuren van een server</h3>
+<table>
+  <tr><th>Icoon</th><th>Betekenis</th></tr>
+  <tr><td><span class="dot blue"></span>Blauw</td><td>Geen sessie; bereikbaarheid wordt niet gecontroleerd (of de eerste controle loopt nog)</td></tr>
+  <tr><td><span class="dot green"></span>Groen</td><td>Geen sessie; bereikbaar</td></tr>
+  <tr><td><span class="dot red"></span>Rood</td><td>Geen sessie; niet bereikbaar</td></tr>
+  <tr><td><span class="dot orange"></span>Oranje</td><td>Bereikbaar, maar op dat adres antwoordt een andere computer: het DNS-record is waarschijnlijk verouderd</td></tr>
+  <tr><td>Icoon met stip</td><td>Sessie: <span class="dot amber"></span>oranje stip = verbinden, groene stip = verbonden, rode stip = fout</td></tr>
+</table>
+<p>Selecteer een server die een open tab heeft, dan wordt die tab getoond. Servers en groepen verplaats je door ze te slepen.</p>
+
+<h2 id="zoeken">5. Zoeken</h2>
+<p>Druk op <kbd>Ctrl</kbd>+<kbd>F</kbd> (of klik in het zoekvak boven de boom) en typ een deel van de naam. De boom toont
+dan alleen servers waarvan de <strong>weergavenaam of hostnaam</strong> overeenkomt, met de groepen erboven; alles staat
+daarbij uitgeklapt. Maak het zoekvak leeg (of druk op <kbd>Esc</kbd>) om weer alles te zien. Ideaal in grote bestanden.</p>
+
+<h2 id="verbinden">6. Verbinden en sessies</h2>
+<ul>
+  <li><strong>Verbinden:</strong> dubbelklik op een server, of selecteer hem en druk op <kbd>Enter</kbd>. Is er al een tab, dan wordt die getoond.</li>
+  <li><strong>Een hele groep:</strong> <em>Server &gt; Alle servers verbinden</em>. De aanmeldgegevens worden &eacute;&eacute;n keer gevraagd.</li>
+  <li><strong>Verbreken:</strong> <kbd>Ctrl</kbd>+<kbd>D</kbd> of via het menu. De sessie op de server blijft doorlopen; de tab sluit.</li>
+  <li><strong>Tabs:</strong> rechtsklik op een tab voor <em>Opnieuw verbinden</em>, <em>Verbreken</em>, <em>In een eigen venster</em>,
+    <em>Volledig scherm</em>, <em>Schaal</em> en <em>Naar het volgende vak verplaatsen</em>. Middelklik sluit een tab.</li>
+  <li><strong>Gesplitst scherm</strong> (menu <em>Beeld</em>): 2 naast of boven elkaar, 3 of 4 naast elkaar, 2&times;2, 3&times;2, 4&times;2 of
+    een eigen indeling.</li>
+  <li><strong>Tabs slepen:</strong> binnen een tabbalk om de volgorde te wijzigen, of naar een ander vak om de sessie daar te tonen.</li>
+  <li><strong>Losmaken:</strong> een sessie in een eigen venster of volledig scherm; sluiten van dat venster zet de sessie terug.</li>
+  <li><strong>Afsluiten met open sessies</strong> vraagt eerst om bevestiging.</li>
+</ul>
+<div class="note">Valt een verbinding weg door een netwerkstoring, dan probeert de RDP-client zelf opnieuw te verbinden.
+Lukt dat niet, dan blijft de tab staan met de melding; kies dan <em>Opnieuw verbinden</em>.</div>
+
+<h2 id="weergave">7. Weergave en schaal</h2>
+<p>Standaard gebruikt RDCManagerX <strong>dynamische resolutie</strong>: de resolutie van de sessie volgt de grootte van het
+vak of venster, zonder opnieuw te verbinden. De <strong>schaal</strong> (100% tot 300%, of automatisch volgens je
+monitor) stel je per server of groep in (Eigenschappen &gt; Weergave) of tijdelijk per tab (rechtsklik &gt; Schaal).</p>
+<p>Andere weergavemodi (Eigenschappen &gt; Weergave): <em>Venstergrootte bij verbinden</em>, <em>Vaste grootte</em> en
+<em>Volledig scherm</em>. Ondersteunt een oude server geen dynamische resolutie, dan verbindt RDCManagerX desgewenst
+opnieuw met de nieuwe afmeting.</p>
+
+<h2 id="eigenschappen">8. Eigenschappen en overerving</h2>
+<p>Rechtsklik op een bestand, groep of server &gt; <em>Eigenschappen</em> (<kbd>Alt</kbd>+<kbd>Enter</kbd>).</p>
+<table>
+  <tr><th>Tab</th><th>Inhoud</th></tr>
+  <tr><td>Algemeen</td><td>Naam, hostnaam, opmerking; bij servers ook Wake-on-LAN</td></tr>
+  <tr><td>Aanmelden</td><td>Gebruiker en domein, of een credential-profiel van het bestand</td></tr>
+  <tr><td>Verbinding</td><td>Poort, beheersessie (console), startprogramma, load-balancing</td></tr>
+  <tr><td>Route</td><td>Direct, via RD Gateway of via Tailscale; bereikbaarheid (ping)</td></tr>
+  <tr><td>Weergave</td><td>Weergavemodus, schaal, vaste grootte, kleurdiepte</td></tr>
+  <tr><td>Lokale bronnen</td><td>Klembord, stations, printers, geluid, smartcards, Windows-toetsen</td></tr>
+  <tr><td>Beveiliging</td><td>Serverauthenticatie (certificaatcontrole)</td></tr>
+</table>
+<p><strong>Overerving:</strong> elk tabblad heeft bovenaan het vinkje <em>Overnemen van bovenliggende groep</em> (bij een
+bestand: <em>van standaardinstellingen</em>). Zet je een instelling op een groep of op het bestand zelf, dan geldt die voor
+alles eronder, tenzij een groep of server een eigen instelling heeft. Zo stel je bijvoorbeeld de gebruikersnaam of de
+ping &eacute;&eacute;n keer in voor een hele groep.</p>
+
+<h2 id="aanmelden">9. Aanmelden en wachtwoordkluis</h2>
+<p>Bij elke verbinding vraagt RDCManagerX het wachtwoord, tenzij het onthouden is. Onthouden kan pas als
+<strong>Bestand &gt; Opties &gt; Onthouden van wachtwoorden toestaan</strong> aan staat; standaard staat dat uit.</p>
+<ul>
+  <li>Bij het aanzetten stel je een <strong>hoofdwachtwoord</strong> in (minimaal 10 tekens). Onthouden wachtwoorden worden daarmee versleuteld
+    (AES-256, sleutel afgeleid met PBKDF2) en daarbovenop door Windows beschermd.</li>
+  <li>Het vinkje <em>Wachtwoord onthouden</em> in de aanmeldvraag staat nooit vanzelf aan.</li>
+  <li>De kluis vergrendelt na een instelbaar aantal minuten zonder gebruik (Opties). Handmatig: <em>Bestand &gt; Wachtwoordkluis vergrendelen</em>.</li>
+  <li>Hoofdwachtwoord wijzigen: <em>Bestand &gt; Hoofdwachtwoord wijzigen</em> of de knop in Opties.</li>
+  <li>Wordt een onthouden wachtwoord door de server geweigerd, dan wordt het automatisch vergeten. Handmatig: <em>Server &gt; Onthouden wachtwoord vergeten</em>.</li>
+  <li><strong>Credential-profielen</strong> (Bestand &gt; Credential-profielen): gedeelde gebruikersnamen per bestand, zoals in RDCMan.</li>
+</ul>
+<div class="note warn">Hoofdwachtwoord vergeten? Dat is niet te herstellen. De kluis kan alleen worden geleegd; daarna stel je een nieuw hoofdwachtwoord in.</div>
+
+<h2 id="route">10. Route: direct, gateway, Tailscale</h2>
+<p>Op de tab <strong>Route</strong> kies je hoe een server bereikt wordt:</p>
+<table>
+  <tr><th>Route</th><th>Toelichting</th></tr>
+  <tr><td>Direct</td><td>Rechtstreeks, eventueel via de RDCMan-gatewayinstelling op dezelfde tab (die staat in de <code>.rdg</code>).</td></tr>
+  <tr><td>Via RDP-gateway</td><td>Een gateway uit <em>Bestand &gt; RDP-gateways</em>: server, poort, gebruiksmethode en aanmeldgegevens.
+    Het gateway-wachtwoord kan in de kluis.</td></tr>
+  <tr><td>Via Tailscale-netwerk</td><td>Een netwerk uit <em>Bestand &gt; Tailscale-netwerken</em>. RDCManagerX wordt zelf tijdelijk een apparaat
+    in het tailnet; Tailscale hoeft op deze pc niet ge&iuml;nstalleerd te zijn. Vul bij <em>Adres in het tailnet</em> de
+    machinenaam of het 100.x-adres in.</td></tr>
+</table>
+<p>Netwerken en gateways horen bij het bestand; auth keys en wachtwoorden staan alleen in de kluis van je eigen pc. Via
+Tailscale verschijnt een certificaatwaarschuwing (naam <code>127.0.0.2</code>); de verbinding zelf is door Tailscale versleuteld.</p>
+
+<h2 id="ping">11. Bereikbaarheid (ping)</h2>
+<p>Zet op een bestand, groep of server: Eigenschappen &gt; Route &gt; <em>Bereikbaarheid tonen in de boom</em>
+(eerst het overerf-vinkje uitzetten). RDCManagerX controleert die servers dan op de achtergrond:</p>
+<ol>
+  <li>een ping; komt er geen antwoord, dan een korte verbinding met de RDP-poort (Windows blokkeert ping vaak);</li>
+  <li>is de server bereikbaar, dan wordt via NetBIOS gecontroleerd of er echt de verwachte computer op dat adres zit.</li>
+</ol>
+<p>Het resultaat zie je aan de kleur in de boom (zie <a href="#boom">De boom</a>) en in de statusbalk bij een geselecteerde
+server, bijvoorbeeld <em>"dc01 is online (3 ms)"</em>. Het interval (standaard 30 seconden) stel je in bij Opties. Alleen
+servers met route <em>Direct</em> worden gecontroleerd; meerdere tegelijk, zonder dat de app daar trager van wordt.</p>
+<div class="note warn"><strong>Oranje</strong> betekent meestal een verouderd DNS-record: het adres is via DHCP aan een
+ander apparaat uitgedeeld, maar het oude record staat nog in de DNS. Oplossing: DNS-scavenging aanzetten en het oude record
+verwijderen (zie <a href="#problemen">Problemen oplossen</a>).</div>
+
+<h2 id="wol">12. Wake-on-LAN</h2>
+<p>Vul bij een server (Eigenschappen &gt; Algemeen) het MAC-adres in, eventueel met broadcastadres en poort. Daarna wek je
+de computer met <em>Server &gt; Wake-on-LAN-signaal versturen</em>.</p>
+
+<h2 id="opties">13. Opties</h2>
+<p><em>Bestand &gt; Opties</em>:</p>
+<ul>
+  <li>Aantal servers in <em>Recent</em></li>
+  <li>Thema: Systeem, Licht of Donker (ook via <em>Beeld &gt; Thema</em>; geldt bij de volgende start als er sessies open zijn)</li>
+  <li>Automatisch opslaan</li>
+  <li>Onthouden van wachtwoorden toestaan, automatisch vergrendelen, hoofdwachtwoord wijzigen</li>
+  <li>Interval voor de bereikbaarheidscontrole</li>
+</ul>
+<p>Instellingen worden alleen opgeslagen als ze in die sessie zijn gewijzigd; twee open vensters overschrijven elkaars instellingen dus niet.</p>
+
+<h2 id="toetsen">14. Sneltoetsen</h2>
+<p>In de boom (de toetsen gaan naar de sessie zodra die de focus heeft):</p>
+<table>
+  <tr><th>Toets</th><th>Actie</th></tr>
+  <tr><td><kbd>Enter</kbd></td><td>Verbinden (of naar de open tab)</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>D</kbd></td><td>Verbreken</td></tr>
+  <tr><td><kbd>Alt</kbd>+<kbd>Enter</kbd></td><td>Eigenschappen</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Naam wijzigen</td></tr>
+  <tr><td><kbd>Del</kbd></td><td>Verwijderen</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>N</kbd></td><td>Nieuwe server</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Nieuwe groep</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Zoeken</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Opslaan</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>Bestand openen</td></tr>
+  <tr><td>Middelklik op tab</td><td>Tab sluiten</td></tr>
+</table>
+
+<h2 id="problemen">15. Problemen oplossen</h2>
+<h3>Debuglog</h3>
+<p>Start met <code>RDCManagerX.exe /debuglog</code> en bekijk <code>%LOCALAPPDATA%\RDCManagerX\debug.log</code>. Wachtwoorden
+komen nooit in het log.</p>
+<h3>Server oranje in de boom (verkeerde computer)</h3>
+<p>Controleer met:</p>
+<pre><code>nslookup &lt;naam&gt;          (welk adres geeft de DNS?)
+nbtstat -A &lt;ip-adres&gt;    (welke computer zit er echt?)</code></pre>
+<p>Verwijder het verouderde record op een domeincontroller en zet DNS-scavenging aan (aging op de zone, scavenging op de
+server), afgestemd op de DHCP-leaseduur:</p>
+<pre><code>Remove-DnsServerResourceRecord -ZoneName contoso.local -RRType A -Name &lt;naam&gt; -RecordData &lt;ip&gt;
+Set-DnsServerZoneAging -Name contoso.local -Aging $true -NoRefreshInterval 3.00:00:00 -RefreshInterval 3.00:00:00
+Set-DnsServerScavenging -ScavengingState $true -ScavengingInterval 1.00:00:00 -ApplyOnAllZones</code></pre>
+<h3>Wachtwoord wordt niet onthouden / kluis vraagt niets</h3>
+<p>Controleer of <em>Onthouden van wachtwoorden toestaan</em> aan staat in Opties. Staat het hoofdwachtwoord niet in je
+geheugen, dan kan alleen de kluis worden geleegd.</p>
+<h3>Tailscale</h3>
+<ul>
+  <li>Op de doel-pc moet Tailscale draaien, en de firewall moet RDP (TCP 3389) toestaan vanaf <code>100.64.0.0/10</code>.</li>
+  <li>Vul bij <em>Adres in het tailnet</em> de machinenaam of het 100.x-adres in, niet het e-mailadres van het account.</li>
+  <li><em>Test verbinding</em> in Bestand &gt; Tailscale-netwerken laat zien of het netwerk opstart.</li>
+</ul>
+<h3>Dynamische resolutie werkt niet direct na het aanmelden</h3>
+<p>Sommige servers hebben na het aanmelden even nodig; RDCManagerX probeert het tot ongeveer 25 seconden lang opnieuw.</p>
+
+<footer>RDCManagerX, handleiding voor beheerders. De volledige technische documentatie (bouwen, Tailscale-bridge, ACL's)
+staat in <code>README.md</code> bij de broncode.</footer>
+</div>
+</body>
+</html>

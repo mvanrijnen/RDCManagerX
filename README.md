@@ -1,2 +1,256 @@
 # RDCManagerX
-Extended, Deluxe, RDP, Remote Desktop Manager optional, RDP Gateway &amp;  TailScale tunneling,
+
+Een RDP-verbindingsbeheerder in de stijl van Microsoft Remote Desktop Connection Manager (RDCMan). Het programma
+leest en schrijft `.rdg`-bestanden van RDCMan en heeft een eigen formaat, `.rdcx`.
+
+Het belangrijkste verschil met RDCMan is **dynamische resolutie**: de sessie past zich aan de venstergrootte aan.
+Daarnaast heeft RDCManagerX een wachtwoordkluis, gesplitste weergave, Wake-on-LAN, en routes via **Tailscale** of
+een **RD Gateway**.
+
+Windows, 64-bit. Gebouwd met Delphi 12.
+
+---
+
+## Verbindingsroutes
+
+Per server of groep stel je in hoe RDCManagerX de server bereikt: **Eigenschappen > Route**. Net als de andere
+instellingen erft de route van de bovenliggende groep.
+
+| Route | Wat er gebeurt |
+|---|---|
+| **Direct** (standaard) | Hetzelfde gedrag als vroeger. Ook de instellingen op de tab *Gateway* (RDCMan-compatibel) blijven gelden. |
+| **Via Tailscale-netwerk** | RDCManagerX wordt zelf, tijdelijk, een apparaat in je tailnet en stuurt alleen zijn eigen RDP-verkeer daarover. Tailscale hoeft op deze pc niet geïnstalleerd te zijn. |
+| **Via RDP-gateway** | Verbinden via een Microsoft RD Gateway uit de lijst van het bestand. |
+
+De **definities** van netwerken en gateways horen bij het bestand. Bij een `.rdg` staan ze in de sidecar
+`<bestand>.rdg.rdcx.json`, bij een `.rdcx` in het bestand zelf. Het `.rdg`-bestand blijft daardoor ongewijzigd en
+RDCMan kan het gewoon blijven openen.
+
+**Geheimen staan nooit in het bestand.** Een auth key, de sleutel van een tailnet-node en een gateway-wachtwoord
+staan alleen in de **wachtwoordkluis van deze pc**. Die is versleuteld met je hoofdwachtwoord (AES-256-GCM,
+PBKDF2 met 600.000 rondes) en daarbovenop met DPAPI in Windows Referentiebeheer. Daarvoor moet *Wachtwoorden
+onthouden* aan staan (Bestand > Opties).
+
+Neem je een bestand mee naar een andere pc, dan gaan de definities mee, maar de geheimen niet. Op die pc vul je de
+auth key of het wachtwoord één keer opnieuw in, of je logt in via de browser.
+
+---
+
+## Tailscale
+
+### Hoe het werkt
+
+- **`tsbridge.dll`** zit ingebouwd in `RDCManagerX.exe` (gecomprimeerd); alleen de exe hoeft verspreid te worden.
+  Bij het eerste gebruik pakt RDCManagerX hem uit naar `%LOCALAPPDATA%\RDCManagerX\bin\` en laadt hem daar, na
+  controle van de controlesom. (Laden rechtstreeks uit het geheugen kan niet betrouwbaar met een Go-DLL, en
+  beveiligingssoftware ziet dat als malware-gedrag.) Het is een Go-bibliotheek op basis van `tailscale.com/tsnet` en
+  draait volledig in userspace. Er is geen TUN-driver, installatie of beheerrecht nodig.
+- **Per netwerk start één node**, zodra de eerste sessie die het netwerk gebruikt verbindt. Het netwerk sluit weer
+  als de laatste tab die het gebruikt dicht gaat, of als je de app afsluit.
+- **Per sessie komt er een lokale doorverwijzing**, bijvoorbeeld `127.0.0.2:51234` → `thuis-pc:3389` in het
+  tailnet. Daarmee verbindt de RDP-client. Tab, boom en meldingen tonen wel de echte servernaam.
+  - Het lokale adres is bewust niet `127.0.0.1`, omdat de RDP-client verbindingen met de eigen loopback kan
+    weigeren. Je stelt het per netwerk in.
+  - De doorverwijzing blijft bestaan zolang de tab open is. Daardoor werken *Opnieuw verbinden* en het automatisch
+    opnieuw verbinden van RDP gewoon.
+- **Het doeladres** is de MagicDNS-naam of het 100.x-adres van de server. Standaard is dat de hostnaam van de server
+  in RDCManagerX; afwijken kan via *Adres in het tailnet* op de tab Route. De poort komt van de tab *Verbinding*
+  (standaard 3389).
+- **Ephemeral** (standaard aan): de node verdwijnt uit je tailnet na het afsluiten en er wordt niets op schijf
+  bewaard.
+- **Niet-ephemeral:** de node-sleutels worden bewaard in
+  `%LOCALAPPDATA%\RDCManagerX\tailscale\<netwerk-id>\state\state.dpapi`. Ze zijn versleuteld met een sleutel die
+  alleen in de wachtwoordkluis staat (AES-256-GCM), met DPAPI daarbovenop. Inloggen hoeft dan maar één keer. Zet je
+  *Wachtwoorden onthouden* uit of leeg je de kluis, dan is die sleutel weg en log je opnieuw in.
+- **Zonder auth key** opent RDCManagerX de login-pagina van Tailscale in je browser.
+
+### Netwerk toevoegen
+
+**Bestand > Tailscale-netwerken… > Nieuw**:
+
+| Veld | Betekenis |
+|---|---|
+| Naam | Bijv. "Thuis" of "Klant X". Je kiest het netwerk op deze naam bij de route. |
+| Naam in het tailnet | De naam waaronder RDCManagerX als apparaat in je tailnet verschijnt. Leeg betekent `rdpclient-<computernaam>`. |
+| Auth key | `tskey-auth-…`, optioneel. Leeg betekent inloggen via de browser. |
+| Ephemeral | Zie hierboven. Zonder auth key zet je dit beter uit, anders log je bij elke start opnieuw in. |
+| Control URL | Leeg is Tailscale zelf. Voor Headscale of een andere eigen control server vul je de URL in. |
+| Lokaal adres | Standaard `127.0.0.2`. Moet een adres in 127.0.0.0/8 zijn. |
+
+**Test verbinding** start het netwerk, toont het tailnet-adres en sluit het daarna weer.
+
+### Auth key maken
+
+Ga in de Tailscale-adminconsole naar **Settings > Keys > Generate auth key**:
+
+- **Reusable**, zodat dezelfde key op meerdere pc's en bij elke start werkt;
+- **Ephemeral**, zodat de node verdwijnt als RDCManagerX stopt;
+- **Pre-approved**, als device approval aan staat;
+- **Tags**, bijvoorbeeld `tag:rdpclient`. Daarmee beperk je de toegang via de ACL hieronder.
+
+**Auth keys verlopen**, standaard na 90 dagen. Daarna krijg je bij het verbinden een foutmelding over een ongeldige
+of verlopen key. Maak dan een nieuwe aan en vul die in bij Tailscale-netwerken.
+
+### Toegang beperken (ACL)
+
+> ⚠️ **Het standaardbeleid van Tailscale staat álles toe**: elk apparaat mag elk ander apparaat bereiken. Scherp dat
+> aan, zodat de RDCManagerX-node alleen RDP naar de doel-pc's mag.
+
+Voorbeeld (Access controls in de adminconsole):
+
+```json
+{
+  "tagOwners": { "tag:rdpclient": ["autogroup:admin"] },
+  "hosts":     { "thuis-pc": "100.x.y.z" },
+  "grants": [
+    { "src": ["tag:rdpclient"], "dst": ["thuis-pc"], "ip": ["tcp:3389"] }
+  ]
+}
+```
+
+Haal daarbij de standaardregel weg die alles toestaat. Gebruik je zelf ook andere apparaten in het tailnet, geef die
+dan eigen regels.
+
+### Op de doel-pc
+
+- **Tailscale moet draaien**, gewoon geïnstalleerd, en Extern bureaublad moet aan staan.
+- **De Windows Firewall moet RDP toestaan vanaf de Tailscale-adapter.** De standaardregel *Extern bureaublad*
+  geldt vaak alleen voor het profiel *Privé/Domein*. Sta TCP 3389 toe vanaf `100.64.0.0/10`, bijvoorbeeld zo:
+
+  ```powershell
+  New-NetFirewallRule -DisplayName "RDP via Tailscale" -Direction Inbound -Protocol TCP -LocalPort 3389 -RemoteAddress 100.64.0.0/10 -Action Allow
+  ```
+
+### Certificaat en aanmelding
+
+De RDP-client verbindt met `127.0.0.2` en niet met de echte servernaam. Dat heeft twee gevolgen:
+
+- **Het servercertificaat** past niet bij `127.0.0.2`.
+  - Bij *Serverauthenticatie: Waarschuwen* (tab Beveiliging) krijg je de bekende certificaatwaarschuwing, die je
+    kunt accepteren.
+  - Bij *Niet verbinden als verificatie mislukt* lukt de verbinding niet.
+  - De ActiveX heeft geen eigenschap om de verwachte servernaam op te geven (`AuthenticationServiceClass` is alleen
+    de SPN-serviceklasse).
+- **Kerberos werkt niet**, dus NLA/CredSSP valt terug op **NTLM**. Met lokale accounts en Microsoft-accounts werkt
+  dat. In een domein waar NTLM is geblokkeerd werkt de Tailscale-route niet.
+
+### Netwerkgedrag
+
+- **Rechtstreekse verbinding:** Tailscale probeert eerst een directe UDP-verbinding (WireGuard).
+- **UDP geblokkeerd** (bijv. op een bedrijfsnetwerk): Tailscale valt automatisch terug op een **DERP-relay via
+  HTTPS/443**. Dat werkt, maar is trager.
+- **Een TLS-inspecterende bedrijfsproxy** kan de verbinding met de control server of DERP verstoren. Je ziet dan een
+  time-out of een certificaatfout bij *Test verbinding*.
+
+### Beveiliging
+
+- **De tunnel is alleen voor RDCManagerX.**
+  - De lokale poort luistert alleen op een loopback-adres (127.x), nooit op het netwerk. Een ander lokaal adres uit
+    een bestand wordt genegeerd.
+  - De poort wordt exclusief geclaimd, zodat een ander programma hem niet kan kapen.
+  - Alleen verbindingen uit het RDCManagerX-proces zelf worden doorgestuurd; andere programma's op de pc worden
+    geweigerd.
+- **Alleen binnen het tailnet.** Het doel wordt opgezocht tussen de apparaten in het tailnet (MagicDNS-naam,
+  hostnaam of 100.x-adres, of een adres in een goedgekeurde subnet-route). Een naam of adres buiten het tailnet wordt
+  geweigerd; RDCManagerX verbindt nooit stilletjes buiten Tailscale om. Een exit-node telt niet mee.
+- **Geheimen horen bij één server.** Een opgeslagen auth key en node-sleutel horen bij de control server waarvoor ze
+  zijn ingevoerd, een gateway-wachtwoord bij die gateway (host en poort).
+  - Een bestand dat een netwerk of gateway naar een andere server laat wijzen, krijgt het geheim dus niet.
+  - Wijzig je de control URL of de gatewayserver, dan wordt het opgeslagen geheim gewist (met een vraag vooraf).
+- **Control URL alleen via https** (http alleen naar localhost); anders kan de auth key onderweg worden onderschept.
+- **Login-pagina alleen via https.** Alleen een https-adres wordt in de browser geopend; een ander "login-adres" van
+  een control server wordt geweigerd.
+- **Controlesom van de DLL.** RDCManagerX laadt alleen de `tsbridge.dll` waarvan de controlesom (SHA-256) in de exe
+  is vastgelegd. Een vervangen of andere versie wordt geweigerd en verbinden via Tailscale is dan uitgeschakeld.
+
+**Wat je zelf moet doen of weten:**
+- **Open alleen bestanden die je vertrouwt.** Net als bij RDCMan kan een bestand een server, gateway of tailnet
+  definiëren dat naar een vreemde server wijst. Jouw opgeslagen geheimen gaan daar niet heen, maar wat je bij het
+  verbinden zelf invult wel.
+- **Certificaatwaarschuwing via Tailscale:** de verbinding tot aan de server is door Tailscale versleuteld en
+  geauthenticeerd (WireGuard, op apparaat-identiteit). De waarschuwing komt alleen doordat de naam `127.0.0.2` niet
+  in het certificaat staat.
+- **Geheimen in het geheugen:** tijdens het gebruik staan een auth key en wachtwoorden onvermijdelijk in het
+  geheugen van het programma. RDCManagerX wist zijn eigen kopieën, maar de Go-runtime in `tsbridge.dll` kan dat niet
+  garanderen. Bescherming tegen iemand die het geheugen van je lopende sessie kan lezen is er niet; dat geldt voor
+  elk programma.
+
+### Problemen oplossen
+
+Start RDCManagerX met `/debuglog`. Dan komen er twee logs in `%LOCALAPPDATA%\RDCManagerX\`:
+
+- `debug.log` (RDCManagerX);
+- `tsbridge-<netwerk-id>.log` (Tailscale).
+
+Auth keys worden altijd uit de logs gefilterd. Er worden nooit logs naar Tailscale gestuurd
+(`TS_NO_LOGS_NO_SUPPORT`).
+
+---
+
+## RD Gateway
+
+**Bestand > RDP-gateways… > Nieuw**:
+
+| Veld | Betekenis |
+|---|---|
+| Gatewayserver / Poort | Bijv. `rdg.voorbeeld.nl`. Een lege poort betekent 443. |
+| Gebruiken | *Altijd*, *Automatisch detecteren*, of *Altijd behalve voor lokale adressen*. |
+| Aanmeldgegevens | *Dezelfde als voor de sessie*, *Eigen* (gebruiker, domein en wachtwoord; het wachtwoord in de kluis), *Vragen bij verbinden*, of *Smartcard*. |
+| Aanmeldmethode | *Wachtwoord (NTLM)*, *Smartcard* of *Automatisch*. |
+
+Kies daarna per server of groep **Eigenschappen > Route > Via RDP-gateway**.
+
+- **Eigen aanmeldgegevens zonder opgeslagen wachtwoord:** Windows vraagt er dan bij het verbinden zelf om.
+- **Client zonder gateway-ondersteuning:** ondersteunt de Remote Desktop-client op de pc geen gateway
+  (`GatewayIsSupported`), dan krijg je een foutmelding en wordt er niet stilletjes direct verbonden.
+- **Route Direct:** de gateway-instellingen in het `.rdg` (tab *Gateway*, RDCMan-compatibel) werken ongewijzigd.
+
+---
+
+## Bouwen
+
+### RDCManagerX
+
+```
+call "C:\Program Files (x86)\Embarcadero\Studio\23.0\bin\rsvars.bat"
+msbuild RDCManagerX.dproj /t:Build /p:Config=Release /p:Platform=Win64
+msbuild Tests\RDCManagerXTests.dproj /t:Build /p:Config=Debug /p:Platform=Win64
+Tests\Win64\Debug\RDCManagerXTests.exe --exitbehavior:Continue
+```
+
+De DLL zit als resource in de exe (`Source\TsBridge.rc` → `Bridge\bin\Win64\tsbridge.dll.gz`); alleen de exe gaat
+naar de share.
+
+### tsbridge.dll
+
+Nodig:
+
+- **Go** 1.26 of nieuwer. Werkt zonder installatie: pak de zip uit naar `%LOCALAPPDATA%\Programs\go`.
+- **mingw-w64 (gcc)**, bijvoorbeeld via `winget install BrechtSanders.WinLibs.POSIX.UCRT`.
+
+```
+Tools\build-tsbridge.cmd test
+```
+
+Dat draait eerst de Go-tests (forwarder met een lokale echo-server, versleutelde state, filteren van secrets) en
+bouwt daarna `Bridge\bin\Win64\tsbridge.dll` (`-buildmode=c-shared`, `GOARCH=amd64`, `CGO_ENABLED=1`).
+
+De DLL moet dezelfde bitness hebben als de app. RDCManagerX is alleen 64-bit.
+
+Het script legt de controlesom van de DLL vast in `Source\RdcmX.TsBridgeHash.inc` en maakt `tsbridge.dll.gz` voor de resource. **Bouw daarna RDCManagerX opnieuw**: de exe neemt de DLL en de controlesom mee.
+
+**C-API** (cdecl, UTF-8 invoer, int32-returncodes; tekst gaat naar een buffer van de aanroeper):
+
+```c
+int TsNetCreate(const char* configJson);          // handle > 0, of foutcode < 0
+int TsNetUp(int h, int timeoutMs);                // blokkeert; TsNetClose vanuit een andere thread breekt af
+int TsNetGetStatus(int h, char* buf, int buflen); // JSON: state, ips, dnsName, authUrl, lastError
+int TsNetAddForward(int h, const char* localAddr, const char* target); // lokale poort
+int TsNetRemoveForward(int h, int localPort);
+int TsNetClose(int h);
+int TsLastError(int h, char* buf, int buflen);    // h = 0: laatste fout van TsNetCreate
+int TsBridgeVersion(char* buf, int buflen);
+```
+
+De DLL wordt nooit ontladen, omdat de Go-runtime dat niet ondersteunt. Ontbreekt hij, dan werkt de app gewoon en is
+alleen de Tailscale-route niet beschikbaar.

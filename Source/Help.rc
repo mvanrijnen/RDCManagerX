@@ -1,0 +1,2 @@
+// Handleiding (HTML) in de exe: Help > Handleiding opent hem in de browser als er geen CHM is ingebouwd.
+HELPHTML RCDATA "Docs\\RDCManagerX-Handleiding.html"

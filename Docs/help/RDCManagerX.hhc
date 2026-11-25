@@ -1,0 +1,19 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN"><HTML><BODY><UL>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="RDCManagerX"><param name="Local" value="RDCManagerX.html"></OBJECT>
+<UL>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="1. Wat is RDCManagerX?"><param name="Local" value="RDCManagerX.html#wat"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="2. Starten"><param name="Local" value="RDCManagerX.html#start"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="3. Bestanden"><param name="Local" value="RDCManagerX.html#bestanden"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="4. De boom"><param name="Local" value="RDCManagerX.html#boom"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="5. Zoeken"><param name="Local" value="RDCManagerX.html#zoeken"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="6. Verbinden en sessies"><param name="Local" value="RDCManagerX.html#verbinden"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="7. Weergave en schaal"><param name="Local" value="RDCManagerX.html#weergave"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="8. Eigenschappen en overerving"><param name="Local" value="RDCManagerX.html#eigenschappen"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="9. Aanmelden en wachtwoordkluis"><param name="Local" value="RDCManagerX.html#aanmelden"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="10. Route: direct, gateway, Tailscale"><param name="Local" value="RDCManagerX.html#route"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="11. Bereikbaarheid (ping)"><param name="Local" value="RDCManagerX.html#ping"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="12. Wake-on-LAN"><param name="Local" value="RDCManagerX.html#wol"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="13. Opties"><param name="Local" value="RDCManagerX.html#opties"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="14. Sneltoetsen"><param name="Local" value="RDCManagerX.html#toetsen"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="15. Problemen oplossen"><param name="Local" value="RDCManagerX.html#problemen"></OBJECT>
+</UL></UL></BODY></HTML>

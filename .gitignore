@@ -1,0 +1,24 @@
+# Delphi build output and IDE state
+/Win64/
+Tests/Win64/
+Win32/
+__history/
+__recovery/
+*.dcu
+*.res
+*.local
+*.dsv
+*.identcache
+*.skincfg
+*.stackdump
+
+# Generated at build time
+BuildNumber.json
+Source/Version.rc
+
+# Test data (not published yet)
+Samples/
+
+# Go bridge: only the compressed DLL is needed (embedded in the exe)
+Bridge/bin/**/*.dll
+Bridge/bin/**/*.h

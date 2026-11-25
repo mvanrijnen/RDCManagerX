@@ -1,0 +1,3 @@
+// tsbridge.dll (gzip) als resource in de exe: de launcher kopieert alleen de exe.
+// Het .gz-bestand maakt Tools\build-tsbridge.cmd; daarna RDCManagerX opnieuw bouwen.
+TSBRIDGE RCDATA "Bridge\\bin\\Win64\\tsbridge.dll.gz"

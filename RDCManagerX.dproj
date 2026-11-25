@@ -1,0 +1,183 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{0E6E8C2B-6F7A-4A0B-9D1C-3B5F2A8E4C21}</ProjectGuid>
+        <ProjectVersion>20.2</ProjectVersion>
+        <FrameworkType>VCL</FrameworkType>
+        <Base>True</Base>
+        <Config Condition="'$(Config)'==''">Debug</Config>
+        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <ProjectName Condition="'$(ProjectName)'==''">RDCManagerX</ProjectName>
+        <TargetedPlatforms>2</TargetedPlatforms>
+        <AppType>Application</AppType>
+        <MainSource>RDCManagerX.dpr</MainSource>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Debug' or '$(Cfg_1)'!=''">
+        <Cfg_1>true</Cfg_1>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win64)'!=''">
+        <Cfg_1_Win64>true</Cfg_1_Win64>
+        <CfgParent>Cfg_1</CfgParent>
+        <Cfg_1>true</Cfg_1>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' or '$(Cfg_2)'!=''">
+        <Cfg_2>true</Cfg_2>
+        <CfgParent>Base</CfgParent>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win64)'!=''">
+        <Cfg_2_Win64>true</Cfg_2_Win64>
+        <CfgParent>Cfg_2</CfgParent>
+        <Cfg_2>true</Cfg_2>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Base)'!=''">
+        <DCC_DcuOutput>.\$(Platform)\$(Config)\dcu</DCC_DcuOutput>
+        <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
+        <DCC_UnitSearchPath>Source;Source\Imports;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_E>false</DCC_E>
+        <DCC_N>false</DCC_N>
+        <DCC_S>false</DCC_S>
+        <DCC_F>false</DCC_F>
+        <DCC_K>false</DCC_K>
+        <DCC_Namespace>Winapi;System.Win;System;Xml;Data;Vcl;Vcl.Imaging;$(DCC_Namespace)</DCC_Namespace>
+        <SanitizedProjectName>RDCManagerX</SanitizedProjectName>
+        <Icon_MainIcon>RDCManagerX.ico</Icon_MainIcon>
+        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+        <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
+        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
+        <VerInfo_IncludeVerInfo>false</VerInfo_IncludeVerInfo>
+        <Custom_Styles>&quot;Windows11 Modern Light|VCLSTYLE|Styles\Windows11ModernLight.vsf&quot;;&quot;Windows11 Modern Dark|VCLSTYLE|Styles\Windows11ModernDark.vsf&quot;;&quot;Windows10 Dark|VCLSTYLE|Styles\Windows10Dark.vsf&quot;</Custom_Styles>
+        <VerInfo_Locale>1043</VerInfo_Locale>    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1)'!=''">
+        <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
+        <DCC_DebugDCUs>false</DCC_DebugDCUs>
+        <DCC_Optimize>false</DCC_Optimize>
+        <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
+        <DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+        <BT_BuildType>Debug</BT_BuildType>
+        <PostBuildEvent><![CDATA[if exist "$(MSBuildProjectDirectory)\Tools\afterbuild.cmd" call "$(MSBuildProjectDirectory)\Tools\afterbuild.cmd" "$(Config)" "$(MSBuildProjectDirectory)\$(Platform)\$(Config)\$(MSBuildProjectName).exe"]]></PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>true</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2)'!=''">
+        <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
+        <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
+        <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+        <DCC_DebugInformation>0</DCC_DebugInformation>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
+        <BT_BuildType>Release</BT_BuildType>
+        <PostBuildEvent><![CDATA[if exist "$(MSBuildProjectDirectory)\Tools\afterbuild.cmd" call "$(MSBuildProjectDirectory)\Tools\afterbuild.cmd" "$(Config)" "$(MSBuildProjectDirectory)\$(Platform)\$(Config)\$(MSBuildProjectName).exe"]]></PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>true</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <ItemGroup>
+        <DelphiCompile Include="$(MainSource)">
+            <MainSource>MainSource</MainSource>
+        </DelphiCompile>
+        <DCCReference Include="Source\Imports\MSTSCLib_TLB.pas"/>
+        <DCCReference Include="Source\RdcmX.AppSettings.pas"/>
+        <DCCReference Include="Source\RdcmX.Credentials.pas"/>
+        <DCCReference Include="Source\RdcmX.Crypto.pas"/>
+        <DCCReference Include="Source\RdcmX.UI.MasterPassword.pas">
+            <Form>frmMasterPassword</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\RdcmX.Log.pas"/>
+        <DCCReference Include="Source\RdcmX.Model.pas"/>
+        <DCCReference Include="Source\RdcmX.Rdp.Host.pas"/>
+        <DCCReference Include="Source\RdcmX.Ping.pas"/>
+        <DCCReference Include="Source\RdcmX.Tailscale.pas"/>
+        <DCCReference Include="Source\RdcmX.UI.Tailnets.pas">
+            <Form>frmTailnets</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\RdcmX.UI.Gateways.pas">
+            <Form>frmGateways</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\RdcmX.Rdp.Session.pas"/>
+        <DCCReference Include="Source\RdcmX.Sessions.pas"/>
+        <DCCReference Include="Source\RdcmX.Shortcuts.pas"/>
+        <DCCReference Include="Source\RdcmX.Storage.pas"/>
+        <DCCReference Include="Source\RdcmX.Storage.Json.pas"/>
+        <DCCReference Include="Source\RdcmX.Storage.Rdg.pas"/>
+        <DCCReference Include="Source\RdcmX.Storage.Sidecar.pas"/>
+        <DCCReference Include="Source\RdcmX.UI.CredentialPrompt.pas">
+            <Form>frmCredentialPrompt</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\RdcmX.UI.Icons.pas"/>
+        <DCCReference Include="Source\RdcmX.UI.Main.pas">
+            <Form>frmMain</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\RdcmX.UI.Options.pas">
+            <Form>frmOptions</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\RdcmX.UI.Profiles.pas">
+            <Form>frmProfiles</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\RdcmX.UI.Properties.pas">
+            <Form>frmProperties</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\RdcmX.UI.SectionPage.pas"/>
+        <DCCReference Include="Source\RdcmX.UI.SessionPanes.pas"/>
+        <DCCReference Include="Source\RdcmX.UI.SessionWindow.pas"/>
+        <DCCReference Include="Source\RdcmX.UI.TabStrip.pas"/>
+        <DCCReference Include="Source\RdcmX.UI.Theme.pas"/>
+        <DCCReference Include="Source\RdcmX.WakeOnLan.pas"/>
+        <DCCReference Include="Source\RdcmX.XmlTree.pas"/>
+        <RcCompile Include="Source\Version.rc">
+            <Form>Version.res</Form>
+        </RcCompile>
+        <RcCompile Include="Source\TsBridge.rc">
+            <Form>TsBridge.res</Form>
+        </RcCompile>
+        <RcCompile Include="Source\Help.rc">
+            <Form>Help.res</Form>
+        </RcCompile>
+        <RcCompile Include="Source\HelpChm.rc">
+            <Form>HelpChm.res</Form>
+        </RcCompile>
+        <BuildConfiguration Include="Base">
+            <Key>Base</Key>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Debug">
+            <Key>Cfg_1</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+        <BuildConfiguration Include="Release">
+            <Key>Cfg_2</Key>
+            <CfgParent>Base</CfgParent>
+        </BuildConfiguration>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Delphi.Personality.12</Borland.Personality>
+        <Borland.ProjectType>Application</Borland.ProjectType>
+        <BorlandProject>
+            <Delphi.Personality>
+                <Source>
+                    <Source Name="MainSource">RDCManagerX.dpr</Source>
+                </Source>
+            </Delphi.Personality>
+            <Platforms>
+                <Platform value="Win32">False</Platform>
+                <Platform value="Win64">True</Platform>
+            </Platforms>
+        </BorlandProject>
+        <ProjectFileVersion>12</ProjectFileVersion>
+    </ProjectExtensions>
+    <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
+    <Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
+    <Import Project="Tools\Version.targets" Condition="Exists('Tools\Version.targets')"/>
+</Project>

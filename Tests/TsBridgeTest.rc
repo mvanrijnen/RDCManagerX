@@ -1,0 +1,2 @@
+// Zelfde ingebouwde tsbridge.dll als in RDCManagerX.exe: de DLL-tests lopen zo via het uitpakken, net als de app.
+TSBRIDGE RCDATA "..\\Bridge\\bin\\Win64\\tsbridge.dll.gz"
