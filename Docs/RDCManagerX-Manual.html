@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RDCManagerX - Manual</title>
+<style>
+  :root {
+    --text: #1f2328; --muted: #57606a; --line: #d0d7de; --bg: #ffffff; --panel: #f6f8fa;
+    --accent: #2f7fd8; --green: #2ea043; --red: #d73a49; --orange: #e8870e; --amber: #e8a317;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --text: #e6edf3; --muted: #9da7b3; --line: #30363d; --bg: #0d1117; --panel: #161b22; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 "Segoe UI", system-ui, sans-serif; }
+  .page { max-width: 880px; margin: 0 auto; padding: 32px 24px 64px; }
+  header.cover { border-bottom: 3px solid var(--accent); padding-bottom: 20px; margin-bottom: 28px; }
+  header.cover h1 { font-size: 34px; margin: 0 0 4px; letter-spacing: -0.5px; }
+  header.cover p { margin: 0; color: var(--muted); font-size: 17px; }
+  h2 { font-size: 23px; margin: 40px 0 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+  h3 { font-size: 17px; margin: 24px 0 6px; }
+  p, li { max-width: 72ch; }
+  code, kbd { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13.5px; }
+  code { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  kbd { background: var(--panel); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; white-space: nowrap; }
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; }
+  pre code { border: 0; padding: 0; background: none; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { background: var(--panel); font-weight: 600; }
+  nav.toc { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 18px; margin-bottom: 8px; }
+  nav.toc ol { margin: 6px 0; padding-left: 22px; columns: 2; column-gap: 32px; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  .note { border-left: 4px solid var(--accent); background: var(--panel); padding: 8px 14px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+  .warn { border-left-color: var(--orange); }
+  .dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+  .blue { background: var(--accent); } .green { background: var(--green); } .red { background: var(--red); }
+  .orange { background: var(--orange); } .amber { background: var(--amber); }
+  footer { margin-top: 48px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 10px; }
+  @media (max-width: 640px) { nav.toc ol { columns: 1; } .page { padding: 20px 16px 48px; } }
+  @media print {
+    :root, :root:not([data-theme="light"]) { --text: #1f2328; --muted: #57606a; --line: #d0d7de; --bg: #ffffff; --panel: #f6f8fa; }
+    body { font-size: 10.5pt; }
+    .page { max-width: none; padding: 0; }
+    h2, h3 { break-after: avoid; }
+    table, pre, .note, nav.toc { break-inside: avoid; }
+    h2#route, h2#troubleshooting { break-before: page; }
+    a { color: inherit; text-decoration: none; }
+    @page { margin: 18mm 16mm; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <h1>RDCManagerX</h1>
+  <p>Administrator manual: connection manager for Remote Desktop (RDP)</p>
+</header>
+
+<nav class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#what">What is RDCManagerX?</a></li>
+    <li><a href="#start">Getting started</a></li>
+    <li><a href="#files">Files</a></li>
+    <li><a href="#tree">The tree</a></li>
+    <li><a href="#search">Search</a></li>
+    <li><a href="#connect">Connecting and sessions</a></li>
+    <li><a href="#display">Display and scale</a></li>
+    <li><a href="#properties">Properties and inheritance</a></li>
+    <li><a href="#logon">Logon and password vault</a></li>
+    <li><a href="#route">Route: direct, gateway, Tailscale</a></li>
+    <li><a href="#ping">Reachability (ping)</a></li>
+    <li><a href="#wol">Wake-on-LAN</a></li>
+    <li><a href="#options">Options</a></li>
+    <li><a href="#keys">Keyboard shortcuts</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<h2 id="what" class="keep">1. What is RDCManagerX?</h2>
+<p>RDCManagerX is a connection manager for Remote Desktop, similar to Microsoft Remote Desktop Connection Manager
+(RDCMan). You organise servers in groups, connect with a double-click and work with several sessions in tabs.</p>
+<ul>
+  <li><strong>Works with your existing RDCMan files</strong> (<code>.rdg</code>): open them without conversion, and they stay usable in RDCMan.</li>
+  <li><strong>Dynamic resolution:</strong> the session adapts to the window or pane, without reconnecting.</li>
+  <li><strong>Reachability in the tree:</strong> see at a glance which servers are online, including stale DNS records.</li>
+  <li><strong>Password vault</strong> with a master password (AES-256), off by default.</li>
+  <li><strong>Routes</strong> via an RD Gateway or a Tailscale network, per server or group.</li>
+  <li><strong>Language:</strong> English or Dutch (<em>File &gt; Options</em>); by default the app follows the Windows display language.</li>
+  <li><strong>One exe, no installation.</strong></li>
+</ul>
+
+<h2 id="start">2. Getting started</h2>
+<p>Start <code>RDCManagerX.exe</code>. No installation is needed; your administrator puts the exe on a network share or distributes it through a launcher. At startup the files that were open
+when you last exited are reopened. Everything is collapsed then, except <em>Recent</em> and <em>Favorites</em>.</p>
+<table>
+  <tr><th>What</th><th>Where</th></tr>
+  <tr><td>App settings (window, recent files, options)</td><td><code>%APPDATA%\RDCManagerX\settings.json</code></td></tr>
+  <tr><td>Remembered passwords and secrets</td><td>Windows Credential Manager, encrypted with your master password</td></tr>
+  <tr><td>Debug log (only with <code>/debuglog</code>)</td><td><code>%LOCALAPPDATA%\RDCManagerX\debug.log</code></td></tr>
+</table>
+<p>You can also open a file from the command line: <code>RDCManagerX.exe path\to\file.rdg</code>.</p>
+
+<h2 id="files">3. Files</h2>
+<table>
+  <tr><th>Format</th><th>Description</th></tr>
+  <tr><td><code>.rdg</code></td><td>The RDCMan format. RDCManagerX reads and writes it without changing anything RDCMan knows about.
+    RDCManagerX's own settings (display, route, ping, Wake-on-LAN) go into a separate file next to it:
+    <code>&lt;file&gt;.rdg.rdcx.json</code>.</td></tr>
+  <tr><td><code>.rdcx</code></td><td>Own format (JSON) with everything in one file. The default for a new file.</td></tr>
+</table>
+<ul>
+  <li>You can have <strong>several files open at once</strong>, for example "Work" and "Private"; each file is its own node in the tree.</li>
+  <li><strong>Save as</strong> converts a file between <code>.rdg</code> and <code>.rdcx</code>.</li>
+  <li>A <code>*</code> after the file name means: unsaved changes. <em>Automatic saving</em> can be turned on in Options.</li>
+  <li><strong>Passwords are never stored in a file.</strong> Passwords in an RDCMan <code>.rdg</code> are ignored when the file is opened.</li>
+</ul>
+
+<h2 id="tree">4. The tree</h2>
+<p>On the left is the tree with files, groups and servers, sorted alphabetically with groups first. At the top are
+<strong>Recent</strong> (last connected servers, newest first) and <strong>Favorites</strong> (via <em>Server &gt;
+Add to favorites</em>).</p>
+<h3>Server colours</h3>
+<table>
+  <tr><th>Icon</th><th>Meaning</th></tr>
+  <tr><td><span class="dot blue"></span>Blue</td><td>No session; reachability is not checked (or the first check is still running)</td></tr>
+  <tr><td><span class="dot green"></span>Green</td><td>No session; reachable</td></tr>
+  <tr><td><span class="dot red"></span>Red</td><td>No session; not reachable</td></tr>
+  <tr><td><span class="dot orange"></span>Orange</td><td>Reachable, but a different computer answers at that address: the DNS record is probably stale</td></tr>
+  <tr><td>Icon with dot</td><td>Session: <span class="dot amber"></span>orange dot = connecting, green dot = connected, red dot = error</td></tr>
+</table>
+<p>Selecting a server that has an open tab shows that tab. Move servers and groups by dragging them.</p>
+
+<h2 id="search">5. Search</h2>
+<p>Press <kbd>Ctrl</kbd>+<kbd>F</kbd> (or click the search box above the tree) and type part of the name. The tree then
+shows only servers whose <strong>display name or host name</strong> matches, with their groups above them; everything is
+expanded. Clear the search box (or press <kbd>Esc</kbd>) to see everything again. Ideal in large files.</p>
+
+<h2 id="connect">6. Connecting and sessions</h2>
+<ul>
+  <li><strong>Connect:</strong> double-click a server, or select it and press <kbd>Enter</kbd>. If it already has a tab, that tab is shown.</li>
+  <li><strong>A whole group:</strong> <em>Server &gt; Connect all servers</em>. The credentials are asked only once.</li>
+  <li><strong>Disconnect:</strong> <kbd>Ctrl</kbd>+<kbd>D</kbd> or via the menu. The session on the server keeps running; the tab closes.</li>
+  <li><strong>Tabs:</strong> right-click a tab for <em>Reconnect</em>, <em>Disconnect</em>, <em>In a separate window</em>,
+    <em>Full screen</em>, <em>Scale</em> and <em>Move to next pane</em>. Middle-click closes a tab.</li>
+  <li><strong>Split view</strong> (<em>View</em> menu): 2 side by side or stacked, 3 or 4 side by side, 2&times;2, 3&times;2, 4&times;2 or
+    a custom layout.</li>
+  <li><strong>Dragging tabs:</strong> within a tab bar to change the order, or to another pane to show the session there.</li>
+  <li><strong>Detach:</strong> a session in a separate window or full screen; closing that window puts the session back.</li>
+  <li><strong>Exiting with open sessions</strong> asks for confirmation first.</li>
+</ul>
+<div class="note">If a connection drops because of a network problem, the RDP client tries to reconnect by itself.
+If that fails, the tab stays open with the message; choose <em>Reconnect</em> then.</div>
+
+<h2 id="display">7. Display and scale</h2>
+<p>By default RDCManagerX uses <strong>dynamic resolution</strong>: the resolution of the session follows the size of the
+pane or window, without reconnecting. The <strong>scale</strong> (100% to 300%, or automatic according to your
+monitor) is set per server or group (Properties &gt; Display) or temporarily per tab (right-click &gt; Scale).</p>
+<p>Other display modes (Properties &gt; Display): <em>Window size at connect</em>, <em>Fixed size</em> and
+<em>Full screen</em>. If an older server does not support dynamic resolution, RDCManagerX can optionally reconnect
+with the new size.</p>
+
+<h2 id="properties">8. Properties and inheritance</h2>
+<p>Right-click a file, group or server &gt; <em>Properties</em> (<kbd>Alt</kbd>+<kbd>Enter</kbd>).</p>
+<table>
+  <tr><th>Tab</th><th>Contents</th></tr>
+  <tr><td>General</td><td>Name, host name, comment; for servers also Wake-on-LAN</td></tr>
+  <tr><td>Logon</td><td>User and domain, or a credential profile of the file</td></tr>
+  <tr><td>Connection</td><td>Port, administrative session (console), start program, load balancing</td></tr>
+  <tr><td>Route</td><td>Direct, via RD Gateway or via Tailscale; reachability (ping)</td></tr>
+  <tr><td>Display</td><td>Display mode, scale, fixed size, colour depth</td></tr>
+  <tr><td>Local resources</td><td>Clipboard, drives, printers, sound, smart cards, Windows key combinations</td></tr>
+  <tr><td>Security</td><td>Server authentication (certificate check)</td></tr>
+</table>
+<p><strong>Inheritance:</strong> each tab has the checkbox <em>Inherit from parent group</em> at the top (for a
+file: <em>from default settings</em>). A setting on a group or on the file itself applies to everything below it,
+unless a group or server has its own setting. That way you set, for example, the user name or the ping once for a whole
+group.</p>
+
+<h2 id="logon">9. Logon and password vault</h2>
+<p>RDCManagerX asks for the password at every connection, unless it is remembered. Remembering is only possible when
+<strong>File &gt; Options &gt; Allow remembering passwords</strong> is on; it is off by default.</p>
+<ul>
+  <li>When you turn it on you set a <strong>master password</strong> (at least 10 characters). Remembered passwords are encrypted with it
+    (AES-256, key derived with PBKDF2) and additionally protected by Windows.</li>
+  <li>The <em>Remember password</em> checkbox in the logon prompt is never ticked by itself.</li>
+  <li>The vault locks after a configurable number of minutes without use (Options). Manually: <em>File &gt; Lock password vault</em>.</li>
+  <li>Change the master password: <em>File &gt; Change master password</em> or the button in Options.</li>
+  <li>If the server rejects a remembered password, it is forgotten automatically. Manually: <em>Server &gt; Forget remembered password</em>.</li>
+  <li><strong>Credential profiles</strong> (File &gt; Credential profiles): shared user names per file, as in RDCMan.</li>
+</ul>
+<div class="note warn">Forgot your master password? It cannot be recovered. The vault can only be emptied; after that you set a new master password.</div>
+
+<h2 id="route">10. Route: direct, gateway, Tailscale</h2>
+<p>On the <strong>Route</strong> tab you choose how a server is reached:</p>
+<table>
+  <tr><th>Route</th><th>Description</th></tr>
+  <tr><td>Direct</td><td>Directly, optionally via the RDCMan gateway setting on the same tab (stored in the <code>.rdg</code>).</td></tr>
+  <tr><td>Via RDP gateway</td><td>A gateway from <em>File &gt; RDP gateways</em>: server, port, usage method and credentials.
+    The gateway password can be stored in the vault. <strong>Not tested yet</strong> against a real RD Gateway.</td></tr>
+  <tr><td>Via Tailscale network</td><td>A network from <em>File &gt; Tailscale networks</em>. RDCManagerX itself temporarily becomes a device
+    in the tailnet; Tailscale does not need to be installed on this PC. In <em>Address in the tailnet</em> enter the
+    machine name or the 100.x address.</td></tr>
+</table>
+<p>Networks and gateways belong to the file; auth keys and passwords are stored only in the vault on your own PC. Via
+Tailscale a certificate warning appears (name <code>127.0.0.2</code>); the connection itself is encrypted by Tailscale.</p>
+<div class="note warn"><strong>Tailscale only with an ACL.</strong> Tailscale's default policy allows everything: every device in the tailnet may reach every other device. So set up an ACL in the Tailscale admin console (Access controls) that allows RDP (TCP 3389) only from the RDCManagerX node (<code>tag:rdpclient</code>) to the target PCs (<code>tag:rdpserver</code>), and remove the allow-all rule. Also turn on MFA and device approval. The example is in <code>README.md</code>.</div>
+
+<h2 id="ping">11. Reachability (ping)</h2>
+<p>Turn on for a file, group or server: Properties &gt; Route &gt; <em>Show reachability in the tree</em>
+(clear the inherit checkbox first). RDCManagerX then checks those servers in the background:</p>
+<ol>
+  <li>a ping; if there is no reply, a short connection to the RDP port (Windows often blocks ping);</li>
+  <li>if the server is reachable, NetBIOS is used to check that the expected computer really is at that address.</li>
+</ol>
+<p>You see the result in the colour in the tree (see <a href="#tree">The tree</a>) and in the status bar for a selected
+server, e.g. <em>"dc01 is online (3 ms)"</em>. The interval (30 seconds by default) is set in Options. Only
+servers with route <em>Direct</em> are checked; several at once, without slowing down the app.</p>
+<div class="note warn"><strong>Orange</strong> usually means a stale DNS record: the address was handed out by DHCP to
+another device, but the old record is still in DNS. Solution: enable DNS scavenging and delete the old record
+(see <a href="#troubleshooting">Troubleshooting</a>).</div>
+
+<h2 id="wol">12. Wake-on-LAN</h2>
+<p>Enter the MAC address for a server (Properties &gt; General), optionally with broadcast address and port. Then wake
+the computer with <em>Server &gt; Send Wake-on-LAN packet</em>.</p>
+
+<h2 id="options">13. Options</h2>
+<p><em>File &gt; Options</em>:</p>
+<ul>
+  <li>Language: System, English or Dutch (applies at the next start)</li>
+  <li>Number of servers in <em>Recent</em></li>
+  <li>Theme: System, Light or Dark (also via <em>View &gt; Theme</em>; applies at the next start if sessions are open)</li>
+  <li>Automatic saving</li>
+  <li>Allow remembering passwords, automatic locking, change master password</li>
+  <li>Interval of the reachability check</li>
+</ul>
+<p>Settings are only saved if they were changed in that session; two open windows therefore do not overwrite each other's settings.</p>
+
+<h2 id="keys">14. Keyboard shortcuts</h2>
+<p>In the tree (keys go to the session as soon as it has focus):</p>
+<table>
+  <tr><th>Key</th><th>Action</th></tr>
+  <tr><td><kbd>Enter</kbd></td><td>Connect (or go to the open tab)</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>D</kbd></td><td>Disconnect</td></tr>
+  <tr><td><kbd>Alt</kbd>+<kbd>Enter</kbd></td><td>Properties</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Rename</td></tr>
+  <tr><td><kbd>Del</kbd></td><td>Delete</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>N</kbd></td><td>New server</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>New group</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Search</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>Open file</td></tr>
+  <tr><td>Middle-click on tab</td><td>Close tab</td></tr>
+</table>
+
+<h2 id="troubleshooting">15. Troubleshooting</h2>
+<h3>Debug log</h3>
+<p>Start with <code>RDCManagerX.exe /debuglog</code> and look at <code>%LOCALAPPDATA%\RDCManagerX\debug.log</code>. Passwords
+never go into the log.</p>
+<h3>Server orange in the tree (wrong computer)</h3>
+<p>Check with:</p>
+<pre><code>nslookup &lt;name&gt;          (which address does DNS return?)
+nbtstat -A &lt;ip-address&gt;  (which computer is really there?)</code></pre>
+<p>Delete the stale record on a domain controller and enable DNS scavenging (aging on the zone, scavenging on the
+server), matched to the DHCP lease time:</p>
+<pre><code>Remove-DnsServerResourceRecord -ZoneName contoso.local -RRType A -Name &lt;name&gt; -RecordData &lt;ip&gt;
+Set-DnsServerZoneAging -Name contoso.local -Aging $true -NoRefreshInterval 3.00:00:00 -RefreshInterval 3.00:00:00
+Set-DnsServerScavenging -ScavengingState $true -ScavengingInterval 1.00:00:00 -ApplyOnAllZones</code></pre>
+<h3>Password is not remembered / vault asks nothing</h3>
+<p>Check that <em>Allow remembering passwords</em> is on in Options. If you no longer know the master
+password, the vault can only be emptied.</p>
+<h3>Tailscale</h3>
+<ul>
+  <li>Tailscale must be running on the target PC, and the firewall must allow RDP (TCP 3389) from <code>100.64.0.0/10</code> on the adapter <code>Tailscale</code>.</li>
+  <li>Connecting fails since you set up the ACL? Check that the target PC has the tag <code>tag:rdpserver</code> and the auth key the tag <code>tag:rdpclient</code>.</li>
+  <li>In <em>Address in the tailnet</em> enter the machine name or the 100.x address, not the account's e-mail address.</li>
+  <li><em>Test connection</em> in File &gt; Tailscale networks shows whether the network starts.</li>
+</ul>
+<h3>Dynamic resolution does not work right after logon</h3>
+<p>Some servers need a moment after logon; RDCManagerX keeps retrying for about 25 seconds.</p>
+
+<footer>RDCManagerX, administrator manual. The full technical documentation (building, Tailscale bridge, ACLs)
+is in <code>README.md</code> with the source code.</footer>
+</div>
+</body>
+</html>

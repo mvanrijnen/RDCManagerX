@@ -1,2 +1,3 @@
-// Handleiding (HTML) in de exe: Help > Handleiding opent hem in de browser als er geen CHM is ingebouwd.
+// Manual (HTML) embedded in the exe: Help > Manual opens it in the browser when no CHM is embedded.
 HELPHTML RCDATA "Docs\\RDCManagerX-Handleiding.html"
+HELPHTML_EN RCDATA "Docs\\RDCManagerX-Manual.html"

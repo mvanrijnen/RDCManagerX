@@ -89,6 +89,7 @@ Manager (RDCMan). Je beheert servers in groepen, verbindt met een dubbelklik en 
   <li><strong>Bereikbaarheid in de boom:</strong> zie in een oogopslag welke servers online zijn, inclusief verouderde DNS-records.</li>
   <li><strong>Wachtwoordkluis</strong> met hoofdwachtwoord (AES-256), standaard uit.</li>
   <li><strong>Routes</strong> via een RD Gateway of een Tailscale-netwerk, per server of groep.</li>
+  <li><strong>Taal:</strong> Nederlands of Engels (<em>Bestand &gt; Opties</em>); standaard volgt de app de weergavetaal van Windows.</li>
   <li><strong>E&eacute;n exe, geen installatie.</strong></li>
 </ul>
 
@@ -199,7 +200,7 @@ ping &eacute;&eacute;n keer in voor een hele groep.</p>
   <tr><th>Route</th><th>Toelichting</th></tr>
   <tr><td>Direct</td><td>Rechtstreeks, eventueel via de RDCMan-gatewayinstelling op dezelfde tab (die staat in de <code>.rdg</code>).</td></tr>
   <tr><td>Via RDP-gateway</td><td>Een gateway uit <em>Bestand &gt; RDP-gateways</em>: server, poort, gebruiksmethode en aanmeldgegevens.
-    Het gateway-wachtwoord kan in de kluis.</td></tr>
+    Het gateway-wachtwoord kan in de kluis. <strong>Nog niet getest</strong> met een echte RD Gateway.</td></tr>
   <tr><td>Via Tailscale-netwerk</td><td>Een netwerk uit <em>Bestand &gt; Tailscale-netwerken</em>. RDCManagerX wordt zelf tijdelijk een apparaat
     in het tailnet; Tailscale hoeft op deze pc niet ge&iuml;nstalleerd te zijn. Vul bij <em>Adres in het tailnet</em> de
     machinenaam of het 100.x-adres in.</td></tr>
@@ -229,6 +230,7 @@ de computer met <em>Server &gt; Wake-on-LAN-signaal versturen</em>.</p>
 <h2 id="opties">13. Opties</h2>
 <p><em>Bestand &gt; Opties</em>:</p>
 <ul>
+  <li>Taal: Systeem, English of Nederlands (geldt bij de volgende start)</li>
   <li>Aantal servers in <em>Recent</em></li>
   <li>Thema: Systeem, Licht of Donker (ook via <em>Beeld &gt; Thema</em>; geldt bij de volgende start als er sessies open zijn)</li>
   <li>Automatisch opslaan</li>
