@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Map voor de .dcu-bestanden (alle builds): $(DCUFolder)\$(ProductVersion)\$(ProjectName)\$(Platform)\$(Config).
+  DCUFolder is een IDE-omgevingsvariabele (Tools > Options > Environment Variables). Bij een build vanaf de
+  opdrachtregel (rsvars.bat zet geen ProductVersion) komt ProductVersion uit $(BDS) en DCUFolder uit het register
+  van de IDE. Zonder DCUFolder: .\$(Platform)\$(Config)\dcu.
+  Geïmporteerd vóór CodeGear.Delphi.Targets, zodat deze waarde wint van die in de dproj.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProductVersion Condition="'$(ProductVersion)'=='' and '$(BDS)'!=''">$([System.IO.Path]::GetFileName($(BDS.TrimEnd('\'))))</ProductVersion>
+        <DCUFolder Condition="'$(DCUFolder)'=='' and '$(ProductVersion)'!=''">$([MSBuild]::GetRegistryValue('HKEY_CURRENT_USER\Software\Embarcadero\BDS\$(ProductVersion)\Environment Variables', 'DCUFolder'))</DCUFolder>
+        <DCC_DcuOutput Condition="'$(DCUFolder)'!=''">$(DCUFolder)\$(ProductVersion)\$(ProjectName)\$(Platform)\$(Config)</DCC_DcuOutput>
+        <DCC_DcuOutput Condition="'$(DCUFolder)'==''">.\$(Platform)\$(Config)\dcu</DCC_DcuOutput>
+    </PropertyGroup>
+</Project>

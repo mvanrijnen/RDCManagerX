@@ -1,4 +1,4 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{0E6E8C2B-6F7A-4A0B-9D1C-3B5F2A8E4C21}</ProjectGuid>
         <ProjectVersion>20.2</ProjectVersion>
@@ -37,7 +37,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <DCC_DcuOutput>.\$(Platform)\$(Config)\dcu</DCC_DcuOutput>
+        <DCC_DcuOutput>$(DCUFolder)\$(ProductVersion)\$(ProjectName)\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_UnitSearchPath>Source;Source\Imports;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_E>false</DCC_E>
@@ -53,7 +53,8 @@
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <VerInfo_IncludeVerInfo>false</VerInfo_IncludeVerInfo>
         <Custom_Styles>&quot;Windows11 Modern Light|VCLSTYLE|Styles\Windows11ModernLight.vsf&quot;;&quot;Windows11 Modern Dark|VCLSTYLE|Styles\Windows11ModernDark.vsf&quot;;&quot;Windows10 Dark|VCLSTYLE|Styles\Windows10Dark.vsf&quot;</Custom_Styles>
-        <VerInfo_Locale>1043</VerInfo_Locale>    </PropertyGroup>
+        <VerInfo_Locale>1043</VerInfo_Locale>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
         <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
         <DCC_DebugDCUs>false</DCC_DebugDCUs>
@@ -85,10 +86,6 @@
         <DCCReference Include="Source\RdcmX.AppSettings.pas"/>
         <DCCReference Include="Source\RdcmX.Credentials.pas"/>
         <DCCReference Include="Source\RdcmX.Crypto.pas"/>
-        <DCCReference Include="Source\RdcmX.UI.MasterPassword.pas">
-            <Form>frmMasterPassword</Form>
-            <FormType>dfm</FormType>
-        </DCCReference>
         <DCCReference Include="Source\RdcmX.Log.pas"/>
         <DCCReference Include="Source\RdcmX.Model.pas"/>
         <DCCReference Include="Source\RdcmX.Rdp.Host.pas"/>
@@ -96,11 +93,9 @@
         <DCCReference Include="Source\RdcmX.Tailscale.pas"/>
         <DCCReference Include="Source\RdcmX.UI.Tailnets.pas">
             <Form>frmTailnets</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Source\RdcmX.UI.Gateways.pas">
             <Form>frmGateways</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Source\RdcmX.Rdp.Session.pas"/>
         <DCCReference Include="Source\RdcmX.Sessions.pas"/>
@@ -116,6 +111,10 @@
         <DCCReference Include="Source\RdcmX.UI.Icons.pas"/>
         <DCCReference Include="Source\RdcmX.UI.Main.pas">
             <Form>frmMain</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Source\RdcmX.UI.MasterPassword.pas">
+            <Form>frmMasterPassword</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Source\RdcmX.UI.Options.pas">
@@ -139,15 +138,6 @@
         <DCCReference Include="Source\RdcmX.XmlTree.pas"/>
         <RcCompile Include="Source\Version.rc">
             <Form>Version.res</Form>
-        </RcCompile>
-        <RcCompile Include="Source\TsBridge.rc">
-            <Form>TsBridge.res</Form>
-        </RcCompile>
-        <RcCompile Include="Source\Help.rc">
-            <Form>Help.res</Form>
-        </RcCompile>
-        <RcCompile Include="Source\HelpChm.rc">
-            <Form>HelpChm.res</Form>
         </RcCompile>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
@@ -177,7 +167,24 @@
         </BorlandProject>
         <ProjectFileVersion>12</ProjectFileVersion>
     </ProjectExtensions>
+    <Import Project="Tools\DcuOutput.props" Condition="Exists('Tools\DcuOutput.props')"/>
     <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')"/>
     <Import Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj" Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')"/>
     <Import Project="Tools\Version.targets" Condition="Exists('Tools\Version.targets')"/>
+    <PropertyGroup Condition="'$(Config)'=='Debug' And '$(Platform)'=='Win64'">
+        <PreBuildEvent/>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent>if exist &quot;$(MSBuildProjectDirectory)\Tools\afterbuild.cmd&quot; call &quot;$(MSBuildProjectDirectory)\Tools\afterbuild.cmd&quot; &quot;$(Config)&quot; &quot;$(MSBuildProjectDirectory)\$(Platform)\$(Config)\$(MSBuildProjectName).exe&quot;</PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Config)'=='Release' And '$(Platform)'=='Win64'">
+        <PreBuildEvent/>
+        <PreBuildEventIgnoreExitCode>False</PreBuildEventIgnoreExitCode>
+        <PreLinkEvent/>
+        <PreLinkEventIgnoreExitCode>False</PreLinkEventIgnoreExitCode>
+        <PostBuildEvent>if exist &quot;$(MSBuildProjectDirectory)\Tools\afterbuild.cmd&quot; call &quot;$(MSBuildProjectDirectory)\Tools\afterbuild.cmd&quot; &quot;$(Config)&quot; &quot;$(MSBuildProjectDirectory)\$(Platform)\$(Config)\$(MSBuildProjectName).exe&quot;</PostBuildEvent>
+        <PostBuildEventIgnoreExitCode>False</PostBuildEventIgnoreExitCode>
+    </PropertyGroup>
 </Project>

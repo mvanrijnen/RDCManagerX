@@ -64,6 +64,7 @@ Tests\Win64\Debug\RDCManagerXTests.exe --exitbehavior:Continue
 - After every build the PostBuildEvent calls `Tools\afterbuild.cmd <Config> <exe path>` (if present). In the repository that file is empty and stays empty; locally the user fills it (Release: copy the exe to the deploy share) and marks it with `git update-index --skip-worktree Tools/afterbuild.cmd`, so never commit local content. The Release copy is what the user tests and distributes, so builds meant for the user are Release builds.
   - If the share is unreachable the script prints a warning and the build does not fail.
   - Use `$(MSBuildProjectDirectory)\$(Platform)\$(Config)` in build events, not `$(OUTPUTPATH)`: that macro is still empty at evaluation time in a command-line msbuild.
+- DCU output for all builds: `$(DCUFolder)\$(ProductVersion)\$(ProjectName)\$(Platform)\$(Config)`, set by `Tools\DcuOutput.props` (imported by both dprojs). From the command line it reads DCUFolder from the IDE registry and ProductVersion from `$(BDS)`; without DCUFolder it falls back to `.\$(Platform)\$(Config)\dcu`.
 - Version scheme `yyyy.mm.dd.xxx` (no semantic versioning; xxx = build number of the day, zero-padded, restarting at 001 each day).
   - `Tools\Version.targets`, imported by the dproj, runs `Tools\NextVersion.ps1` before `BrccCompile`. A PreBuildEvent is too late because it runs after the resource compile.
   - The script increments `BuildNumber.json` and generates `Source\Version.rc` (VERSIONINFO), which is linked via `{$R 'Version.res' 'Source\Version.rc'}`.
