@@ -89,6 +89,7 @@ Tests\Win64\Debug\RDCManagerXTests.exe --exitbehavior:Continue
 - **README:** `README.md` (English, what GitHub shows) and `README.nl.md` (Dutch), with a language switch at the top. Keep both in sync.
 - **GitHub Pages:** `.github/workflows/pages.yml` publishes the manual (en/nl, HTML and PDF, landing page `Docs\site\index.html`) to `https://mvanrijnen.github.io/RDCManagerX/` on changes in `Docs`.
 - **Security scans:** `.github/workflows/codacy.yml` (SARIF split per tool: code scanning accepts one run per category) and `devskim.yml`. Actions are pinned to commit SHAs with the version in a comment.
+- **GitHub releases** (user decision): never the bare exe, always a zip made with `Tools\make-release-zip.ps1` (`RDCManagerX-<version>-win64.zip` with the exe and LICENSE, in `Win64\Release`); tag `v<version>`; first releases as pre-release; SHA-256 of zip and exe in the notes.
 - **Public repo:** keep real names, hosts and company references out of everything committed (docs, samples, PDFs; `Samples/` is git-ignored). Test data with fake secrets must not look like real keys (build them from pieces), or GitHub secret scanning flags them.
 
 ## Architecture
