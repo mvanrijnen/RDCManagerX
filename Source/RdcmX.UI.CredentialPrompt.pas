@@ -4,6 +4,8 @@
   Vraagt het wachtwoord (en eventueel gebruikersnaam/domein voor deze verbinding).
   Met "Wachtwoorden onthouden" in Opties staat er een vinkje "Wachtwoord onthouden"; het opslaan zelf gebeurt
   door de aanroeper in Windows Referentiebeheer (RdcmX.Credentials). Het veld wordt na gebruik overschreven.
+  "Gebruikersnaam en domein onthouden" (user request) is separate from the password: the caller stores user name and
+  domain in the file (logon settings of the server or group); never checked by default.
 }
 
 interface
@@ -24,6 +26,7 @@ type
     edtPassword: TEdit;
     lblHint: TLabel;
     chkRemember: TCheckBox;
+    chkRememberUser: TCheckBox;
     pnlButtons: TPanel;
     btnOk: TButton;
     btnCancel: TButton;
@@ -33,8 +36,9 @@ type
   protected
     procedure DoCreate; override;
   public
-    /// <summary>aShowRemember: vinkje "Wachtwoord onthouden" tonen (Opties); aRemember: begin- en eindstand daarvan.</summary>
-    class function Execute(const aServerCaption: string; var aUserName, aDomain: string; out aPassword: string; aShowRemember: Boolean; var aRemember: Boolean): Boolean; static;
+    /// <summary>aShowRemember: vinkje "Wachtwoord onthouden" tonen (Opties); aRemember: begin- en eindstand daarvan.
+    /// aRememberUser: "Gebruikersnaam en domein onthouden" (start and end state).</summary>
+    class function Execute(const aServerCaption: string; var aUserName, aDomain: string; out aPassword: string; aShowRemember: Boolean; var aRemember, aRememberUser: Boolean): Boolean; static;
   end;
 
 implementation
@@ -51,7 +55,7 @@ begin
   inherited;
 end;
 
-class function TfrmCredentialPrompt.Execute(const aServerCaption: string; var aUserName, aDomain: string; out aPassword: string; aShowRemember: Boolean; var aRemember: Boolean): Boolean;
+class function TfrmCredentialPrompt.Execute(const aServerCaption: string; var aUserName, aDomain: string; out aPassword: string; aShowRemember: Boolean; var aRemember, aRememberUser: Boolean): Boolean;
 var
   lForm: TfrmCredentialPrompt;
 begin
@@ -63,6 +67,9 @@ begin
     lForm.edtDomain.Text := aDomain;
     lForm.chkRemember.Visible := aShowRemember;
     lForm.chkRemember.Checked := aRemember;
+    lForm.chkRememberUser.Checked := aRememberUser;
+    if not aShowRemember then
+      lForm.ClientHeight := lForm.ClientHeight - (lForm.chkRemember.Top - lForm.chkRememberUser.Top);
     if aShowRemember then
       lForm.lblHint.Caption := _('Onthouden: versleuteld in Windows Referentiebeheer, nooit in het bestand.')
     else
@@ -74,6 +81,7 @@ begin
       aDomain := Trim(lForm.edtDomain.Text);
       aPassword := lForm.edtPassword.Text;
       aRemember := aShowRemember and lForm.chkRemember.Checked;
+      aRememberUser := lForm.chkRememberUser.Checked;
     end;
     lForm.edtPassword.Text := '';
   finally

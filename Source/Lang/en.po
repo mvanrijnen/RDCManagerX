@@ -50,6 +50,14 @@ msgid "Wachtwoord onthouden"
 msgstr "Remember password"
 
 #: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Gebruikersnaam en domein opslaan bij deze server in het bestand (zoals op het tabblad Aanmelden), zodat ze de volgende keer ingevuld zijn. Het wachtwoord valt hier niet onder."
+msgstr "Store the user name and domain with this server in the file (as on the Logon tab), so they are filled in next time. This does not include the password."
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
+msgid "Gebruikersnaam en domein onthouden"
+msgstr "Remember user name and domain"
+
+#: Source/RdcmX.UI.CredentialPrompt.dfm
 msgid "Verbinden met deze aanmeldgegevens."
 msgstr "Connect with these credentials."
 

@@ -46,7 +46,7 @@ Where data is stored:
   - The `.rdg` reader clears every `<password>` text and adds a warning to `TRdcFile.Warnings`.
   - Writers always emit an empty `<password />`.
   - The password is asked at every connect (`RdcmX.UI.CredentialPrompt`), handed to the control and cleared. `AllowCredentialSaving` is False.
-  - User name and domain may be stored.
+  - User name and domain may be stored. The logon prompt has "Gebruikersnaam en domein onthouden" (user request, separate from the password, unchecked by default): `TfrmMain.RememberUserName` writes them into the server's (group connect: the group's) own logon section as custom credentials.
 - Open sessions are shown as **tabs**. Double-click or Enter connects the server, or activates its tab if it is already open.
   - Selecting a server in the tree that has an open tab shows that tab (`ShowTabOfSelectedServer`, user decision 2026-11-24, replaces "the tree does not switch the session"). Keyboard focus stays in the tree and a detached window is not brought forward (`FSelectingFromTree`).
   - A session that ends normally closes its tab: user disconnect, or the server ending it (`TRdcSessionManager.EndedNormally`, queued via `CloseTabAfterDisconnect`). After an error the tab stays open with the message. A fallback reconnect (`ReconnectPending`) does not count as an end.

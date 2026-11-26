@@ -4,7 +4,7 @@ object frmCredentialPrompt: TfrmCredentialPrompt
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Aanmelden'
-  ClientHeight = 240
+  ClientHeight = 264
   ClientWidth = 380
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -77,10 +77,22 @@ object frmCredentialPrompt: TfrmCredentialPrompt
       'Het wachtwoord versleuteld in de wachtwoordkluis bewaren, zodat het d' +
       'e volgende keer niet gevraagd wordt.'
     Left = 120
-    Top = 160
+    Top = 184
     Width = 244
     Height = 19
     Caption = 'Wachtwoord onthouden'
+    TabOrder = 4
+  end
+  object chkRememberUser: TCheckBox
+    Hint =
+      'Gebruikersnaam en domein opslaan bij deze server in het bestand (zoals' +
+      ' op het tabblad Aanmelden), zodat ze de volgende keer ingevuld zijn. H' +
+      'et wachtwoord valt hier niet onder.'
+    Left = 120
+    Top = 160
+    Width = 244
+    Height = 19
+    Caption = 'Gebruikersnaam en domein onthouden'
     TabOrder = 3
   end
   object edtUser: TEdit
@@ -114,12 +126,12 @@ object frmCredentialPrompt: TfrmCredentialPrompt
   end
   object pnlButtons: TPanel
     Left = 0
-    Top = 194
+    Top = 218
     Width = 380
     Height = 46
     Align = alBottom
     BevelOuter = bvNone
-    TabOrder = 4
+    TabOrder = 5
     object btnOk: TButton
       Hint = 'Verbinden met deze aanmeldgegevens.'
       Left = 192

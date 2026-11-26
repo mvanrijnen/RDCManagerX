@@ -432,6 +432,7 @@ type
     function LoadRememberedPassword(aServer: TRdcServer; const aContext: TRdcCredentialContext; const aUserName, aDomain: string; out aPassword: string): TRdcLoadResult;
     procedure RememberPassword(aServer: TRdcServer; const aContext: TRdcCredentialContext; const aUserName, aDomain, aPassword: string);
     function ConfirmHostApproval(const aAccount: string; const aMissing: TArray<TRdcHostRef>): Boolean;
+    procedure RememberUserName(aNode: TRdcNode; const aUserName, aDomain: string);
     function ApproveGroupHosts(const aServers: TArray<TRdcServer>; const aUserName, aDomain: string): Boolean;
     function HasRememberedPassword(aServer: TRdcServer; const aUserName, aDomain: string): Boolean;
     function AccountText(const aUserName, aDomain: string): string;
@@ -3147,6 +3148,7 @@ end;
 function TfrmMain.CredentialRequest(aServer: TRdcServer; const aContext: TRdcCredentialContext; var aUserName, aDomain: string; out aPassword: string; out aFromVault: Boolean): Boolean;
 var
   lRemember: Boolean;
+  lRememberUser: Boolean;
 begin
   aFromVault := False;
   if FBatchActive then
@@ -3168,9 +3170,45 @@ begin
   end;
   // "Wachtwoord onthouden" staat nooit standaard aan: alleen onthouden als de gebruiker het zelf aanvinkt.
   lRemember := False;
-  Result := TfrmCredentialPrompt.Execute(Format('%s (%s)', [aServer.Caption, aContext.HostText]), aUserName, aDomain, aPassword, FAppSettings.RememberPasswords, lRemember);
+  lRememberUser := False;
+  Result := TfrmCredentialPrompt.Execute(Format('%s (%s)', [aServer.Caption, aContext.HostText]), aUserName, aDomain, aPassword, FAppSettings.RememberPasswords, lRemember, lRememberUser);
   if Result and lRemember then
     RememberPassword(aServer, aContext, aUserName, aDomain, aPassword);
+  if Result and lRememberUser then
+    RememberUserName(aServer, aUserName, aDomain);
+end;
+
+procedure TfrmMain.RememberUserName(aNode: TRdcNode; const aUserName, aDomain: string);
+var
+  lDomain: string;
+  lLogon: TRdcLogonCredentials;
+  lOldDomain: string;
+  lOldUser: string;
+  lUser: string;
+begin
+  // User name and domain only (never the password) into the node's own logon settings, as on the Logon tab.
+  TRdcCredentialsSettings.SplitLogon(aUserName, aDomain, lDomain, lUser);
+  if lUser = '' then
+    Exit;
+  if aNode.ResolveLogon(lOldDomain, lOldUser) and SameText(lOldUser, lUser) and SameText(lOldDomain, lDomain) then
+    Exit; // already what the node uses
+  lLogon := aNode.Settings.Logon;
+  if lLogon.Inherit then
+  begin
+    lLogon.Inherit := False;
+    lLogon.Clear;
+  end;
+  if lLogon.Node.Children.Count = 0 then
+    lLogon.FillDefaults;
+  if not lLogon.IsCustom then
+  begin
+    lLogon.ProfileName := cRdcCustomProfileName;
+    lLogon.ProfileScope := psLocal;
+  end;
+  lLogon.UserName := lUser;
+  lLogon.Domain := lDomain;
+  MarkModified(aNode);
+  TRdcLog.Write(Format('%s: gebruikersnaam onthouden (%s)', [aNode.Caption, AccountText(lUser, lDomain)]));
 end;
 
 procedure TfrmMain.TailnetOptions(aDef: TRdcTailnetDef; out aMatchHostName, aAllowShared: Boolean);
@@ -3518,6 +3556,7 @@ var
   lGroup: TRdcNode;
   lIndex: Integer;
   lPane: Integer;
+  lRememberUser: Boolean;
   lServers: TArray<TRdcServer>;
   lUserName: string;
 begin
@@ -3533,6 +3572,7 @@ begin
   FBatchUserName := lUserName;
   FBatchDomain := lDomain;
   FBatchRemember := False; // nooit standaard onthouden
+  lRememberUser := False;
   // Declined hosts: the normal group prompt below (one typed password for all).
   if HasRememberedPassword(lServers[0], lUserName, lDomain) and ApproveGroupHosts(lServers, lUserName, lDomain) then
   begin
@@ -3541,8 +3581,11 @@ begin
     ShowActiveSession;
     Exit;
   end;
-  if not TfrmCredentialPrompt.Execute(Format(_('%d servers in "%s"'), [Length(lServers), lGroup.Caption]), FBatchUserName, FBatchDomain, FBatchPassword, FAppSettings.RememberPasswords, FBatchRemember) then
+  if not TfrmCredentialPrompt.Execute(Format(_('%d servers in "%s"'), [Length(lServers), lGroup.Caption]), FBatchUserName, FBatchDomain, FBatchPassword, FAppSettings.RememberPasswords, FBatchRemember, lRememberUser) then
     Exit;
+  // For the group: its servers inherit it unless they have their own logon settings.
+  if lRememberUser then
+    RememberUserName(lGroup, FBatchUserName, FBatchDomain);
   FBatchActive := True;
   try
     // Verdelen over de vakken, te beginnen bij het actieve vak; open sessies alleen tonen.
