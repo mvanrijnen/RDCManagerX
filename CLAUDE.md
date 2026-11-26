@@ -34,6 +34,9 @@ Where data is stored:
     - Stored items without a vault (from before the vault existed) are wiped at startup, and the option is turned off (`DropLegacyPasswords`).
     - The store is behind `IRdcBlobStore`; the tests (`Tests\RdcmX.Tests.Vault.pas`) use an in-memory store and never touch Credential Manager.
   - Credentials are keyed per account: `RDCManagerX:account:<domain\user>`. Local accounts are keyed per server: `RDCManagerX:server:<host>:<user>`.
+  - **An account password is bound to approved hosts** (security review 2026-11-25, user decision): the encrypted payload holds the password plus host keys (`DirectHostKey`, `TailnetHostKey` with the control URL hash, `GatewayHostKey` for credSharing). `TRdcSessionManager.CredentialContextFor` lists where a connection's password goes; `TRdcPasswordVault.LoadApproved` asks once for hosts not approved yet (`ConfirmHostApproval`, default No; No = normal prompt). Saving a typed password approves that connection's hosts. Group connect asks once for all new hosts (`ApproveGroupHosts`). Old items (plain payload) count as approved for nothing.
+  - With a vault password `AuthenticationLevel` is never 0: `AuthenticationLevelFor` raises it to 2 (warn). Not 1, because the Tailscale route (127.0.0.2) never matches the certificate name.
+  - Prompts show the real host next to the caption (the caption comes from the file).
   - Passwords never go into `.rdg`/`.rdcx`/sidecar, `settings.json` or the log. The log contains only the target name.
   - Password strings are overwritten after use (`WipeString`).
   - A stored password rejected by the server is forgotten automatically: disconnect reason 2055/2567, marked ONZEKER.

@@ -1025,6 +1025,14 @@ msgstr ""
 "\r\n"
 "%s"
 
+#: Source/RdcmX.Sessions.pas
+msgid "gateway %s (krijgt dezelfde aanmeldgegevens)"
+msgstr "gateway %s (receives the same credentials)"
+
+#: Source/RdcmX.Sessions.pas
+msgid "%s (via Tailscale-netwerk \"%s\")"
+msgstr "%s (via Tailscale network \"%s\")"
+
 #: Source/RdcmX.Storage.Json.pas
 msgid "Onbekende instellingsgroep \"%s\" bij \"%s\" genegeerd."
 msgstr "Unknown settings group \"%s\" at \"%s\" ignored."
@@ -1572,8 +1580,8 @@ msgid "Verbinding met %s verbroken (reden %d)%s"
 msgstr "Connection to %s ended (reason %d)%s"
 
 #: Source/RdcmX.UI.Main.pas
-msgid "Ontgrendel de wachtwoordkluis om met %s te verbinden."
-msgstr "Unlock the password vault to connect to %s."
+msgid "Ontgrendel de wachtwoordkluis om met %s (%s) te verbinden."
+msgstr "Unlock the password vault to connect to %s (%s)."
 
 #: Source/RdcmX.UI.Main.pas
 msgid "Ontgrendel de wachtwoordkluis om het wachtwoord te onthouden."
@@ -1582,6 +1590,22 @@ msgstr "Unlock the password vault to remember the password."
 #: Source/RdcmX.UI.Main.pas
 msgid "Wachtwoord niet onthouden (kluis niet ontgrendeld)."
 msgstr "Password not remembered (vault not unlocked)."
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Onthouden wachtwoord voor %s gebruiken op:%s\r\n"
+"\r\n"
+"Dit wachtwoord is nog niet voor deze host(s) gebruikt. Kies alleen Ja als u ze vertrouwt; het antwoord wordt onthouden. Bij Nee typt u het wachtwoord zelf in."
+msgstr ""
+"Use the remembered password for %s on:%s
+"
+"
+"
+"This password has not been used for these host(s) yet. Only choose Yes if you trust them; the answer is remembered. With No you type the password yourself."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Ontgrendel de wachtwoordkluis om met %d servers te verbinden."
+msgstr "Unlock the password vault to connect to %d servers."
 
 #: Source/RdcmX.UI.Main.pas
 msgid "Onthouden wachtwoord vergeten voor %s"

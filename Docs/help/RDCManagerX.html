@@ -173,6 +173,11 @@ ping &eacute;&eacute;n keer in voor een hele groep.</p>
   <li>Bij het aanzetten stel je een <strong>hoofdwachtwoord</strong> in (minimaal 10 tekens). Onthouden wachtwoorden worden daarmee versleuteld
     (AES-256, sleutel afgeleid met PBKDF2) en daarbovenop door Windows beschermd.</li>
   <li>Het vinkje <em>Wachtwoord onthouden</em> in de aanmeldvraag staat nooit vanzelf aan.</li>
+  <li>Een onthouden wachtwoord hoort bij de <strong>hosts</strong> waarvoor je het gebruikt hebt. Wijst een server (bijvoorbeeld uit een
+    bestand van iemand anders) hetzelfde account naar een andere host, of naar een gateway die dezelfde aanmeldgegevens krijgt, dan vraagt
+    RDCManagerX eerst of het wachtwoord daar gebruikt mag worden (standaard <em>Nee</em>; dan typ je het zelf in). Bij een groep komt er
+    één vraag voor alle nieuwe hosts. Met een wachtwoord uit de kluis wordt nooit verbonden zonder serververificatie: staat de server op
+    "geen verificatie", dan krijg je een waarschuwing als de server zich niet kan bewijzen.</li>
   <li>De kluis vergrendelt na een instelbaar aantal minuten zonder gebruik (Opties). Handmatig: <em>Bestand &gt; Wachtwoordkluis vergrendelen</em>.</li>
   <li>Hoofdwachtwoord wijzigen: <em>Bestand &gt; Hoofdwachtwoord wijzigen</em> of de knop in Opties.</li>
   <li>Wordt een onthouden wachtwoord door de server geweigerd, dan wordt het automatisch vergeten. Handmatig: <em>Server &gt; Onthouden wachtwoord vergeten</em>.</li>

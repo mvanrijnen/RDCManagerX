@@ -427,8 +427,10 @@ type
     procedure ConnectSelectedGroup;
     // Onthouden wachtwoorden
     function CredentialTargetFor(aServer: TRdcServer; const aUserName, aDomain: string): string;
-    function LoadRememberedPassword(aServer: TRdcServer; const aUserName, aDomain: string; out aPassword: string): Boolean;
-    procedure RememberPassword(aServer: TRdcServer; const aUserName, aDomain, aPassword: string);
+    function LoadRememberedPassword(aServer: TRdcServer; const aContext: TRdcCredentialContext; const aUserName, aDomain: string; out aPassword: string): TRdcLoadResult;
+    procedure RememberPassword(aServer: TRdcServer; const aContext: TRdcCredentialContext; const aUserName, aDomain, aPassword: string);
+    function ConfirmHostApproval(const aAccount: string; const aMissing: TArray<TRdcHostRef>): Boolean;
+    function ApproveGroupHosts(const aServers: TArray<TRdcServer>; const aUserName, aDomain: string): Boolean;
     function HasRememberedPassword(aServer: TRdcServer; const aUserName, aDomain: string): Boolean;
     function AccountText(const aUserName, aDomain: string): string;
     // Wachtwoordkluis (hoofdwachtwoord)
@@ -460,7 +462,7 @@ type
     procedure SessionWindowHostResized(aSender: TObject; aServer: TRdcServer);
     procedure DisconnectSelectedGroup;
     function SelectedGroupServers: TArray<TRdcServer>;
-    function CredentialRequest(aServer: TRdcServer; var aUserName, aDomain: string; out aPassword: string): Boolean;
+    function CredentialRequest(aServer: TRdcServer; const aContext: TRdcCredentialContext; var aUserName, aDomain: string; out aPassword: string; out aFromVault: Boolean): Boolean;
     procedure DisconnectSelectedServer;
     procedure ShowTabOfSelectedServer;
     function OpenSessionsCloseQuestion(aActive: Integer): string;
@@ -3115,10 +3117,11 @@ begin
     FSessions.Disconnect(SelectedServer);
 end;
 
-function TfrmMain.CredentialRequest(aServer: TRdcServer; var aUserName, aDomain: string; out aPassword: string): Boolean;
+function TfrmMain.CredentialRequest(aServer: TRdcServer; const aContext: TRdcCredentialContext; var aUserName, aDomain: string; out aPassword: string; out aFromVault: Boolean): Boolean;
 var
   lRemember: Boolean;
 begin
+  aFromVault := False;
   if FBatchActive then
   begin
     // Groep verbinden: de eenmalig gevraagde gegevens voor alle servers.
@@ -3126,17 +3129,21 @@ begin
     aDomain := FBatchDomain;
     aPassword := FBatchPassword;
     if FBatchRemember then
-      RememberPassword(aServer, aUserName, aDomain, aPassword);
+      RememberPassword(aServer, aContext, aUserName, aDomain, aPassword);
     Exit(True);
   end;
-  // Onthouden wachtwoord voor dit account: zonder te vragen verbinden.
-  if FAppSettings.RememberPasswords and LoadRememberedPassword(aServer, aUserName, aDomain, aPassword) then
+  // Remembered password for this account: without a prompt, but only for hosts approved for it (asked once per new
+  // host). Declined: the normal prompt below.
+  if FAppSettings.RememberPasswords and (LoadRememberedPassword(aServer, aContext, aUserName, aDomain, aPassword) = rlrLoaded) then
+  begin
+    aFromVault := True;
     Exit(True);
+  end;
   // "Wachtwoord onthouden" staat nooit standaard aan: alleen onthouden als de gebruiker het zelf aanvinkt.
   lRemember := False;
-  Result := TfrmCredentialPrompt.Execute(Format('%s (%s)', [aServer.Caption, aServer.Name]), aUserName, aDomain, aPassword, FAppSettings.RememberPasswords, lRemember);
+  Result := TfrmCredentialPrompt.Execute(Format('%s (%s)', [aServer.Caption, aContext.HostText]), aUserName, aDomain, aPassword, FAppSettings.RememberPasswords, lRemember);
   if Result and lRemember then
-    RememberPassword(aServer, aUserName, aDomain, aPassword);
+    RememberPassword(aServer, aContext, aUserName, aDomain, aPassword);
 end;
 
 function TfrmMain.CredentialTargetFor(aServer: TRdcServer; const aUserName, aDomain: string): string;
@@ -3166,26 +3173,35 @@ begin
   Result := FAppSettings.RememberPasswords and (Trim(aUserName) <> '') and FVault.HasPassword(CredentialTargetFor(aServer, aUserName, aDomain));
 end;
 
-function TfrmMain.LoadRememberedPassword(aServer: TRdcServer; const aUserName, aDomain: string; out aPassword: string): Boolean;
+function TfrmMain.LoadRememberedPassword(aServer: TRdcServer; const aContext: TRdcCredentialContext; const aUserName, aDomain: string; out aPassword: string): TRdcLoadResult;
 var
+  lAccount: string;
   lTarget: string;
 begin
   aPassword := '';
-  Result := False;
+  Result := rlrNone;
   if not HasRememberedPassword(aServer, aUserName, aDomain) then
     Exit;
-  if not EnsureVaultUnlocked(Format(_('Ontgrendel de wachtwoordkluis om met %s te verbinden.'), [aServer.Caption])) then
+  // The real host next to the caption: the caption comes from the file and can say anything.
+  if not EnsureVaultUnlocked(Format(_('Ontgrendel de wachtwoordkluis om met %s (%s) te verbinden.'), [aServer.Caption, aContext.HostText])) then
     Exit;
   lTarget := CredentialTargetFor(aServer, aUserName, aDomain);
-  Result := FVault.TryLoad(lTarget, aPassword);
-  if Result then
+  lAccount := AccountText(aUserName, aDomain);
+  Result := FVault.LoadApproved(lTarget, lAccount, aContext.Hosts,
+    function(const aMissing: TArray<TRdcHostRef>): Boolean
+    begin
+      Result := ConfirmHostApproval(lAccount, aMissing);
+    end, aPassword);
+  if Result = rlrDeclined then
+    TRdcLog.Write(Format('%s: onthouden wachtwoord niet gebruikt, host niet goedgekeurd (%s)', [aServer.Caption, lTarget]));
+  if Result = rlrLoaded then
   begin
     FStoredPasswordUsed.AddOrSetValue(aServer, lTarget);
     TRdcLog.Write(Format('%s: onthouden wachtwoord gebruikt (%s)', [aServer.Caption, lTarget])); // doelnaam, nooit het wachtwoord
   end;
 end;
 
-procedure TfrmMain.RememberPassword(aServer: TRdcServer; const aUserName, aDomain, aPassword: string);
+procedure TfrmMain.RememberPassword(aServer: TRdcServer; const aContext: TRdcCredentialContext; const aUserName, aDomain, aPassword: string);
 var
   lTarget: string;
 begin
@@ -3197,11 +3213,61 @@ begin
     Exit;
   end;
   lTarget := CredentialTargetFor(aServer, aUserName, aDomain);
-  if FVault.Save(lTarget, AccountText(aUserName, aDomain), aPassword) then
+  // The hosts of this connection are approved: the user typed the password for them.
+  if FVault.SaveAccount(lTarget, AccountText(aUserName, aDomain), aPassword, aContext.Hosts) then
   begin
     FStoredPasswordUsed.AddOrSetValue(aServer, lTarget);
     TRdcLog.Write(Format('%s: wachtwoord onthouden (%s)', [aServer.Caption, lTarget]));
   end;
+end;
+
+function TfrmMain.ConfirmHostApproval(const aAccount: string; const aMissing: TArray<TRdcHostRef>): Boolean;
+var
+  lHost: TRdcHostRef;
+  lList: string;
+begin
+  lList := '';
+  for lHost in aMissing do
+    lList := lList + #13#10'  - ' + lHost.Display;
+  // Default No: a file can name any host for a remembered account.
+  Result := MessageDlg(Format(_('Onthouden wachtwoord voor %s gebruiken op:%s'#13#10#13#10'Dit wachtwoord is nog niet voor deze host(s) gebruikt. Kies alleen Ja als u ze vertrouwt; het antwoord wordt onthouden. Bij Nee typt u het wachtwoord zelf in.'), [aAccount, lList]), mtConfirmation, [mbYes, mbNo], 0, mbNo) = mrYes;
+end;
+
+function TfrmMain.ApproveGroupHosts(const aServers: TArray<TRdcServer>; const aUserName, aDomain: string): Boolean;
+var
+  lAccount: string;
+  lHost: TRdcHostRef;
+  lMissing: TArray<TRdcHostRef>;
+  lServer: TRdcServer;
+  lTarget: string;
+
+  function Listed(const aKey: string): Boolean;
+  var
+    lItem: TRdcHostRef;
+  begin
+    for lItem in lMissing do
+      if SameText(lItem.Key, aKey) then
+        Exit(True);
+    Result := False;
+  end;
+
+begin
+  // Group connect with a remembered password: one question for all hosts of this account that are not approved yet,
+  // instead of one per server. Servers with another account ask for themselves.
+  Result := False;
+  lTarget := CredentialTargetFor(aServers[0], aUserName, aDomain);
+  lAccount := AccountText(aUserName, aDomain);
+  if not EnsureVaultUnlocked(Format(_('Ontgrendel de wachtwoordkluis om met %d servers te verbinden.'), [Length(aServers)])) then
+    Exit;
+  lMissing := [];
+  for lServer in aServers do
+    if SameText(CredentialTargetFor(lServer, aUserName, aDomain), lTarget) then
+      for lHost in FVault.MissingHosts(lTarget, FSessions.CredentialContextFor(lServer).Hosts) do
+        if not Listed(lHost.Key) then
+          lMissing := lMissing + [lHost];
+  if Length(lMissing) = 0 then
+    Exit(True);
+  Result := ConfirmHostApproval(lAccount, lMissing) and FVault.ApproveHosts(lTarget, lAccount, lMissing);
 end;
 
 procedure TfrmMain.ForgetSelectedPassword;
@@ -3430,7 +3496,8 @@ begin
   FBatchUserName := lUserName;
   FBatchDomain := lDomain;
   FBatchRemember := False; // nooit standaard onthouden
-  if HasRememberedPassword(lServers[0], lUserName, lDomain) then
+  // Declined hosts: the normal group prompt below (one typed password for all).
+  if HasRememberedPassword(lServers[0], lUserName, lDomain) and ApproveGroupHosts(lServers, lUserName, lDomain) then
   begin
     for lIndex := 0 to High(lServers) do
       ConnectServer(lServers[lIndex]);

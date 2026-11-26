@@ -187,6 +187,11 @@ group.</p>
   <li>When you turn it on you set a <strong>master password</strong> (at least 10 characters). Remembered passwords are encrypted with it
     (AES-256, key derived with PBKDF2) and additionally protected by Windows.</li>
   <li>The <em>Remember password</em> checkbox in the logon prompt is never ticked by itself.</li>
+  <li>A remembered password belongs to the <strong>hosts</strong> you used it for. When a server (for example from someone else's file)
+    points the same account at another host, or at a gateway that receives the same credentials, RDCManagerX first asks whether the
+    password may be used there (default <em>No</em>; then you type it yourself). For a group there is one question for all new hosts. A
+    password from the vault is never used without server authentication: when the server is set to "no authentication", you get a
+    warning if the server cannot prove its identity.</li>
   <li>The vault locks after a configurable number of minutes without use (Options). Manually: <em>File &gt; Lock password vault</em>.</li>
   <li>Change the master password: <em>File &gt; Change master password</em> or the button in Options.</li>
   <li>If the server rejects a remembered password, it is forgotten automatically. Manually: <em>Server &gt; Forget remembered password</em>.</li>

@@ -22,6 +22,11 @@
   - 'RDCManagerX:vault': versie(1) + iteraties(4) + salt(16) + versleutelde controlewaarde.
   - 'RDCManagerX:account:<domein\gebruiker>' / 'RDCManagerX:server:<host>:<gebruiker>': versie(1) + versleuteld
     wachtwoord. Per account; lokale accounts per server (zie TargetFor).
+    Account passwords are bound to approved hosts: the encrypted payload holds the password plus the list of host keys
+    (DirectHostKey/TailnetHostKey/GatewayHostKey) it may be sent to, so the list is confidential and bound to the
+    target name (AAD). A file pointing the same account at another host does not get the password without asking
+    (LoadApproved). Payload: #0 #2, then length-prefixed UTF-8 password, count, length-prefixed host keys. Items from
+    before this (plain UTF-8 password) have an empty list: their first use per host asks too.
   - 'RDCManagerX:tailnet:<id>:authkey' / ':statekey' en 'RDCManagerX:gateway:<id>': zelfde formaat, voor de auth key
     en state-sleutel van een Tailscale-netwerk en het wachtwoord van een gateway. Vallen onder hetzelfde
     hoofdwachtwoord (opnieuw versleutelen, kluis legen).
@@ -38,6 +43,20 @@ const
   cRdcMinMasterPasswordLength = 10;
 
 type
+  /// <summary>A host a remembered account password would be sent to. Key goes into the approval list,
+  /// Display into the question to the user.</summary>
+  TRdcHostRef = record
+    Key: string;
+    Display: string;
+    class function Create(const aKey, aDisplay: string): TRdcHostRef; static;
+  end;
+
+  /// <summary>Asks whether the remembered password may be used for these not yet approved hosts (default: no).</summary>
+  TRdcApproveHostsFunc = reference to function(const aMissing: TArray<TRdcHostRef>): Boolean;
+
+  /// <summary>rlrNone: nothing stored, vault locked or unreadable; rlrDeclined: the user did not approve a host.</summary>
+  TRdcLoadResult = (rlrNone, rlrDeclined, rlrLoaded);
+
   /// <summary>Opslag van binaire items op doelnaam (Windows Referentiebeheer, of in het geheugen voor tests).</summary>
   IRdcBlobStore = interface
     ['{6B8E0F55-3A3B-4C51-9C55-2E2C2E7E1A01}']
@@ -84,6 +103,8 @@ type
     function SealBytes(const aKey: TBytes; const aTarget: string; const aPlain: TBytes): TBytes;
     function OpenBytes(const aKey: TBytes; const aTarget: string; const aData: TBytes; out aPlain: TBytes): Boolean;
     function OpenPassword(const aKey: TBytes; const aTarget: string; const aData: TBytes; out aPassword: string): Boolean;
+    function OpenAccount(const aTarget: string; out aPassword: string; out aHostKeys: TArray<string>): Boolean;
+    function SealAccount(const aTarget, aAccount, aPassword: string; const aHostKeys: TArray<string>): Boolean;
     function StagedTargets: TArray<string>;
     function CommitStaged: Boolean;
     procedure DeleteStaged;
@@ -108,6 +129,15 @@ type
     class function TailnetTargetPrefix(const aTailnetId: string): string; static;
     class function GatewayTarget(const aGatewayId, aGatewayAddress: string): string; static;
     class function GatewayTargetPrefix(const aGatewayId: string): string; static;
+    /// <summary>Approval keys for the hosts an account password goes to: the RDP server on route Direct or Gateway,
+    /// the device in a tailnet (bound to the control URL: another tailnet with the same names is another key), and a
+    /// gateway that receives the session credentials (credSharing).</summary>
+    class function DirectHostKey(const aHost: string): string; static;
+    class function TailnetHostKey(const aControlUrl, aHost: string): string; static;
+    class function GatewayHostKey(const aGatewayAddress: string): string; static;
+    /// <summary>AuthenticationLevel to use: with a password from the vault never 0 (connect without warning); a file
+    /// asking for 0 gets 2 (warn). 1 is not forced: the Tailscale route (127.0.0.2) never matches the certificate name.</summary>
+    class function AuthenticationLevelFor(aLevel: Cardinal; aFromVault: Boolean): Cardinal; static;
     /// <summary>Control URL zoals die voor de binding telt (kleine letters, zonder / aan het eind; leeg = Tailscale).</summary>
     class function NormalizeControlUrl(const aControlUrl: string): string; static;
     /// <summary>Heeft het hoofdwachtwoord voldoende lengte?</summary>
@@ -125,6 +155,17 @@ type
     function TryLoad(const aTarget: string; out aPassword: string): Boolean;
     /// <summary>Vereist een ontgrendelde kluis.</summary>
     function Save(const aTarget, aAccount, aPassword: string): Boolean;
+    /// <summary>Saves an account password the user typed for these hosts: they are approved, together with the hosts
+    /// approved before (if the existing item is readable). Requires an unlocked vault.</summary>
+    function SaveAccount(const aTarget, aAccount, aPassword: string; const aHosts: TArray<TRdcHostRef>): Boolean;
+    /// <summary>The hosts in aHosts that are not approved for this item yet (all of them for an old item).
+    /// Requires an unlocked vault; empty when there is no readable item.</summary>
+    function MissingHosts(const aTarget: string; const aHosts: TArray<TRdcHostRef>): TArray<TRdcHostRef>;
+    /// <summary>Adds hosts to the approval list. Requires an unlocked vault.</summary>
+    function ApproveHosts(const aTarget, aAccount: string; const aHosts: TArray<TRdcHostRef>): Boolean;
+    /// <summary>The account password for these hosts. Hosts not approved yet are offered to aAsk once (all in one
+    /// question); approved ones are added to the list, declined means rlrDeclined and no password.</summary>
+    function LoadApproved(const aTarget, aAccount: string; const aHosts: TArray<TRdcHostRef>; const aAsk: TRdcApproveHostsFunc; out aPassword: string): TRdcLoadResult;
     procedure Delete(const aTarget: string);
     /// <summary>Alle items waarvan de doelnaam met aPrefix begint (nooit de kluis zelf).</summary>
     procedure DeleteByPrefix(const aPrefix: string);
@@ -211,6 +252,119 @@ end;
 function Utf8(const aText: string): TBytes;
 begin
   Result := TEncoding.UTF8.GetBytes(aText);
+end;
+
+const
+  cAccountPayloadMarker = 0;
+  cAccountPayloadVersion = 2;
+
+procedure AppendBytes(var aBuffer: TBytes; const aData: TBytes);
+var
+  lLength: Cardinal;
+  lOffset: Integer;
+begin
+  lLength := Length(aData);
+  lOffset := Length(aBuffer);
+  SetLength(aBuffer, lOffset + SizeOf(Cardinal) + Integer(lLength));
+  Move(lLength, aBuffer[lOffset], SizeOf(Cardinal));
+  if lLength > 0 then
+    Move(aData[0], aBuffer[lOffset + SizeOf(Cardinal)], lLength);
+end;
+
+function ReadBytes(const aBuffer: TBytes; var aOffset: Integer; out aData: TBytes): Boolean;
+var
+  lLength: Cardinal;
+begin
+  aData := nil;
+  Result := aOffset + SizeOf(Cardinal) <= Length(aBuffer);
+  if not Result then
+    Exit;
+  Move(aBuffer[aOffset], lLength, SizeOf(Cardinal));
+  Inc(aOffset, SizeOf(Cardinal));
+  Result := Int64(aOffset) + lLength <= Length(aBuffer);
+  if Result then
+  begin
+    aData := Copy(aBuffer, aOffset, lLength);
+    Inc(aOffset, lLength);
+  end;
+end;
+
+function EncodeAccountPayload(const aPassword: string; const aHostKeys: TArray<string>): TBytes;
+var
+  lCount: Cardinal;
+  lKey: string;
+  lPassword: TBytes;
+begin
+  Result := TBytes.Create(cAccountPayloadMarker, cAccountPayloadVersion);
+  lPassword := TEncoding.UTF8.GetBytes(aPassword);
+  try
+    AppendBytes(Result, lPassword);
+  finally
+    WipeBytes(lPassword);
+  end;
+  lCount := Length(aHostKeys);
+  SetLength(Result, Length(Result) + SizeOf(Cardinal));
+  Move(lCount, Result[Length(Result) - SizeOf(Cardinal)], SizeOf(Cardinal));
+  for lKey in aHostKeys do
+    AppendBytes(Result, TEncoding.UTF8.GetBytes(lKey));
+end;
+
+function DecodeAccountPayload(const aPlain: TBytes; out aPassword: string; out aHostKeys: TArray<string>): Boolean;
+var
+  lCount: Cardinal;
+  lData: TBytes;
+  lIndex: Cardinal;
+  lOffset: Integer;
+begin
+  aPassword := '';
+  aHostKeys := [];
+  if (Length(aPlain) < 2) or (aPlain[0] <> cAccountPayloadMarker) then
+  begin
+    // Old item: the whole payload is the password, nothing approved yet.
+    aPassword := TEncoding.UTF8.GetString(aPlain);
+    Exit(aPassword <> '');
+  end;
+  Result := False;
+  if aPlain[1] <> cAccountPayloadVersion then
+    Exit;
+  lOffset := 2;
+  if not ReadBytes(aPlain, lOffset, lData) then
+    Exit;
+  aPassword := TEncoding.UTF8.GetString(lData);
+  WipeBytes(lData);
+  if lOffset + SizeOf(Cardinal) > Length(aPlain) then
+    Exit;
+  Move(aPlain[lOffset], lCount, SizeOf(Cardinal));
+  Inc(lOffset, SizeOf(Cardinal));
+  if lCount > 10000 then
+    Exit;
+  for lIndex := 1 to lCount do
+  begin
+    if not ReadBytes(aPlain, lOffset, lData) then
+      Exit;
+    aHostKeys := aHostKeys + [TEncoding.UTF8.GetString(lData)];
+  end;
+  Result := aPassword <> '';
+  if not Result then
+    WipeString(aPassword);
+end;
+
+function ContainsKey(const aKeys: TArray<string>; const aKey: string): Boolean;
+var
+  lKey: string;
+begin
+  for lKey in aKeys do
+    if SameText(lKey, aKey) then
+      Exit(True);
+  Result := False;
+end;
+
+{ TRdcHostRef }
+
+class function TRdcHostRef.Create(const aKey, aDisplay: string): TRdcHostRef;
+begin
+  Result.Key := aKey;
+  Result.Display := aDisplay;
 end;
 
 function TargetAad(const aTarget: string): TBytes;
@@ -352,6 +506,28 @@ begin
   Result := GatewayTargetPrefix(aGatewayId) + BindingHash(LowerCase(Trim(aGatewayAddress)));
 end;
 
+class function TRdcPasswordVault.DirectHostKey(const aHost: string): string;
+begin
+  Result := 'host:' + LowerCase(Trim(aHost));
+end;
+
+class function TRdcPasswordVault.TailnetHostKey(const aControlUrl, aHost: string): string;
+begin
+  Result := 'ts:' + BindingHash(NormalizeControlUrl(aControlUrl)) + ':' + LowerCase(Trim(aHost));
+end;
+
+class function TRdcPasswordVault.GatewayHostKey(const aGatewayAddress: string): string;
+begin
+  Result := 'gw:' + LowerCase(Trim(aGatewayAddress));
+end;
+
+class function TRdcPasswordVault.AuthenticationLevelFor(aLevel: Cardinal; aFromVault: Boolean): Cardinal;
+begin
+  Result := aLevel;
+  if aFromVault and (Result = 0) then
+    Result := 2;
+end;
+
 class function TRdcPasswordVault.IsStrongEnough(const aMasterPassword: string): Boolean;
 begin
   Result := Length(aMasterPassword) >= cRdcMinMasterPasswordLength;
@@ -464,15 +640,15 @@ end;
 
 function TRdcPasswordVault.OpenPassword(const aKey: TBytes; const aTarget: string; const aData: TBytes; out aPassword: string): Boolean;
 var
+  lHostKeys: TArray<string>;
   lPlain: TBytes;
 begin
   aPassword := '';
   Result := OpenBytes(aKey, aTarget, aData, lPlain);
   if Result then
   begin
-    aPassword := TEncoding.UTF8.GetString(lPlain);
+    Result := DecodeAccountPayload(lPlain, aPassword, lHostKeys);
     WipeBytes(lPlain);
-    Result := aPassword <> '';
   end;
 end;
 
@@ -607,6 +783,118 @@ begin
   finally
     ReleaseKey(lKey);
   end;
+end;
+
+function TRdcPasswordVault.OpenAccount(const aTarget: string; out aPassword: string; out aHostKeys: TArray<string>): Boolean;
+var
+  lData: TBytes;
+  lKey: TBytes;
+  lPlain: TBytes;
+begin
+  aPassword := '';
+  aHostKeys := [];
+  if not IsUnlocked or not FStore.Read(aTarget, lData) then
+    Exit(False);
+  lKey := UseKey;
+  try
+    Result := OpenBytes(lKey, aTarget, lData, lPlain) and DecodeAccountPayload(lPlain, aPassword, aHostKeys);
+  finally
+    WipeBytes(lPlain);
+    ReleaseKey(lKey);
+  end;
+end;
+
+function TRdcPasswordVault.SealAccount(const aTarget, aAccount, aPassword: string; const aHostKeys: TArray<string>): Boolean;
+var
+  lKey: TBytes;
+  lPlain: TBytes;
+begin
+  if not IsUnlocked or (aPassword = '') then
+    Exit(False);
+  lKey := UseKey;
+  lPlain := EncodeAccountPayload(aPassword, aHostKeys);
+  try
+    Result := FStore.Write(aTarget, aAccount, SealBytes(lKey, aTarget, lPlain));
+  finally
+    WipeBytes(lPlain);
+    ReleaseKey(lKey);
+  end;
+end;
+
+function TRdcPasswordVault.SaveAccount(const aTarget, aAccount, aPassword: string; const aHosts: TArray<TRdcHostRef>): Boolean;
+var
+  lHost: TRdcHostRef;
+  lKeys: TArray<string>;
+  lOldPassword: string;
+begin
+  if not IsUnlocked or (aPassword = '') then
+    Exit(False);
+  if not OpenAccount(aTarget, lOldPassword, lKeys) then
+    lKeys := [];
+  WipeString(lOldPassword);
+  for lHost in aHosts do
+    if not ContainsKey(lKeys, lHost.Key) then
+      lKeys := lKeys + [LowerCase(lHost.Key)];
+  Result := SealAccount(aTarget, aAccount, aPassword, lKeys);
+end;
+
+function TRdcPasswordVault.MissingHosts(const aTarget: string; const aHosts: TArray<TRdcHostRef>): TArray<TRdcHostRef>;
+var
+  lHost: TRdcHostRef;
+  lKeys: TArray<string>;
+  lPassword: string;
+begin
+  Result := [];
+  if not OpenAccount(aTarget, lPassword, lKeys) then
+    Exit;
+  WipeString(lPassword);
+  for lHost in aHosts do
+    if not ContainsKey(lKeys, lHost.Key) then
+      Result := Result + [lHost];
+end;
+
+function TRdcPasswordVault.ApproveHosts(const aTarget, aAccount: string; const aHosts: TArray<TRdcHostRef>): Boolean;
+var
+  lHost: TRdcHostRef;
+  lKeys: TArray<string>;
+  lPassword: string;
+begin
+  if not OpenAccount(aTarget, lPassword, lKeys) then
+    Exit(False);
+  try
+    for lHost in aHosts do
+      if not ContainsKey(lKeys, lHost.Key) then
+        lKeys := lKeys + [LowerCase(lHost.Key)];
+    Result := SealAccount(aTarget, aAccount, lPassword, lKeys);
+  finally
+    WipeString(lPassword);
+  end;
+end;
+
+function TRdcPasswordVault.LoadApproved(const aTarget, aAccount: string; const aHosts: TArray<TRdcHostRef>; const aAsk: TRdcApproveHostsFunc; out aPassword: string): TRdcLoadResult;
+var
+  lHost: TRdcHostRef;
+  lKeys: TArray<string>;
+  lMissing: TArray<TRdcHostRef>;
+begin
+  if not OpenAccount(aTarget, aPassword, lKeys) then
+    Exit(rlrNone);
+  lMissing := [];
+  for lHost in aHosts do
+    if not ContainsKey(lKeys, lHost.Key) then
+      lMissing := lMissing + [lHost];
+  if Length(lMissing) = 0 then
+    Exit(rlrLoaded);
+  // Never without a question: a file can name any host for this account.
+  if not Assigned(aAsk) or not aAsk(lMissing) then
+  begin
+    WipeString(aPassword);
+    Exit(rlrDeclined);
+  end;
+  for lHost in lMissing do
+    lKeys := lKeys + [LowerCase(lHost.Key)];
+  SealAccount(aTarget, aAccount, aPassword, lKeys);
+  Result := rlrLoaded;
 end;
 
 procedure TRdcPasswordVault.Delete(const aTarget: string);

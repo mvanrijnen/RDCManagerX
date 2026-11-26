@@ -32,7 +32,15 @@ uses
 
 type
   TRdcSessionEvent = procedure(aSender: TObject; aServer: TRdcServer) of object;
-  TRdcCredentialRequest = function(aServer: TRdcServer; var aUserName, aDomain: string; out aPassword: string): Boolean of object;
+  /// <summary>Where the password of a connection goes: the hosts for the vault's host approval, and the real host
+  /// name (not the caption from the file) for prompts.</summary>
+  TRdcCredentialContext = record
+    Hosts: TArray<TRdcHostRef>;
+    HostText: string;
+  end;
+
+  /// <summary>aFromVault: the password came from the vault (then AuthenticationLevel is never 0).</summary>
+  TRdcCredentialRequest = function(aServer: TRdcServer; const aContext: TRdcCredentialContext; var aUserName, aDomain: string; out aPassword: string; out aFromVault: Boolean): Boolean of object;
   TRdcPlaceHostEvent = procedure(aServer: TRdcServer; aHost: TControl) of object;
 
   /// <summary>Tailscale-route van één sessie: het netwerk (refcount in TRdcTailnetManager) en de lokale forward.
@@ -84,6 +92,9 @@ type
     destructor Destroy; override;
     /// <summary>Vraagt (via OnCredentialRequest) het wachtwoord en verbindt. False als de gebruiker annuleert.</summary>
     function Connect(aServer: TRdcServer): Boolean;
+    /// <summary>The hosts the server's password goes to on its effective route (RDP server or tailnet device, plus a
+    /// gateway that shares the session credentials). From the model only: no vault access, no prompts.</summary>
+    function CredentialContextFor(aServer: TRdcServer): TRdcCredentialContext;
     procedure Disconnect(aServer: TRdcServer);
     procedure DisconnectAll;
     function Find(aServer: TRdcServer): TRdpSession;
@@ -471,10 +482,71 @@ begin
     FTunnelTimer.Enabled := False;
 end;
 
+function TRdcSessionManager.CredentialContextFor(aServer: TRdcServer): TRdcCredentialContext;
+var
+  lControlUrl: string;
+  lDef: TRdcTailnetDef;
+  lGateway: TRdcGatewaySettings;
+  lGatewayDef: TRdcGatewayDef;
+  lHost: string;
+  lNetworkName: string;
+  lRoute: TRdcxRouteSettings;
+
+  procedure AddGateway(const aAddress: string);
+  begin
+    Result.Hosts := Result.Hosts + [TRdcHostRef.Create(TRdcPasswordVault.GatewayHostKey(aAddress), Format(_('gateway %s (krijgt dezelfde aanmeldgegevens)'), [aAddress]))];
+  end;
+
+begin
+  Result.Hosts := [];
+  lRoute := aServer.EffectiveRoute;
+  case lRoute.Kind of
+    rkTailscale:
+      begin
+        // Same target as ConnectViaTailnet; bound to the control URL, so another tailnet with the same device names
+        // is another host.
+        lHost := Trim(lRoute.TailnetHost);
+        if lHost = '' then
+          lHost := aServer.Name;
+        lDef := nil;
+        if aServer.RdcFile <> nil then
+          lDef := aServer.RdcFile.FindTailnet(lRoute.TailnetId);
+        lControlUrl := '';
+        lNetworkName := lRoute.TailnetId;
+        if lDef <> nil then
+        begin
+          lControlUrl := lDef.ControlUrl;
+          lNetworkName := lDef.Name;
+        end;
+        Result.HostText := lHost;
+        Result.Hosts := [TRdcHostRef.Create(TRdcPasswordVault.TailnetHostKey(lControlUrl, lHost), Format(_('%s (via Tailscale-netwerk "%s")'), [lHost, lNetworkName]))];
+      end;
+    rkGateway:
+      begin
+        Result.HostText := aServer.Name;
+        Result.Hosts := [TRdcHostRef.Create(TRdcPasswordVault.DirectHostKey(aServer.Name), aServer.Name)];
+        lGatewayDef := nil;
+        if aServer.RdcFile <> nil then
+          lGatewayDef := aServer.RdcFile.FindGateway(lRoute.GatewayId);
+        if (lGatewayDef <> nil) and (lGatewayDef.CredsMode = gcmSession) and (Trim(lGatewayDef.HostName) <> '') then
+          AddGateway(lGatewayDef.Address);
+      end;
+  else
+    Result.HostText := aServer.Name;
+    Result.Hosts := [TRdcHostRef.Create(TRdcPasswordVault.DirectHostKey(aServer.Name), aServer.Name)];
+    // gatewaySettings from the .rdg (as in BuildSettings): with credSharing the gateway gets the same credentials.
+    lGateway := aServer.EffectiveGateway;
+    if lGateway.Enabled and (Trim(lGateway.HostName) <> '') and lGateway.CredSharing then
+      AddGateway(Trim(lGateway.HostName));
+  end;
+end;
+
 function TRdcSessionManager.Connect(aServer: TRdcServer): Boolean;
 var
   lDomain: string;
   lError: string;
+  lFromVault: Boolean;
+  lLevel: Cardinal;
   lRouteError: string;
   lPassword: string;
   lSession: TRdpSession;
@@ -494,10 +566,18 @@ begin
   lUserName := lSettings.UserName;
   lDomain := lSettings.Domain;
   lPassword := '';
-  if (lRouteError = '') and Assigned(FOnCredentialRequest) and not FOnCredentialRequest(aServer, lUserName, lDomain, lPassword) then
+  lFromVault := False;
+  if (lRouteError = '') and Assigned(FOnCredentialRequest) and not FOnCredentialRequest(aServer, CredentialContextFor(aServer), lUserName, lDomain, lPassword, lFromVault) then
   begin
     WipeString(lSettings.GatewayPassword);
     Exit;
+  end;
+  // A password from the vault never goes to a server that is not authenticated without a warning.
+  lLevel := TRdcPasswordVault.AuthenticationLevelFor(lSettings.AuthenticationLevel, lFromVault);
+  if lLevel <> lSettings.AuthenticationLevel then
+  begin
+    TRdcLog.Write(Format('%s: AuthenticationLevel %d -> %d (wachtwoord uit de kluis)', [aServer.Caption, lSettings.AuthenticationLevel, lLevel]));
+    lSettings.AuthenticationLevel := lLevel;
   end;
   lSettings.UserName := lUserName;
   lSettings.Domain := lDomain;

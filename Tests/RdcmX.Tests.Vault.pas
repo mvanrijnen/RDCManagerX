@@ -67,6 +67,20 @@ type
     [Test]
     procedure ChangeMasterPasswordCrashIsRecovered;
     [Test]
+    procedure NewHostAsksAndDeclineGivesNothing;
+    [Test]
+    procedure ApprovedHostDoesNotAsk;
+    [Test]
+    procedure OldItemAsksPerHost;
+    [Test]
+    procedure OnlyMissingHostsAreAsked;
+    [Test]
+    procedure HostKeysAreBoundToRouteAndTailnet;
+    [Test]
+    procedure ApprovalsSurviveMasterPasswordChange;
+    [Test]
+    procedure AuthenticationLevelIsForcedForVaultPasswords;
+    [Test]
     procedure ResetRemovesEverything;
     [Test]
     procedure WeakMasterPasswordIsRefused;
@@ -398,6 +412,154 @@ begin
       Assert.AreEqual('Nieuw-Hoofdwachtwoord', MasterThatOpensAll(lStoreRef), Format('crash at write %d', [lFailAt]));
     Assert.AreEqual(Integer(0), Integer(Length(lStore.Targets('RDCManagerX:~'))), Format('staging left after crash at write %d', [lFailAt]));
   end;
+end;
+
+function HostA: TRdcHostRef;
+begin
+  Result := TRdcHostRef.Create(TRdcPasswordVault.DirectHostKey('srv01.corp.local'), 'srv01.corp.local');
+end;
+
+function HostB: TRdcHostRef;
+begin
+  Result := TRdcHostRef.Create(TRdcPasswordVault.DirectHostKey('rdp.aanvaller.tld'), 'rdp.aanvaller.tld');
+end;
+
+procedure TVaultTests.NewHostAsksAndDeclineGivesNothing;
+var
+  lAsked: Integer;
+  lPassword: string;
+  lAnswer: Boolean;
+  lAsk: TRdcApproveHostsFunc;
+begin
+  FVault.Initialize(cMaster);
+  Assert.IsTrue(FVault.SaveAccount(cTargetA, 'corp\beheer', 'S3cret!', [HostA]));
+  lAsked := 0;
+  lAnswer := False;
+  lAsk := function(const aMissing: TArray<TRdcHostRef>): Boolean
+    begin
+      Inc(lAsked);
+      Assert.AreEqual(Integer(1), Integer(Length(aMissing)));
+      Assert.AreEqual(HostB.Key, aMissing[0].Key);
+      Result := lAnswer;
+    end;
+  // A file pointing the same account at another host: asked, and No gives no password.
+  Assert.AreEqual(rlrDeclined, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostB], lAsk, lPassword));
+  Assert.AreEqual('', lPassword);
+  Assert.AreEqual(1, lAsked);
+  // Declining is not remembered as approval: asked again next time; Yes gives the password and is remembered.
+  lAnswer := True;
+  Assert.AreEqual(rlrLoaded, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostB], lAsk, lPassword));
+  Assert.AreEqual('S3cret!', lPassword);
+  Assert.AreEqual(2, lAsked);
+  Assert.AreEqual(rlrLoaded, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostB], lAsk, lPassword));
+  Assert.AreEqual(2, lAsked, 'approved host asked again');
+  // Without a question callback a new host is never approved.
+  Assert.AreEqual(rlrDeclined, FVault.LoadApproved(cTargetA, 'corp\beheer', [TRdcHostRef.Create('host:x', 'x')], nil, lPassword));
+end;
+
+procedure TVaultTests.ApprovedHostDoesNotAsk;
+var
+  lPassword: string;
+begin
+  FVault.Initialize(cMaster);
+  FVault.SaveAccount(cTargetA, 'corp\beheer', 'S3cret!', [HostA]);
+  Assert.AreEqual(rlrLoaded, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostA],
+    function(const aMissing: TArray<TRdcHostRef>): Boolean
+    begin
+      Assert.Fail('asked for an approved host');
+      Result := False;
+    end, lPassword));
+  Assert.AreEqual('S3cret!', lPassword);
+  // Case and spaces in the host name do not matter.
+  Assert.AreEqual(rlrLoaded, FVault.LoadApproved(cTargetA, 'corp\beheer', [TRdcHostRef.Create(TRdcPasswordVault.DirectHostKey(' SRV01.Corp.Local '), '')], nil, lPassword));
+  // Nothing stored or vault locked: rlrNone.
+  Assert.AreEqual(rlrNone, FVault.LoadApproved(cTargetB, 'admin', [HostA], nil, lPassword));
+  FVault.Lock;
+  Assert.AreEqual(rlrNone, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostA], nil, lPassword));
+end;
+
+procedure TVaultTests.OldItemAsksPerHost;
+var
+  lAsked: Integer;
+  lPassword: string;
+begin
+  // An item from before the host binding (plain password): still loadable, but every host is new.
+  FVault.Initialize(cMaster);
+  FVault.Save(cTargetA, 'corp\beheer', 'S3cret!');
+  Assert.IsTrue(FVault.TryLoad(cTargetA, lPassword));
+  Assert.AreEqual('S3cret!', lPassword);
+  Assert.AreEqual(Integer(1), Integer(Length(FVault.MissingHosts(cTargetA, [HostA]))));
+  lAsked := 0;
+  Assert.AreEqual(rlrLoaded, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostA],
+    function(const aMissing: TArray<TRdcHostRef>): Boolean
+    begin
+      Inc(lAsked);
+      Result := True;
+    end, lPassword));
+  Assert.AreEqual(1, lAsked);
+  Assert.AreEqual('S3cret!', lPassword);
+  Assert.AreEqual(Integer(0), Integer(Length(FVault.MissingHosts(cTargetA, [HostA]))));
+  Assert.IsTrue(FVault.TryLoad(cTargetA, lPassword), 'TryLoad reads the new format too');
+  Assert.AreEqual('S3cret!', lPassword);
+  Assert.IsFalse(FStore.Contains('S3cret!'));
+end;
+
+procedure TVaultTests.OnlyMissingHostsAreAsked;
+var
+  lGateway: TRdcHostRef;
+  lPassword: string;
+begin
+  // Server approved, gateway with credSharing not: only the gateway is asked.
+  FVault.Initialize(cMaster);
+  FVault.SaveAccount(cTargetA, 'corp\beheer', 'S3cret!', [HostA]);
+  lGateway := TRdcHostRef.Create(TRdcPasswordVault.GatewayHostKey('gw.aanvaller.tld:443'), 'gw');
+  Assert.AreEqual(rlrDeclined, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostA, lGateway],
+    function(const aMissing: TArray<TRdcHostRef>): Boolean
+    begin
+      Assert.AreEqual(Integer(1), Integer(Length(aMissing)));
+      Assert.AreEqual(lGateway.Key, aMissing[0].Key);
+      Result := False;
+    end, lPassword));
+  Assert.AreEqual('', lPassword);
+  // ApproveHosts (group connect: one question for all) approves without loading.
+  Assert.IsTrue(FVault.ApproveHosts(cTargetA, 'corp\beheer', [lGateway]));
+  Assert.AreEqual(rlrLoaded, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostA, lGateway], nil, lPassword));
+end;
+
+procedure TVaultTests.HostKeysAreBoundToRouteAndTailnet;
+begin
+  // The same name directly, in another tailnet (control URL) or as a gateway: all different approvals.
+  Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('srv'), TRdcPasswordVault.TailnetHostKey('', 'srv'));
+  Assert.AreNotEqual(TRdcPasswordVault.TailnetHostKey('', 'srv'), TRdcPasswordVault.TailnetHostKey('https://headscale.aanvaller.tld', 'srv'));
+  Assert.AreEqual(TRdcPasswordVault.TailnetHostKey('https://HS.example.com/', 'Srv'), TRdcPasswordVault.TailnetHostKey('https://hs.example.com', 'srv'));
+  Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('gw.corp.local'), TRdcPasswordVault.GatewayHostKey('gw.corp.local'));
+end;
+
+procedure TVaultTests.ApprovalsSurviveMasterPasswordChange;
+var
+  lPassword: string;
+  lVault: TRdcPasswordVault;
+begin
+  FVault.Initialize(cMaster);
+  FVault.SaveAccount(cTargetA, 'corp\beheer', 'S3cret!', [HostA]);
+  Assert.IsTrue(FVault.ChangeMasterPassword(cMaster, 'Nieuw-Hoofdwachtwoord'));
+  lVault := TRdcPasswordVault.Create(FStoreRef, cIterations);
+  try
+    Assert.IsTrue(lVault.Unlock('Nieuw-Hoofdwachtwoord'));
+    Assert.AreEqual(rlrLoaded, lVault.LoadApproved(cTargetA, 'corp\beheer', [HostA], nil, lPassword));
+    Assert.AreEqual('S3cret!', lPassword);
+  finally
+    lVault.Free;
+  end;
+end;
+
+procedure TVaultTests.AuthenticationLevelIsForcedForVaultPasswords;
+begin
+  // 0 = connect without warning: never with a vault password; 1 (required) and 2 (warn) stay.
+  Assert.AreEqual(Cardinal(2), TRdcPasswordVault.AuthenticationLevelFor(0, True));
+  Assert.AreEqual(Cardinal(1), TRdcPasswordVault.AuthenticationLevelFor(1, True));
+  Assert.AreEqual(Cardinal(2), TRdcPasswordVault.AuthenticationLevelFor(2, True));
+  Assert.AreEqual(Cardinal(0), TRdcPasswordVault.AuthenticationLevelFor(0, False), 'typed password: as in the file');
 end;
 
 procedure TVaultTests.ResetRemovesEverything;
