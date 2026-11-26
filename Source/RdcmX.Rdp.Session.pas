@@ -365,6 +365,9 @@ destructor TRdpSession.Destroy;
 begin
   FDestroying := True;
   StopTimers;
+  // Freed while still preparing (tailnet starting): the passwords were never handed to the control.
+  WipeString(FSettings.Password);
+  WipeString(FSettings.GatewayPassword);
   if (FClient <> nil) and (FState <> rssDisconnected) then
   begin
     try
@@ -894,7 +897,7 @@ begin
   except
     on E: Exception do
     begin
-      FSettings.Password := '';
+      WipeString(FSettings.Password);
       WipeString(FSettings.GatewayPassword);
       ShowControl(False);
       SetError(Format(_('Verbinden mislukt: %s'), [E.Message]));
