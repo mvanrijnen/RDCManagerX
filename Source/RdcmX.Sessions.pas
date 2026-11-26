@@ -120,6 +120,8 @@ type
     /// <summary>Servers met een sessie die niet verbroken is.</summary>
     function ActiveServers: TArray<TRdcServer>;
     function StateOf(aServer: TRdcServer): TRdpSessionState;
+    /// <summary>Servers with a session that is connecting or connected (the "Connected" section of the tree).</summary>
+    function ConnectedServers: TArray<TRdcServer>;
     /// <summary>Host van aServer naar een ander venster verplaatsen (op Win32-niveau; VCL-Parent blijft gelijk).</summary>
     procedure Detach(aServer: TRdcServer; aParentWnd: HWND);
     /// <summary>Host terug in het sessiegebied (wordt daarna door ShowServers weer geplaatst).</summary>
@@ -645,6 +647,16 @@ begin
     if lGateway.Enabled and (Trim(lGateway.HostName) <> '') then
       AddGateway(Trim(lGateway.HostName));
   end;
+end;
+
+function TRdcSessionManager.ConnectedServers: TArray<TRdcServer>;
+var
+  lPair: TPair<TRdcServer, TRdpSession>;
+begin
+  Result := [];
+  for lPair in FSessions do
+    if lPair.Value.State in [rssConnecting, rssConnected, rssLoggedIn] then
+      Result := Result + [lPair.Key];
 end;
 
 function TRdcSessionManager.Connect(aServer: TRdcServer): Boolean;

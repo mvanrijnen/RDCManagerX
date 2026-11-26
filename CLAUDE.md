@@ -262,6 +262,7 @@ User docs: `README.md`. Manual test plan: `TESTPLAN.md`.
   - With a VCL style active the menu bar is drawn by the style, so `GetMenu` finds nothing. VCL also adds `&` accelerators automatically (e.g. `B&eeld`).
   - Menu commands work via `WM_COMMAND` with the item IDs. Those IDs are the same for every run of the same build.
   - Keystrokes via SendKeys often do not arrive, because a background process does not get the focus.
+- **Connected** (user request): a third shortcut section at the very top with every server whose session is connecting or connected (`TRdcSessionManager.ConnectedServers`); `UpdateConnectedSection` (queued from `SessionsStateChanged`) rebuilds the sections only when that set changes. Delete is disabled there (the entry is the server itself).
 - **Favorites and Recent** (`RdcmX.Shortcuts`; settings `favorites`, `recentServers`, `recentServerCount`) are client settings and are never written to the file.
   - Favorites are stored per file; Recent holds the last N connected servers (N is set in Options; a group connect does not add to it).
   - Entries are stored as file plus `Path(True)`. While a file is open, an entry points to the server object itself, so renaming or moving a server does not break it; paths are refreshed when saving or closing.

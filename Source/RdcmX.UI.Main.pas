@@ -31,7 +31,7 @@ uses
   RdcmX.AdLdap, RdcmX.AdSync, RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Lang, RdcmX.Model, RdcmX.Ping, RdcmX.Rdp.Session, RdcmX.Redirections, RdcmX.Sessions, RdcmX.Shortcuts, RdcmX.Storage, RdcmX.Tailscale, RdcmX.UI.SessionPanes, RdcmX.UI.SessionWindow, RdcmX.UI.Theme;
 
 type
-  TRdcTreeShortcutKind = (tskFavoritesHeader, tskRecentHeader, tskFavorite, tskRecent);
+  TRdcTreeShortcutKind = (tskFavoritesHeader, tskRecentHeader, tskFavorite, tskRecent, tskConnectedHeader, tskConnected);
 
   /// <summary>Data van de boom-nodes onder Favorieten/Recent (gewone nodes hebben een TRdcNode als Data).</summary>
   TRdcTreeShortcut = class
@@ -304,6 +304,10 @@ type
     FShortcutData: TObjectList<TRdcTreeShortcut>;
     FFavoritesHeader: TTreeNode;
     FRecentHeader: TTreeNode;
+    FConnectedHeader: TTreeNode;
+    FConnectedCollapsed: Boolean;
+    /// <summary>Servers shown under "Connected" (rebuilt only when this set changes).</summary>
+    FConnectedShown: TArray<TRdcServer>;
     FFavoritesCollapsed: Boolean;
     FRecentCollapsed: Boolean;
     FCollapsedFiles: TList<TRdcFile>; // bestanden waarvan de hoofdknoop ingeklapt is (bij starten: alle)
@@ -351,6 +355,8 @@ type
     function NewShortcutData(aKind: TRdcTreeShortcutKind; aServer: TRdcServer; aOrder: Integer): TRdcTreeShortcut;
     function NodeOfTreeNode(aTreeNode: TTreeNode): TRdcNode;
     procedure RebuildShortcutNodes;
+    function SortedConnectedServers: TArray<TRdcServer>;
+    procedure UpdateConnectedSection;
     procedure RemoveSelectedShortcut;
     function SelectedShortcut: TRdcTreeShortcut;
     function ShortcutCaption(aServer: TRdcServer): string;
@@ -533,7 +539,7 @@ implementation
 
 uses
   Winapi.ActiveX, Winapi.KnownFolders, Winapi.ShellAPI, Winapi.ShlObj,
-  System.IOUtils,
+  System.Generics.Defaults, System.IOUtils,
   RdcmX.Log, RdcmX.UI.CredentialPrompt, RdcmX.UI.Gateways, RdcmX.UI.HostApproval, RdcmX.UI.Icons, RdcmX.UI.MasterPassword, RdcmX.UI.Options, RdcmX.UI.Profiles, RdcmX.UI.Properties, RdcmX.UI.Tailnets, RdcmX.WakeOnLan;
 
 const
@@ -1210,6 +1216,8 @@ begin
     Exit(_('Favoriete servers (Server > Aan favorieten toevoegen)'));
   if (lShortcut <> nil) and (lShortcut.Kind = tskRecentHeader) then
     Exit(_('Laatst verbonden servers, nieuwste bovenaan (aantal: Bestand > Opties)'));
+  if (lShortcut <> nil) and (lShortcut.Kind = tskConnectedHeader) then
+    Exit(_('Servers met een open sessie; ze verdwijnen hier weer bij verbreken'));
   lNode := NodeOfTreeNode(aTreeNode);
   if lNode is TRdcServer then
     Exit(ServerHint(TRdcServer(lNode)));
@@ -1660,6 +1668,7 @@ begin
     FTreeNodes.Clear;
     FFavoritesHeader := nil;
     FRecentHeader := nil;
+    FConnectedHeader := nil;
     FShortcutData.Clear;
     for lFile in FFiles do
       AddTreeNode(nil, lFile);
@@ -1671,8 +1680,8 @@ end;
 
 function TfrmMain.CompareTreeNodes(aNode1, aNode2: TTreeNode): Integer;
 const
-  // Volgorde bovenin de boom: Recent, dan Favorieten.
-  cShortcutKindOrder: array[TRdcTreeShortcutKind] of Integer = (1, 0, 3, 2);
+  // Volgorde bovenin de boom: Verbonden, Recent, dan Favorieten (items only compare among siblings).
+  cShortcutKindOrder: array[TRdcTreeShortcutKind] of Integer = (2, 1, 4, 3, 0, 5);
 var
   lNode1: TRdcNode;
   lNode2: TRdcNode;
@@ -1846,14 +1855,20 @@ begin
       FFavoritesHeader.Delete;
     if FRecentHeader <> nil then
       FRecentHeader.Delete;
+    if FConnectedHeader <> nil then
+      FConnectedHeader.Delete;
     FFavoritesHeader := nil;
     FRecentHeader := nil;
+    FConnectedHeader := nil;
     FShortcutData.Clear;
+    FConnectedShown := SortedConnectedServers;
     // Tijdens zoeken niet tonen: dan telt alleen wat overeenkomt in de bestanden.
     if FFilter = '' then
     begin
       FFavoritesHeader := AddShortcutSection(tskFavoritesHeader, _('Favorieten'), ciFavorites, FShortcuts.FavoriteServers, tskFavorite, FFavoritesCollapsed);
       FRecentHeader := AddShortcutSection(tskRecentHeader, _('Recent'), ciRecent, FShortcuts.RecentServers, tskRecent, FRecentCollapsed);
+      // User request: every server with an open session, gone again at disconnect.
+      FConnectedHeader := AddShortcutSection(tskConnectedHeader, _('Verbonden'), ciServerOnline, FConnectedShown, tskConnected, FConnectedCollapsed);
     end;
   finally
     tvServers.Items.EndUpdate;
@@ -1861,12 +1876,41 @@ begin
   SortTree;
 end;
 
+function TfrmMain.SortedConnectedServers: TArray<TRdcServer>;
+begin
+  Result := nil;
+  if FSessions = nil then
+    Exit;
+  Result := FSessions.ConnectedServers;
+  TArray.Sort<TRdcServer>(Result, TComparer<TRdcServer>.Construct(
+    function(const aLeft, aRight: TRdcServer): Integer
+    begin
+      Result := CompareText(aLeft.Caption, aRight.Caption);
+    end));
+end;
+
+procedure TfrmMain.UpdateConnectedSection;
+var
+  lCurrent: TArray<TRdcServer>;
+  lIndex: Integer;
+  lSame: Boolean;
+begin
+  // Rebuild the shortcut sections only when the set of connected servers changed (no flicker on other states).
+  lCurrent := SortedConnectedServers;
+  lSame := Length(lCurrent) = Length(FConnectedShown);
+  if lSame then
+    for lIndex := 0 to High(lCurrent) do
+      lSame := lSame and (lCurrent[lIndex] = FConnectedShown[lIndex]);
+  if not lSame then
+    RebuildShortcutNodes;
+end;
+
 procedure TfrmMain.UpdateShortcutImages(aNode: TRdcNode);
 var
   lHeader: TTreeNode;
   lItem: TTreeNode;
 begin
-  for lHeader in [FFavoritesHeader, FRecentHeader] do
+  for lHeader in [FFavoritesHeader, FRecentHeader, FConnectedHeader] do
   begin
     if lHeader = nil then
       Continue;
@@ -2014,7 +2058,9 @@ begin
     if ShortcutOf(aTreeNode).Kind = tskFavoritesHeader then
       FFavoritesCollapsed := not aExpanded
     else if ShortcutOf(aTreeNode).Kind = tskRecentHeader then
-      FRecentCollapsed := not aExpanded;
+      FRecentCollapsed := not aExpanded
+    else if ShortcutOf(aTreeNode).Kind = tskConnectedHeader then
+      FConnectedCollapsed := not aExpanded;
     Exit;
   end;
   if TObject(aTreeNode.Data) is TRdcFile then
@@ -4112,6 +4158,9 @@ begin
   UpdateNodeImage(aServer);
   UpdateTabImages;
   UpdateStatusBar;
+  // "Connected" section: rebuilt via the queue, never inside the RDP event.
+  if not FClosing then
+    TThread.ForceQueue(nil, UpdateConnectedSection);
   // Normaal verbroken (gebruiker, afgemeld, server): tab sluiten. Bij een fout blijft de tab staan met de melding.
   // Niet vanuit het RDP-event zelf sluiten (de sessie wordt dan vrijgegeven); via de message queue.
   if not FClosing and FSessions.EndedNormally(aServer) and FPanes.Contains(aServer) then
@@ -4168,7 +4217,8 @@ begin
     actFavorite.Caption := _('Uit favorieten verwijderen')
   else
     actFavorite.Caption := _('Aan favorieten toevoegen');
-  actDelete.Enabled := (lNode <> nil) and not (lNode is TRdcFile);
+  // An entry under "Connected" is the server itself: Delete would remove it from the file.
+  actDelete.Enabled := (lNode <> nil) and not (lNode is TRdcFile) and ((SelectedShortcut = nil) or (SelectedShortcut.Kind in [tskFavorite, tskRecent]));
   if (SelectedShortcut <> nil) and (SelectedShortcut.Kind = tskFavorite) then
     actDelete.Caption := _('Uit favorieten verwijderen'#9'Del')
   else if (SelectedShortcut <> nil) and (SelectedShortcut.Kind = tskRecent) then

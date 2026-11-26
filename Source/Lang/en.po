@@ -1466,6 +1466,10 @@ msgid "Laatst verbonden servers, nieuwste bovenaan (aantal: Bestand > Opties)"
 msgstr "Last connected servers, newest first (number: File > Options)"
 
 #: Source/RdcmX.UI.Main.pas
+msgid "Servers met een open sessie; ze verdwijnen hier weer bij verbreken"
+msgstr "Servers with an open session; they disappear from here again when disconnected"
+
+#: Source/RdcmX.UI.Main.pas
 msgid ""
 "%s\r\n"
 "%d server(s)"
