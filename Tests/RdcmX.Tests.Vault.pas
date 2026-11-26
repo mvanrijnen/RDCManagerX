@@ -557,8 +557,8 @@ var
 begin
   // Nothing to bind to (tailnet device without MagicDNS name): the password stays in the vault, without a question.
   FVault.Initialize(cMaster);
-  FVault.SaveAccount(cTargetA, 'corpeheer', 'S3cret!', [HostA]);
-  Assert.AreEqual(rlrDeclined, FVault.LoadApproved(cTargetA, 'corpeheer', [],
+  FVault.SaveAccount(cTargetA, 'corp\beheer', 'S3cret!', [HostA]);
+  Assert.AreEqual(rlrDeclined, FVault.LoadApproved(cTargetA, 'corp\beheer', [],
     function(const aMissing: TArray<TRdcHostRef>): Boolean
     begin
       Result := True;
@@ -704,7 +704,7 @@ var
 begin
   // A second instance changed the master password: this one must not add items sealed with the old key.
   FVault.Initialize(cMaster);
-  FVault.Save(cTargetA, 'corpeheer', 'S3cret!');
+  FVault.Save(cTargetA, 'corp\beheer', 'S3cret!');
   lOther := TRdcPasswordVault.Create(FStoreRef, cIterations);
   try
     Assert.IsTrue(lOther.ChangeMasterPassword(cMaster, 'Nieuw-Hoofdwachtwoord'));
