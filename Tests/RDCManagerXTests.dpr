@@ -30,6 +30,7 @@ uses
   RdcmX.Tests.Lang in 'RdcmX.Tests.Lang.pas',
   RdcmX.Tests.Ping in 'RdcmX.Tests.Ping.pas',
   RdcmX.Tests.Redirections in 'RdcmX.Tests.Redirections.pas',
+  RdcmX.Tests.Experience in 'RdcmX.Tests.Experience.pas',
   RdcmX.Tests.Storage in 'RdcmX.Tests.Storage.pas',
   RdcmX.Tests.Tailscale in 'RdcmX.Tests.Tailscale.pas',
   RdcmX.Tests.Vault in 'RdcmX.Tests.Vault.pas';

@@ -161,7 +161,7 @@ msgstr "rdg.example.com"
 msgid "Altijd gebruiken"
 msgstr "Always use"
 
-#: Source/RdcmX.UI.Gateways.dfm
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Properties.pas
 msgid "Automatisch detecteren"
 msgstr "Detect automatically"
 
@@ -1977,12 +1977,124 @@ msgid "Smartcards van deze pc gebruiken in de sessie (ook om aan te melden)."
 msgstr "Use the smart cards of this PC in the session (also to log on)."
 
 #: Source/RdcmX.UI.Properties.pas
+msgid "Snelheid van de verbinding met deze server. Bij een keuze worden de vinkjes hieronder gezet zoals in Verbinding met extern bureaublad (mstsc); u kunt ze daarna aanpassen."
+msgstr "Speed of the connection to this server. Choosing one sets the check boxes below as in Remote Desktop Connection (mstsc); you can change them afterwards."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Achtergrondafbeelding van het externe bureaublad tonen (kost bandbreedte)."
+msgstr "Show the background image of the remote desktop (costs bandwidth)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "ClearType-lettertypen in de sessie."
+msgstr "ClearType fonts in the session."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Transparantie en andere effecten van het externe bureaublad."
+msgstr "Transparency and other effects of the remote desktop."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "De inhoud van een venster tonen terwijl u het versleept, in plaats van alleen de rand."
+msgstr "Show the contents of a window while you drag it, instead of only its outline."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Menu's en vensters geanimeerd openen en sluiten."
+msgstr "Animate opening and closing menus and windows."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Vensters, knoppen en menu's in de stijl van Windows tonen."
+msgstr "Show windows, buttons and menus in the Windows style."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Veelgebruikte beelden op deze pc bewaren zodat ze niet opnieuw worden verstuurd (sneller bij een trage verbinding)."
+msgstr "Keep frequently used images on this PC so they are not sent again (faster on a slow connection)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Automatisch opnieuw verbinden als de netwerkverbinding kort wegvalt."
+msgstr "Reconnect automatically when the network connection drops briefly."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Stuurt af en toe een kleine muisbeweging naar de sessie zolang u er niet in werkt, zodat de server niet vergrendelt of de schermbeveiliging start. Houdt ook de netwerkverbinding actief."
+msgstr "Now and then sends a tiny mouse movement to the session while you are not working in it, so the server does not lock or start its screen saver. Also keeps the network connection alive."
+
+#: Source/RdcmX.UI.Properties.pas
 msgid "Plug-and-play-apparaten (bijv. camera of telefoon) doorgeven aan de sessie."
 msgstr "Pass plug and play devices (e.g. a camera or phone) to the session."
 
 #: Source/RdcmX.UI.Properties.pas
 msgid "Wat te doen als het certificaat van de server niet geverifieerd kan worden: toch verbinden, niet verbinden, of waarschuwen (aanbevolen)."
 msgstr "What to do when the server certificate cannot be verified: connect anyway, do not connect, or warn (recommended)."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Gebruikerservaring"
+msgstr "Experience"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Verbindingssnelheid"
+msgstr "Connection speed"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Modem (56 kbps)"
+msgstr "Modem (56 kbps)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Breedband met lage snelheid (256 kbps - 2 Mbps)"
+msgstr "Low-speed broadband (256 kbps - 2 Mbps)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Satelliet (2 - 16 Mbps met hoge latentie)"
+msgstr "Satellite (2 - 16 Mbps with high latency)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Breedband met hoge snelheid (2 - 10 Mbps)"
+msgstr "High-speed broadband (2 - 10 Mbps)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "WAN (10 Mbps of hoger met hoge latentie)"
+msgstr "WAN (10 Mbps or higher with high latency)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "LAN (10 Mbps of hoger)"
+msgstr "LAN (10 Mbps or higher)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Bureaubladachtergrond"
+msgstr "Desktop background"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Lettertypen vloeiend maken"
+msgstr "Font smoothing"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Bureaubladsamenstelling"
+msgstr "Desktop composition"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Vensterinhoud tijdens slepen weergeven"
+msgstr "Show window contents while dragging"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Animatie van menu's en vensters"
+msgstr "Menu and window animation"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Visuele stijlen"
+msgstr "Visual styles"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Bitmapafbeeldingen in permanente cache plaatsen"
+msgstr "Persistent bitmap caching"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Opnieuw verbinding maken als de verbinding wordt verbroken"
+msgstr "Reconnect if the connection is dropped"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Sessie actief houden (vergrendelen en schermbeveiliging op de server voorkomen)"
+msgstr "Keep session active (prevent lock and screen saver on the server)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Bij \"Automatisch detecteren\" past de server de weergave aan de verbinding aan. Wijzigingen gelden bij de volgende verbinding."
+msgstr "With \"Detect automatically\" the server adapts the display to the connection. Changes apply at the next connection."
 
 #: Source/RdcmX.UI.Properties.pas
 msgid "Route"

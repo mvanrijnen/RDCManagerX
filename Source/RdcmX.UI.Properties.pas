@@ -72,6 +72,9 @@ type
     FWork: TRdcNodeSettings;
     FPages: TObjectList<TRdcSectionPage>;
     FDisplayPage: TRdcSectionPage;
+    FExperiencePage: TRdcSectionPage;
+    FSpeedCombo: TComboBox;
+    FSpeedChangedByPage: TNotifyEvent;
     FInitialDisplayMode: string;
     FLogonChoices: TArray<TRdcLogonChoice>;
     FLoading: Boolean;
@@ -90,6 +93,9 @@ type
     function AddPage(const aCaption: string; aClass: TRdcSettingsGroupClass): TRdcSectionPage;
     procedure BuildSectionPages;
     procedure BuildRoutePage;
+    procedure BuildExperiencePage;
+    procedure cbConnectionSpeedChange(Sender: TObject);
+    procedure ApplyExperiencePreset;
     procedure ApplyFieldHints;
     procedure SyncRemoteDesktopWithDisplayMode;
     procedure LoadGeneral;
@@ -371,9 +377,59 @@ begin
     lPage.SetHint('redirectPrinters', _('Printers van deze pc gebruiken in de sessie.'));
     lPage.SetHint('redirectPorts', _('COM- en LPT-poorten van deze pc doorgeven aan de sessie.'));
     lPage.SetHint('redirectSmartCards', _('Smartcards van deze pc gebruiken in de sessie (ook om aan te melden).'));
+    lPage.SetHint('connectionSpeed', _('Snelheid van de verbinding met deze server. Bij een keuze worden de vinkjes hieronder gezet zoals in Verbinding met extern bureaublad (mstsc); u kunt ze daarna aanpassen.'));
+    lPage.SetHint('desktopBackground', _('Achtergrondafbeelding van het externe bureaublad tonen (kost bandbreedte).'));
+    lPage.SetHint('fontSmoothing', _('ClearType-lettertypen in de sessie.'));
+    lPage.SetHint('desktopComposition', _('Transparantie en andere effecten van het externe bureaublad.'));
+    lPage.SetHint('showWindowContents', _('De inhoud van een venster tonen terwijl u het versleept, in plaats van alleen de rand.'));
+    lPage.SetHint('menuAnimations', _('Menu''s en vensters geanimeerd openen en sluiten.'));
+    lPage.SetHint('visualStyles', _('Vensters, knoppen en menu''s in de stijl van Windows tonen.'));
+    lPage.SetHint('bitmapCaching', _('Veelgebruikte beelden op deze pc bewaren zodat ze niet opnieuw worden verstuurd (sneller bij een trage verbinding).'));
+    lPage.SetHint('autoReconnect', _('Automatisch opnieuw verbinden als de netwerkverbinding kort wegvalt.'));
+    lPage.SetHint('keepAlive', _('Stuurt af en toe een kleine muisbeweging naar de sessie zolang u er niet in werkt, zodat de server niet vergrendelt of de schermbeveiliging start. Houdt ook de netwerkverbinding actief.'));
     lPage.SetHint('redirectPnpDevices', _('Plug-and-play-apparaten (bijv. camera of telefoon) doorgeven aan de sessie.'));
     lPage.SetHint('authentication', _('Wat te doen als het certificaat van de server niet geverifieerd kan worden: toch verbinden, niet verbinden, of waarschuwen (aanbevolen).'));
   end;
+end;
+
+procedure TfrmProperties.BuildExperiencePage;
+begin
+  // As the Experience tab of mstsc (user request). Choosing a connection speed sets the check boxes like mstsc.
+  FExperiencePage := AddPage(_('Gebruikerservaring'), TRdcxExperienceSettings);
+  FSpeedCombo := FExperiencePage.AddChoice('connectionSpeed', _('Verbindingssnelheid'), cRdcConnectionSpeedNames,
+    [_('Automatisch detecteren'), _('Modem (56 kbps)'), _('Breedband met lage snelheid (256 kbps - 2 Mbps)'), _('Satelliet (2 - 16 Mbps met hoge latentie)'),
+     _('Breedband met hoge snelheid (2 - 10 Mbps)'), _('WAN (10 Mbps of hoger met hoge latentie)'), _('LAN (10 Mbps of hoger)')]);
+  FSpeedChangedByPage := FSpeedCombo.OnChange;
+  FSpeedCombo.OnChange := cbConnectionSpeedChange;
+  FExperiencePage.AddCheck('desktopBackground', _('Bureaubladachtergrond'));
+  FExperiencePage.AddCheck('fontSmoothing', _('Lettertypen vloeiend maken'));
+  FExperiencePage.AddCheck('desktopComposition', _('Bureaubladsamenstelling'));
+  FExperiencePage.AddCheck('showWindowContents', _('Vensterinhoud tijdens slepen weergeven'));
+  FExperiencePage.AddCheck('menuAnimations', _('Animatie van menu''s en vensters'));
+  FExperiencePage.AddCheck('visualStyles', _('Visuele stijlen'));
+  FExperiencePage.AddCheck('bitmapCaching', _('Bitmapafbeeldingen in permanente cache plaatsen'));
+  FExperiencePage.AddCheck('autoReconnect', _('Opnieuw verbinding maken als de verbinding wordt verbroken'));
+  FExperiencePage.AddCheck('keepAlive', _('Sessie actief houden (vergrendelen en schermbeveiliging op de server voorkomen)'));
+  FExperiencePage.AddHint(_('Bij "Automatisch detecteren" past de server de weergave aan de verbinding aan. Wijzigingen gelden bij de volgende verbinding.'));
+end;
+
+procedure TfrmProperties.cbConnectionSpeedChange(Sender: TObject);
+begin
+  ApplyExperiencePreset;
+  if Assigned(FSpeedChangedByPage) then
+    FSpeedChangedByPage(Sender);
+end;
+
+procedure TfrmProperties.ApplyExperiencePreset;
+var
+  lOption: TRdcExperienceOption;
+  lPreset: TRdcExperienceOptions;
+begin
+  if (FSpeedCombo = nil) or (FSpeedCombo.ItemIndex < 0) then
+    Exit;
+  lPreset := TRdcxExperienceSettings.PresetFor(TRdcConnectionSpeed(FSpeedCombo.ItemIndex));
+  for lOption := Low(TRdcExperienceOption) to High(TRdcExperienceOption) do
+    FExperiencePage.SetFieldValue(cRdcExperienceElements[lOption], BoolToStr(lOption in lPreset, True));
 end;
 
 procedure TfrmProperties.BuildRoutePage;
@@ -489,6 +545,8 @@ begin
   lPage.AddCheck('redirectSmartCards', _('Smartcards'));
   lPage.AddCheck('redirectPnpDevices', _('Plug-and-play-apparaten'));
   lPage.AddHint(_('Wijzigingen gelden bij de volgende verbinding.'));
+
+  BuildExperiencePage;
 
   lPage := AddPage(_('Beveiliging'), TRdcSecuritySettings);
   lPage.AddChoice('authentication', _('Serverauthenticatie'), cRdcAuthenticationNames, [_('Verbinden zonder waarschuwing'), _('Niet verbinden als verificatie mislukt'), _('Waarschuwen als verificatie mislukt')]);

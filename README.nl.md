@@ -49,6 +49,14 @@ De indeling (raster en splitterposities) staat in de app-instellingen, niet in h
 
 ---
 
+## Gebruikerservaring
+
+Het tabblad *Gebruikerservaring* (per server of groep, erft zoals alle instellingen) heeft de opties van het tabblad
+Ervaring in mstsc: verbindingssnelheid (een keuze zet de vinkjes zoals mstsc dat doet), bureaubladachtergrond,
+vloeiende lettertypen, bureaubladsamenstelling, vensterinhoud tijdens slepen, animaties, visuele stijlen,
+bitmapcache en automatisch opnieuw verbinden. Daarnaast stuurt **Sessie actief houden** af en toe een kleine
+muisbeweging naar de sessie zolang je er niet in werkt, zodat de server niet vergrendelt of de schermbeveiliging start.
+
 ## Verbindingsroutes
 
 Per server of groep stel je in hoe RDCManagerX de server bereikt: **Eigenschappen > Route**. Net als de andere

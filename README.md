@@ -52,6 +52,14 @@ The layout (grid and splitter positions) is stored in the app settings, not in t
 
 ---
 
+## Experience
+
+The *Experience* tab (per server or group, inherited like every other setting) has the options of the mstsc Experience
+tab: connection speed (choosing one sets the check boxes as mstsc does), desktop background, font smoothing, desktop
+composition, window contents while dragging, animations, visual styles, persistent bitmap caching and automatic
+reconnect. On top of that, **Keep session active** sends a tiny mouse movement to the session now and then while you
+are not working in it, so the server does not lock or start its screen saver.
+
 ## Connection routes
 
 For each server or group you choose how RDCManagerX reaches the server: **Properties > Route**

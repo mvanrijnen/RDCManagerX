@@ -87,6 +87,15 @@ type
     KeyboardHookMode: Integer;
     /// <summary>Schaal in de sessie in procenten (100..500); 0 = automatisch (volgt de DPI van de monitor).</summary>
     DesktopScale: Cardinal;
+    // User experience (mstsc Experience tab)
+    /// <summary>TS_PERF_* flags (TRdcxExperienceSettings.PerformanceFlags).</summary>
+    PerformanceFlags: Integer;
+    /// <summary>1 (modem) .. 6 (LAN); 7 = detect automatically (with bandwidth detection).</summary>
+    NetworkConnectionType: Cardinal;
+    BitmapCaching: Boolean;
+    AutoReconnect: Boolean;
+    /// <summary>Keep the remote session from locking: network keep-alive plus KeepAlivePulse from the manager.</summary>
+    KeepAlive: Boolean;
     // Verbinding
     ConnectToConsole: Boolean;
     StartProgram: string;
@@ -159,6 +168,7 @@ type
     FOnStateChanged: TNotifyEvent;
     procedure ApplyConnectSettings(aWidth, aHeight: Integer);
     procedure ApplyConnectionOptions(aAdvanced: IMsRdpClientAdvancedSettings);
+    procedure ApplyExperience(const aAdv: IMsRdpClientAdvancedSettings);
     procedure ApplyGatewaySettings;
     procedure ControlWndProc(var aMessage: TMessage);
     procedure SetError(const aText: string);
@@ -201,6 +211,9 @@ type
     /// <summary>Voorbereiden vóór Connect (bijv. Tailscale-netwerk starten): toont aText en de status "verbinden".
     /// Daarna Connect (na SetEndpoint), of PrepareFailed.</summary>
     procedure BeginPrepare(const aText: string);
+    /// <summary>Simulated input (a tiny mouse move) so the remote session does not lock or start its screen saver.
+    /// Only when logged in; the session manager decides when (setting KeepAlive, user not working in it).</summary>
+    procedure KeepAlivePulse;
     procedure PrepareFailed(const aError: string);
     /// <summary>Adres en poort waarmee de control verbindt (de rest van de instellingen blijft).</summary>
     /// <summary>aDisplayName (optional): name in the status texts, e.g. the server plus what the tailnet resolved.</summary>
@@ -320,6 +333,8 @@ begin
   Result.ResizeDebounceMs := cDefaultDebounceMs;
   Result.ReconnectOnResizeFallback := True;
   Result.PhysicalSizeInMillimeters := False;
+  Result.NetworkConnectionType := 7; // detect automatically
+  Result.AutoReconnect := True;
   Result.RedirectClipboard := True;
   Result.RedirectDrives := False;
   Result.RedirectPrinters := False;
@@ -774,7 +789,8 @@ begin
     lAdv4.AuthenticationLevel := FSettings.AuthenticationLevel;
 
   if Supports(lAdv, IMsRdpClientAdvancedSettings2, lAdv2) then
-    lAdv2.EnableAutoReconnect := True;
+    lAdv2.EnableAutoReconnect := FSettings.AutoReconnect;
+  ApplyExperience(lAdv);
 
   ApplyConnectionOptions(lAdv);
   ApplyGatewaySettings;
@@ -825,6 +841,64 @@ begin
   FSentDeviceScale := lDeviceScale;
   FRemoteWidth := aWidth;
   FRemoteHeight := aHeight;
+end;
+
+procedure TRdpSession.ApplyExperience(const aAdv: IMsRdpClientAdvancedSettings);
+const
+  cAutoDetect = 7;
+  cKeepAliveMs = 60000;
+var
+  lAdv7: IMsRdpClientAdvancedSettings7;
+  lAdv8: IMsRdpClientAdvancedSettings8;
+begin
+  // Connection type first: choosing one may preset the performance flags, which are set explicitly afterwards.
+  if Supports(aAdv, IMsRdpClientAdvancedSettings8, lAdv8) then
+    lAdv8.BandwidthDetection := FSettings.NetworkConnectionType = cAutoDetect;
+  if Supports(aAdv, IMsRdpClientAdvancedSettings7, lAdv7) then
+    lAdv7.NetworkConnectionType := FSettings.NetworkConnectionType;
+  aAdv.PerformanceFlags := FSettings.PerformanceFlags;
+  aAdv.BitmapPersistence := Ord(FSettings.BitmapCaching);
+  if FSettings.KeepAlive then
+    aAdv.keepAliveInterval := cKeepAliveMs; // network keep-alive: idle connections are not dropped
+  Log(Format('Gebruikerservaring: verbindingstype %d, PerformanceFlags $%x, bitmapcache %s, automatisch opnieuw verbinden %s, actief houden %s', [FSettings.NetworkConnectionType, FSettings.PerformanceFlags, BoolToStr(FSettings.BitmapCaching, True), BoolToStr(FSettings.AutoReconnect, True), BoolToStr(FSettings.KeepAlive, True)]));
+end;
+
+type
+  PHWND = ^HWND;
+
+function EnumFindInputWindow(aWnd: HWND; aResult: LPARAM): BOOL; stdcall;
+var
+  lClass: array[0..63] of Char;
+begin
+  Result := True;
+  if (GetClassName(aWnd, lClass, Length(lClass)) > 0) and SameText(lClass, 'IHWindowClass') then
+  begin
+    PHWND(aResult)^ := aWnd;
+    Result := False;
+  end;
+end;
+
+function FindInputWindow(aParent: HWND): HWND;
+begin
+  Result := 0;
+  if aParent <> 0 then
+    EnumChildWindows(aParent, @EnumFindInputWindow, LPARAM(@Result));
+end;
+
+procedure TRdpSession.KeepAlivePulse;
+var
+  lInput: HWND;
+begin
+  // ONZEKER (tested by the user): the RDP control's input window (class IHWindowClass) turns mouse messages into
+  // remote input, which resets the idle timer of the remote session (screen saver, lock). A move of one pixel
+  // and back, at the top-left corner, so it does not get in the way of the remote pointer.
+  if (FState <> rssLoggedIn) or (FControl = nil) or not FControl.HandleAllocated then
+    Exit;
+  lInput := FindInputWindow(FControl.Handle);
+  if lInput = 0 then
+    Exit;
+  PostMessage(lInput, WM_MOUSEMOVE, 0, MakeLParam(2, 2));
+  PostMessage(lInput, WM_MOUSEMOVE, 0, MakeLParam(1, 1));
 end;
 
 procedure TRdpSession.BeginPrepare(const aText: string);

@@ -49,6 +49,11 @@ type
   TRdcDisplayMode = (dmDynamic, dmClientArea, dmFixed, dmFullScreen);     // RDCManX-extra
   /// <summary>Verbindingsroute (RDCManX-extra). Direct = het bestaande gedrag, inclusief gatewaySettings uit de .rdg.</summary>
   TRdcRouteKind = (rkDirect, rkTailscale, rkGateway);
+  /// <summary>Connection speed as in mstsc (Experience tab); order = NetworkConnectionType 1..6, csAuto = 7.</summary>
+  TRdcConnectionSpeed = (csAuto, csModem, csLowBroadband, csSatellite, csHighBroadband, csWan, csLan);
+  /// <summary>The "allow" check boxes of the mstsc Experience tab.</summary>
+  TRdcExperienceOption = (eoDesktopBackground, eoFontSmoothing, eoDesktopComposition, eoShowWindowContents, eoMenuAnimations, eoVisualStyles);
+  TRdcExperienceOptions = set of TRdcExperienceOption;
   /// <summary>Gateway gebruiken: altijd / automatisch detecteren / altijd behalve voor lokale adressen.</summary>
   TRdcGatewayUsage = (guAlways, guAutoDetect, guBypassLocal);
   /// <summary>Aanmeldgegevens voor de gateway: die van de sessie / eigen (wachtwoord in de kluis) / vragen / smartcard.</summary>
@@ -66,6 +71,8 @@ const
   cRdcProfileScopeNames: array[TRdcProfileScope] of string = ('Local', 'File');
   cRdcDisplayModeNames: array[TRdcDisplayMode] of string = ('Dynamic', 'ClientArea', 'Fixed', 'FullScreen');
   cRdcRouteKindNames: array[TRdcRouteKind] of string = ('Direct', 'Tailscale', 'Gateway');
+  cRdcConnectionSpeedNames: array[TRdcConnectionSpeed] of string = ('Auto', 'Modem', 'LowBroadband', 'Satellite', 'HighBroadband', 'WAN', 'LAN');
+  cRdcExperienceElements: array[TRdcExperienceOption] of string = ('desktopBackground', 'fontSmoothing', 'desktopComposition', 'showWindowContents', 'menuAnimations', 'visualStyles');
   cRdcGatewayUsageNames: array[TRdcGatewayUsage] of string = ('Always', 'AutoDetect', 'BypassLocal');
   cRdcGatewayCredsModeNames: array[TRdcGatewayCredsMode] of string = ('Session', 'Separate', 'Ask', 'SmartCard');
   cRdcDefaultRdpPort = 3389;
@@ -322,6 +329,34 @@ type
     property PingEnabled: Boolean read GetPingEnabled write SetPingEnabled;
   end;
 
+  /// <summary>RDCManX extra: user experience as on the mstsc Experience tab (inherits; never in the .rdg).</summary>
+  TRdcxExperienceSettings = class(TRdcSettingsGroup)
+  public
+    class function XmlName: string; override;
+    class function ElementOrder: TArray<string>; override;
+    class function ElementDefaults: TArray<string>; override;
+    class function InRdg: Boolean; override;
+    function ConnectionSpeed: TRdcConnectionSpeed;
+    function DesktopBackground: Boolean;
+    function FontSmoothing: Boolean;
+    function DesktopComposition: Boolean;
+    function ShowWindowContents: Boolean;
+    function MenuAnimations: Boolean;
+    function VisualStyles: Boolean;
+    function BitmapCaching: Boolean;
+    function AutoReconnect: Boolean;
+    /// <summary>Keep the remote session from locking or starting its screen saver while it is idle.</summary>
+    function KeepAlive: Boolean;
+    function Options: TRdcExperienceOptions;
+    /// <summary>What mstsc checks for a connection speed (Auto: everything; the server adjusts).</summary>
+    class function PresetFor(aSpeed: TRdcConnectionSpeed): TRdcExperienceOptions; static;
+    /// <summary>PerformanceFlags for the RDP control (TS_PERF_*): disable wallpaper/full window drag/menu
+    /// animations/theming, enable font smoothing/desktop composition.</summary>
+    function PerformanceFlags: Integer;
+    /// <summary>NetworkConnectionType for the RDP control: 1 (modem) .. 6 (LAN), 7 = detect automatically.</summary>
+    function NetworkConnectionType: Cardinal;
+  end;
+
   TRdcNodeSettings = class
   private
     FGroups: TObjectList<TRdcSettingsGroup>;
@@ -336,6 +371,7 @@ type
     function GetRemoteDesktop: TRdcRemoteDesktopSettings;
     function GetRoute: TRdcxRouteSettings;
     function GetSecurity: TRdcSecuritySettings;
+    function GetExperience: TRdcxExperienceSettings;
   public
     constructor Create(aInherit: Boolean);
     destructor Destroy; override;
@@ -356,6 +392,7 @@ type
     property RemoteDesktop: TRdcRemoteDesktopSettings read GetRemoteDesktop;
     property Route: TRdcxRouteSettings read GetRoute;
     property Security: TRdcSecuritySettings read GetSecurity;
+    property Experience: TRdcxExperienceSettings read GetExperience;
   end;
 
   // --- Nodes -------------------------------------------------------------------------------------------------
@@ -408,6 +445,7 @@ type
     function EffectiveLogon: TRdcLogonCredentials;
     function EffectiveRemoteDesktop: TRdcRemoteDesktopSettings;
     function EffectiveRoute: TRdcxRouteSettings;
+    function EffectiveExperience: TRdcxExperienceSettings;
     function EffectiveSecurity: TRdcSecuritySettings;
     /// <summary>Effectieve credentials (inclusief file-profiel) gesplitst voor de RDP-control. False bij een extern profiel of onbekend file-profiel.</summary>
     function ResolveLogon(out aDomain, aUserName: string): Boolean;
@@ -1344,6 +1382,140 @@ begin
   SetInt('wolPort', aValue);
 end;
 
+{ TRdcxExperienceSettings }
+
+class function TRdcxExperienceSettings.XmlName: string;
+begin
+  Result := 'rdcmxExperience';
+end;
+
+class function TRdcxExperienceSettings.ElementOrder: TArray<string>;
+begin
+  Result := ['connectionSpeed', 'desktopBackground', 'fontSmoothing', 'desktopComposition', 'showWindowContents', 'menuAnimations', 'visualStyles', 'bitmapCaching', 'autoReconnect', 'keepAlive'];
+end;
+
+class function TRdcxExperienceSettings.ElementDefaults: TArray<string>;
+begin
+  // As mstsc with "detect connection quality automatically": everything on, bitmap cache off, reconnect on.
+  Result := ['Auto', cRdcTrue, cRdcTrue, cRdcTrue, cRdcTrue, cRdcTrue, cRdcTrue, cRdcFalse, cRdcTrue, cRdcFalse];
+end;
+
+class function TRdcxExperienceSettings.InRdg: Boolean;
+begin
+  Result := False;
+end;
+
+function TRdcxExperienceSettings.ConnectionSpeed: TRdcConnectionSpeed;
+begin
+  Result := TRdcConnectionSpeed(RdcTextToEnum(GetValue('connectionSpeed'), cRdcConnectionSpeedNames, Ord(csAuto)));
+end;
+
+function TRdcxExperienceSettings.DesktopBackground: Boolean;
+begin
+  Result := GetBool('desktopBackground');
+end;
+
+function TRdcxExperienceSettings.FontSmoothing: Boolean;
+begin
+  Result := GetBool('fontSmoothing');
+end;
+
+function TRdcxExperienceSettings.DesktopComposition: Boolean;
+begin
+  Result := GetBool('desktopComposition');
+end;
+
+function TRdcxExperienceSettings.ShowWindowContents: Boolean;
+begin
+  Result := GetBool('showWindowContents');
+end;
+
+function TRdcxExperienceSettings.MenuAnimations: Boolean;
+begin
+  Result := GetBool('menuAnimations');
+end;
+
+function TRdcxExperienceSettings.VisualStyles: Boolean;
+begin
+  Result := GetBool('visualStyles');
+end;
+
+function TRdcxExperienceSettings.BitmapCaching: Boolean;
+begin
+  Result := GetBool('bitmapCaching');
+end;
+
+function TRdcxExperienceSettings.AutoReconnect: Boolean;
+begin
+  Result := GetBool('autoReconnect');
+end;
+
+function TRdcxExperienceSettings.KeepAlive: Boolean;
+begin
+  Result := GetBool('keepAlive');
+end;
+
+function TRdcxExperienceSettings.Options: TRdcExperienceOptions;
+var
+  lOption: TRdcExperienceOption;
+begin
+  Result := [];
+  for lOption := Low(TRdcExperienceOption) to High(TRdcExperienceOption) do
+    if GetBool(cRdcExperienceElements[lOption]) then
+      Include(Result, lOption);
+end;
+
+class function TRdcxExperienceSettings.PresetFor(aSpeed: TRdcConnectionSpeed): TRdcExperienceOptions;
+begin
+  case aSpeed of
+    csModem:
+      Result := [];
+    csLowBroadband:
+      Result := [eoVisualStyles];
+    csSatellite:
+      Result := [eoDesktopComposition, eoVisualStyles];
+    csHighBroadband:
+      Result := [eoFontSmoothing, eoDesktopComposition, eoShowWindowContents, eoVisualStyles];
+  else
+    Result := [Low(TRdcExperienceOption)..High(TRdcExperienceOption)]; // Auto, WAN, LAN
+  end;
+end;
+
+function TRdcxExperienceSettings.PerformanceFlags: Integer;
+const
+  TS_PERF_DISABLE_WALLPAPER = $00000001;
+  TS_PERF_DISABLE_FULLWINDOWDRAG = $00000002;
+  TS_PERF_DISABLE_MENUANIMATIONS = $00000004;
+  TS_PERF_DISABLE_THEMING = $00000008;
+  TS_PERF_ENABLE_FONT_SMOOTHING = $00000080;
+  TS_PERF_ENABLE_DESKTOP_COMPOSITION = $00000100;
+var
+  lOptions: TRdcExperienceOptions;
+begin
+  lOptions := Options;
+  Result := 0;
+  if not (eoDesktopBackground in lOptions) then
+    Result := Result or TS_PERF_DISABLE_WALLPAPER;
+  if not (eoShowWindowContents in lOptions) then
+    Result := Result or TS_PERF_DISABLE_FULLWINDOWDRAG;
+  if not (eoMenuAnimations in lOptions) then
+    Result := Result or TS_PERF_DISABLE_MENUANIMATIONS;
+  if not (eoVisualStyles in lOptions) then
+    Result := Result or TS_PERF_DISABLE_THEMING;
+  if eoFontSmoothing in lOptions then
+    Result := Result or TS_PERF_ENABLE_FONT_SMOOTHING;
+  if eoDesktopComposition in lOptions then
+    Result := Result or TS_PERF_ENABLE_DESKTOP_COMPOSITION;
+end;
+
+function TRdcxExperienceSettings.NetworkConnectionType: Cardinal;
+begin
+  if ConnectionSpeed = csAuto then
+    Result := 7
+  else
+    Result := Cardinal(Ord(ConnectionSpeed));
+end;
+
 { TRdcxRouteSettings }
 
 class function TRdcxRouteSettings.XmlName: string;
@@ -1437,6 +1609,7 @@ begin
   FGroups.Add(TRdcxSettings.Create);
   FGroups.Add(TRdcxHostSettings.Create);
   FGroups.Add(TRdcxRouteSettings.Create);
+  FGroups.Add(TRdcxExperienceSettings.Create);
   for lGroup in FGroups do
     lGroup.Inherit := aInherit;
 end;
@@ -1503,6 +1676,11 @@ end;
 function TRdcNodeSettings.GetHost: TRdcxHostSettings;
 begin
   Result := TRdcxHostSettings(Find(TRdcxHostSettings));
+end;
+
+function TRdcNodeSettings.GetExperience: TRdcxExperienceSettings;
+begin
+  Result := TRdcxExperienceSettings(Find(TRdcxExperienceSettings));
 end;
 
 function TRdcNodeSettings.GetRoute: TRdcxRouteSettings;
@@ -1651,6 +1829,11 @@ end;
 function TRdcNode.EffectiveExtras: TRdcxSettings;
 begin
   Result := TRdcxSettings(Effective(TRdcxSettings));
+end;
+
+function TRdcNode.EffectiveExperience: TRdcxExperienceSettings;
+begin
+  Result := TRdcxExperienceSettings(Effective(TRdcxExperienceSettings));
 end;
 
 function TRdcNode.EffectiveRoute: TRdcxRouteSettings;

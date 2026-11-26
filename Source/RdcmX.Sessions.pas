@@ -66,6 +66,7 @@ type
     FSessions: TDictionary<TRdcServer, TRdpSession>;
     FTunnels: TObjectDictionary<TRdpSession, TRdcTunnel>;
     FTunnelTimer: TTimer;
+    FKeepAliveTimer: TTimer;
     FTailnets: TRdcTailnetManager;
     FSecrets: IRdcSecretAccess;
     FPendingFree: TList<TRdpSession>;
@@ -82,6 +83,8 @@ type
     procedure ConnectViaTailnet(aServer: TRdcServer; aSession: TRdpSession);
     procedure TunnelReady(aSession: TRdpSession; aSuccess: Boolean; const aError: string);
     function TailnetDisplayName(aSession: TRdpSession; const aResolved: string): string;
+    procedure KeepAliveTimerFired(aSender: TObject);
+    procedure PulseIdleSessions;
     procedure ReleaseTunnel(aSession: TRdpSession);
     procedure TunnelTimerFired(aSender: TObject);
     procedure FreePendingSessions;
@@ -169,6 +172,10 @@ begin
   FTunnelTimer.Enabled := False;
   FTunnelTimer.Interval := 1000;
   FTunnelTimer.OnTimer := TunnelTimerFired;
+  // "Keep session active": every 2 minutes, well within the usual screen saver/lock times (5 minutes and up).
+  FKeepAliveTimer := TTimer.Create(nil);
+  FKeepAliveTimer.Interval := 2 * 60 * 1000;
+  FKeepAliveTimer.OnTimer := KeepAliveTimerFired;
   FMsgWnd := System.Classes.AllocateHWnd(MsgWndProc);
 end;
 
@@ -179,6 +186,7 @@ begin
   FOnStateChanged := nil;
   FOnDisplayChanged := nil;
   FreeAndNil(FTunnelTimer);
+  FreeAndNil(FKeepAliveTimer);
   for lSession in FTunnels.Keys.ToArray do
     ReleaseTunnel(lSession);
   FTunnels.Free;
@@ -209,6 +217,7 @@ const
 var
   lConnection: TRdcConnectionSettings;
   lDomain: string;
+  lExperience: TRdcxExperienceSettings;
   lExtras: TRdcxSettings;
   lGateway: TRdcGatewaySettings;
   lLocal: TRdcLocalResources;
@@ -261,6 +270,13 @@ begin
   aSettings.AudioQualityMode := Ord(lLocal.AudioQuality);
   aSettings.AudioCaptureRedirection := lLocal.AudioCapture = acRecord;
   aSettings.KeyboardHookMode := Ord(lLocal.KeyboardHook);
+
+  lExperience := aServer.EffectiveExperience;
+  aSettings.PerformanceFlags := lExperience.PerformanceFlags;
+  aSettings.NetworkConnectionType := lExperience.NetworkConnectionType;
+  aSettings.BitmapCaching := lExperience.BitmapCaching;
+  aSettings.AutoReconnect := lExperience.AutoReconnect;
+  aSettings.KeepAlive := lExperience.KeepAlive;
 
   lExtras := aServer.EffectiveExtras;
   aSettings.SizeMode := cSizeModes[lExtras.DisplayMode];
@@ -411,6 +427,31 @@ begin
         TunnelReady(aSession, aSuccess, aStartError);
     end);
   FTunnelTimer.Enabled := True;
+end;
+
+procedure TRdcSessionManager.KeepAliveTimerFired(aSender: TObject);
+begin
+  PulseIdleSessions;
+end;
+
+procedure TRdcSessionManager.PulseIdleSessions;
+const
+  cIdleMs = 60 * 1000;
+var
+  lFocus: HWND;
+  lInfo: TLastInputInfo;
+  lLocalIdle: Boolean;
+  lSession: TRdpSession;
+begin
+  // A session the user is working in needs no help (and must not get a stray mouse move): only sessions without
+  // the keyboard focus, or all of them when nobody has touched this PC for a minute.
+  lInfo.cbSize := SizeOf(lInfo);
+  lLocalIdle := GetLastInputInfo(lInfo) and (GetTickCount - lInfo.dwTime >= cIdleMs);
+  lFocus := GetFocus;
+  for lSession in FSessions.Values do
+    if lSession.Settings.KeepAlive and (lSession.State = rssLoggedIn) then
+      if lLocalIdle or (lFocus = 0) or not lSession.Host.HandleAllocated or ((lFocus <> lSession.Host.Handle) and not IsChild(lSession.Host.Handle, lFocus)) then
+        lSession.KeepAlivePulse;
 end;
 
 function TRdcSessionManager.TailnetDisplayName(aSession: TRdpSession; const aResolved: string): string;
