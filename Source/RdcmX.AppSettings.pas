@@ -65,6 +65,7 @@ type
     FLanguage: string;
     FTailnetHostNameMatch: TStringList;
     FTailnetAllowShared: TStringList;
+    FAcceptedRedirections: TStringList;
     FSnapshot: TDictionary<string, string>; // sleutel -> JSON zoals bij laden/laatste opslaan
     procedure MigrateSplitMode(const aSplitMode: string; aSplitRatio: Double);
     function BuildJson: TJSONObject;
@@ -113,10 +114,16 @@ type
     /// chose itself / devices shared in from another tailnet. Client-side on purpose: a file cannot loosen this.</summary>
     property TailnetHostNameMatch: TStringList read FTailnetHostNameMatch;
     property TailnetAllowShared: TStringList read FTailnetAllowShared;
+    /// <summary>Fingerprints (RdcRedirectionFingerprint) of redirection warnings already shown or of files saved by
+    /// the user; newest last.</summary>
+    property AcceptedRedirections: TStringList read FAcceptedRedirections;
+    /// <summary>Adds a fingerprint (keeps the newest cMaxAcceptedRedirections).</summary>
+    procedure AcceptRedirections(const aFingerprint: string);
   end;
 
 const
   cMaxRecentFiles = 10;
+  cMaxAcceptedRedirections = 200;
   cAppFolder = 'RDCManagerX';
 
 implementation
@@ -136,6 +143,8 @@ begin
   FTailnetHostNameMatch.CaseSensitive := False;
   FTailnetAllowShared := TStringList.Create;
   FTailnetAllowShared.CaseSensitive := False;
+  FAcceptedRedirections := TStringList.Create;
+  FAcceptedRedirections.CaseSensitive := False;
   FLayouts := TDictionary<string, TRdcWindowLayout>.Create;
   FSnapshot := TDictionary<string, string>.Create;
   FGridColumns := 1;
@@ -156,6 +165,7 @@ begin
   FOpenFiles.Free;
   FTailnetHostNameMatch.Free;
   FTailnetAllowShared.Free;
+  FAcceptedRedirections.Free;
   inherited Destroy;
 end;
 
@@ -260,6 +270,7 @@ begin
         ReadList(TJSONObject(lRoot), 'openFiles', FOpenFiles);
         ReadList(TJSONObject(lRoot), 'tailnetHostNameMatch', FTailnetHostNameMatch);
         ReadList(TJSONObject(lRoot), 'tailnetAllowShared', FTailnetAllowShared);
+        ReadList(TJSONObject(lRoot), 'acceptedRedirections', FAcceptedRedirections);
         FLastLayoutKey := TJSONObject(lRoot).GetValue<string>('lastLayout', '');
         if TJSONObject(lRoot).GetValue('gridColumns') <> nil then
         begin
@@ -427,6 +438,7 @@ begin
     lRoot.AddPair('openFiles', WriteList(FOpenFiles));
     lRoot.AddPair('tailnetHostNameMatch', WriteList(FTailnetHostNameMatch));
     lRoot.AddPair('tailnetAllowShared', WriteList(FTailnetAllowShared));
+    lRoot.AddPair('acceptedRedirections', WriteList(FAcceptedRedirections));
     lRoot.AddPair('lastLayout', FLastLayoutKey);
     lRoot.AddPair('gridColumns', TJSONNumber.Create(FGridColumns));
     lRoot.AddPair('gridRows', TJSONNumber.Create(FGridRows));
@@ -488,6 +500,15 @@ begin
     FGridColumns := 4;
     FGridRows := 2;
   end;
+end;
+
+procedure TRdcAppSettings.AcceptRedirections(const aFingerprint: string);
+begin
+  if (aFingerprint = '') or (FAcceptedRedirections.IndexOf(aFingerprint) >= 0) then
+    Exit;
+  FAcceptedRedirections.Add(aFingerprint);
+  while FAcceptedRedirections.Count > cMaxAcceptedRedirections do
+    FAcceptedRedirections.Delete(0);
 end;
 
 procedure TRdcAppSettings.AddRecent(const aFileName: string);

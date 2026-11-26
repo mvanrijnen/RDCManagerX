@@ -76,6 +76,7 @@
         <DCCReference Include="..\Source\RdcmX.Lang.pas"/>
         <DCCReference Include="..\Source\RdcmX.Log.pas"/>
         <DCCReference Include="..\Source\RdcmX.Ping.pas"/>
+        <DCCReference Include="..\Source\RdcmX.Redirections.pas"/>
         <DCCReference Include="..\Source\RdcmX.Tailscale.pas"/>
         <DCCReference Include="..\Source\RdcmX.Crypto.pas"/>
         <DCCReference Include="..\Source\RdcmX.Shortcuts.pas"/>
@@ -90,6 +91,7 @@
         <DCCReference Include="RdcmX.Tests.Tailscale.pas"/>
         <DCCReference Include="RdcmX.Tests.AppSettings.pas"/>
         <DCCReference Include="RdcmX.Tests.Ping.pas"/>
+        <DCCReference Include="RdcmX.Tests.Redirections.pas"/>
         <DCCReference Include="RdcmX.Tests.Lang.pas"/>
         <RcCompile Include="TsBridgeTest.rc">
             <Form>TsBridgeTest.res</Form>

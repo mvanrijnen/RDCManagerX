@@ -17,6 +17,7 @@ uses
   RdcmX.Lang in '..\Source\RdcmX.Lang.pas',
   RdcmX.Log in '..\Source\RdcmX.Log.pas',
   RdcmX.Ping in '..\Source\RdcmX.Ping.pas',
+  RdcmX.Redirections in '..\Source\RdcmX.Redirections.pas',
   RdcmX.Shortcuts in '..\Source\RdcmX.Shortcuts.pas',
   RdcmX.Storage in '..\Source\RdcmX.Storage.pas',
   RdcmX.Storage.Json in '..\Source\RdcmX.Storage.Json.pas',
@@ -28,6 +29,7 @@ uses
   RdcmX.Tests.AppSettings in 'RdcmX.Tests.AppSettings.pas',
   RdcmX.Tests.Lang in 'RdcmX.Tests.Lang.pas',
   RdcmX.Tests.Ping in 'RdcmX.Tests.Ping.pas',
+  RdcmX.Tests.Redirections in 'RdcmX.Tests.Redirections.pas',
   RdcmX.Tests.Storage in 'RdcmX.Tests.Storage.pas',
   RdcmX.Tests.Tailscale in 'RdcmX.Tests.Tailscale.pas',
   RdcmX.Tests.Vault in 'RdcmX.Tests.Vault.pas';

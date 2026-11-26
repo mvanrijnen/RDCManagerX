@@ -28,7 +28,7 @@ uses
   Winapi.CommCtrl, Winapi.Messages, Winapi.MultiMon, Winapi.Windows,
   System.Actions, System.Classes, System.DateUtils, System.Generics.Collections, System.ImageList, System.Math, System.StrUtils, System.SysUtils, System.Types, System.UITypes,
   Vcl.ActnList, Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Graphics, Vcl.ImgList, Vcl.Menus, Vcl.StdCtrls, Vcl.WinXCtrls,
-  RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Lang, RdcmX.Model, RdcmX.Ping, RdcmX.Rdp.Session, RdcmX.Sessions, RdcmX.Shortcuts, RdcmX.Storage, RdcmX.Tailscale, RdcmX.UI.SessionPanes, RdcmX.UI.SessionWindow, RdcmX.UI.Theme;
+  RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Lang, RdcmX.Model, RdcmX.Ping, RdcmX.Rdp.Session, RdcmX.Redirections, RdcmX.Sessions, RdcmX.Shortcuts, RdcmX.Storage, RdcmX.Tailscale, RdcmX.UI.SessionPanes, RdcmX.UI.SessionWindow, RdcmX.UI.Theme;
 
 type
   TRdcTreeShortcutKind = (tskFavoritesHeader, tskRecentHeader, tskFavorite, tskRecent);
@@ -413,6 +413,8 @@ type
     procedure SaveSelectedFile(aSaveAs: Boolean);
     function SelectedFile: TRdcFile;
     procedure ShowLoadWarnings(aFile: TRdcFile);
+    procedure WarnAboutRedirections(aFile: TRdcFile);
+    procedure AcceptRedirectionsOf(aFile: TRdcFile);
     procedure UpdateFileNodeText(aFile: TRdcFile);
     procedure UpdateRecentMenu;
     // Sessies en tabs
@@ -2588,6 +2590,28 @@ begin
   FAppSettings.AddRecent(aFileName);
   UpdateRecentMenu;
   ShowLoadWarnings(Result);
+  WarnAboutRedirections(Result);
+end;
+
+procedure TfrmMain.WarnAboutRedirections(aFile: TRdcFile);
+var
+  lFindings: TArray<TRdcRedirectionFinding>;
+  lFingerprint: string;
+begin
+  // Once per set of risky settings: a file from someone else can switch on drive/port redirection or a start
+  // program, which is applied silently at connect.
+  lFindings := RdcRiskyRedirections(aFile);
+  lFingerprint := RdcRedirectionFingerprint(aFile, lFindings);
+  if (lFingerprint = '') or (FAppSettings.AcceptedRedirections.IndexOf(lFingerprint) >= 0) then
+    Exit;
+  FAppSettings.AcceptRedirections(lFingerprint);
+  MessageDlg(RdcRedirectionWarning(aFile, lFindings), mtWarning, [mbOK], 0);
+end;
+
+procedure TfrmMain.AcceptRedirectionsOf(aFile: TRdcFile);
+begin
+  // Saved by the user: the current settings are theirs, no warning at the next open.
+  FAppSettings.AcceptRedirections(RdcRedirectionFingerprint(aFile, RdcRiskyRedirections(aFile)));
 end;
 
 procedure TfrmMain.ShowLoadWarnings(aFile: TRdcFile);
@@ -2708,6 +2732,7 @@ begin
     srSaved:
       begin
         UpdateFileNodeText(aFile);
+        AcceptRedirectionsOf(aFile);
         FAppSettings.AddRecent(aFile.FileName);
         UpdateRecentMenu;
         Result := True;

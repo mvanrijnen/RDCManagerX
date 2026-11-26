@@ -995,6 +995,40 @@ msgstr "Connecting to %s..."
 msgid "Verbinding verbreken..."
 msgstr "Disconnecting..."
 
+#: Source/RdcmX.Redirections.pas
+msgid " en nog %d"
+msgstr " and %d more"
+
+#: Source/RdcmX.Redirections.pas
+msgid "Lokale schijven delen met de server"
+msgstr "Share local drives with the server"
+
+#: Source/RdcmX.Redirections.pas
+msgid "Lokale poorten (COM/LPT) delen met de server"
+msgstr "Share local ports (COM/LPT) with the server"
+
+#: Source/RdcmX.Redirections.pas Source/RdcmX.UI.Properties.pas
+msgid "Programma starten na aanmelden"
+msgstr "Start program after logon"
+
+#: Source/RdcmX.Redirections.pas
+msgid "Windows-toetscombinaties altijd naar de server"
+msgstr "Always send Windows key combinations to the server"
+
+#: Source/RdcmX.Redirections.pas
+msgid ""
+"\"%s\" zet bij het verbinden het volgende aan:\r\n"
+"\r\n"
+"%s\r\n"
+"\r\n"
+"Een server kan zo bij uw lokale bestanden of apparaten, of een programma laten starten. Vertrouwt u de maker van dit bestand niet, zet het dan uit in Eigenschappen (tabbladen Lokale bronnen en Verbinding). Deze melding komt pas terug als deze instellingen veranderen."
+msgstr ""
+"\"%s\" turns on the following when connecting:\r\n"
+"\r\n"
+"%s\r\n"
+"\r\n"
+"This lets a server reach your local files or devices, or start a program. If you do not trust the author of this file, turn it off in Properties (tabs Local resources and Connection). This message only comes back when these settings change."
+
 #: Source/RdcmX.Sessions.pas
 msgid "De route \"Via RDP-gateway\" verwijst naar een gateway die niet (meer) in dit bestand staat. Kies in Eigenschappen > Route een gateway."
 msgstr "The route \"Via RDP gateway\" refers to a gateway that is not (or no longer) in this file. Choose a gateway in Properties > Route."
@@ -2033,10 +2067,6 @@ msgstr "Connection"
 #: Source/RdcmX.UI.Properties.pas
 msgid "Verbinden met de beheersessie (console)"
 msgstr "Connect to the administrative session (console)"
-
-#: Source/RdcmX.UI.Properties.pas
-msgid "Programma starten na aanmelden"
-msgstr "Start program after logon"
 
 #: Source/RdcmX.UI.Properties.pas
 msgid "Werkmap van dat programma"

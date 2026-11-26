@@ -100,6 +100,7 @@
             <Form>frmGateways</Form>
         </DCCReference>
         <DCCReference Include="Source\RdcmX.Rdp.Session.pas"/>
+        <DCCReference Include="Source\RdcmX.Redirections.pas"/>
         <DCCReference Include="Source\RdcmX.Sessions.pas"/>
         <DCCReference Include="Source\RdcmX.Shortcuts.pas"/>
         <DCCReference Include="Source\RdcmX.Storage.pas"/>

@@ -17,6 +17,7 @@ uses
   RdcmX.UI.Tailnets in 'Source\RdcmX.UI.Tailnets.pas' {frmTailnets},
   RdcmX.UI.Gateways in 'Source\RdcmX.UI.Gateways.pas' {frmGateways},
   RdcmX.Rdp.Session in 'Source\RdcmX.Rdp.Session.pas',
+  RdcmX.Redirections in 'Source\RdcmX.Redirections.pas',
   RdcmX.Sessions in 'Source\RdcmX.Sessions.pas',
   RdcmX.Shortcuts in 'Source\RdcmX.Shortcuts.pas',
   RdcmX.Storage in 'Source\RdcmX.Storage.pas',
