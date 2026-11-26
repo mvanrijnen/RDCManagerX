@@ -78,15 +78,23 @@ type
     FKey: TBytes; // versleuteld in het geheugen (CryptProtectMemory) zolang ontgrendeld
     FLastUse: TDateTime;
     function DeriveAndCheck(const aMasterPassword: string; out aKey: TBytes): Boolean;
+    function BuildVaultItem(const aKey: TBytes; const aSalt: TBytes; aIterations: Cardinal): TBytes;
     function WriteVaultItem(const aKey: TBytes; const aSalt: TBytes; aIterations: Cardinal): Boolean;
     function SealPassword(const aKey: TBytes; const aTarget, aPassword: string): TBytes;
+    function SealBytes(const aKey: TBytes; const aTarget: string; const aPlain: TBytes): TBytes;
+    function OpenBytes(const aKey: TBytes; const aTarget: string; const aData: TBytes; out aPlain: TBytes): Boolean;
     function OpenPassword(const aKey: TBytes; const aTarget: string; const aData: TBytes; out aPassword: string): Boolean;
+    function StagedTargets: TArray<string>;
+    function CommitStaged: Boolean;
+    procedure DeleteStaged;
+    procedure RecoverInterruptedChange;
     function PasswordTargets: TArray<string>;
     function UseKey: TBytes;
     procedure ReleaseKey(var aKey: TBytes);
     procedure SetKey(var aKey: TBytes);
   public
-    /// <summary>aIterations: PBKDF2-rondes voor een NIEUWE kluis (tests gebruiken minder).</summary>
+    /// <summary>aIterations: PBKDF2-rondes voor een NIEUWE kluis (tests gebruiken minder).
+    /// Finishes or discards a master password change that was interrupted (see ChangeMasterPassword).</summary>
     constructor Create(const aStore: IRdcBlobStore; aIterations: Cardinal = 0);
     destructor Destroy; override;
     /// <summary>Doelnaam voor dit account op deze server: per account, lokale accounts per server.</summary>
@@ -124,7 +132,11 @@ type
     function Count: Integer;
     /// <summary>Kluis en alle wachtwoorden verwijderen; vergrendelt. Geeft het aantal verwijderde wachtwoorden.</summary>
     function Reset: Integer;
-    /// <summary>Alle wachtwoorden opnieuw versleutelen met een nieuw hoofdwachtwoord. False bij een verkeerd oud hoofdwachtwoord.</summary>
+    /// <summary>Alle wachtwoorden opnieuw versleutelen met een nieuw hoofdwachtwoord. False bij een verkeerd oud
+    /// hoofdwachtwoord, or when the store refuses a write: then nothing has changed.
+    /// Two phases: every item is first re-encrypted under a staging name (any failure: staging removed, old vault
+    /// untouched); then the new vault item is written (the commit point) and the staged items are copied over the
+    /// real ones. A crash after the commit point is finished by RecoverInterruptedChange at the next start.</summary>
     function ChangeMasterPassword(const aOldMasterPassword, aNewMasterPassword: string): Boolean;
     /// <summary>Tijdstip van het laatste gebruik (voor automatisch vergrendelen).</summary>
     property LastUse: TDateTime read FLastUse;
@@ -147,6 +159,9 @@ const
   cFormatVersion = 1;
   cVaultIterations = 600000; // PBKDF2-HMAC-SHA256, OWASP-advies
   cVaultCheckText = 'RDCManagerX-kluis-v1';
+  // Staging area of ChangeMasterPassword: never counted as a password, never loaded.
+  cStagingPrefix = cTargetPrefix + '~staging:';
+  cStagedVaultTarget = cStagingPrefix + 'vault';
 
 type
   // CREDENTIALW uit wincred.h (natuurlijke uitlijning).
@@ -275,6 +290,7 @@ begin
     FIterations := cVaultIterations
   else
     FIterations := aIterations;
+  RecoverInterruptedChange;
 end;
 
 destructor TRdcPasswordVault.Destroy;
@@ -380,18 +396,21 @@ begin
   WipeBytes(FKey);
 end;
 
-function TRdcPasswordVault.WriteVaultItem(const aKey: TBytes; const aSalt: TBytes; aIterations: Cardinal): Boolean;
+function TRdcPasswordVault.BuildVaultItem(const aKey: TBytes; const aSalt: TBytes; aIterations: Cardinal): TBytes;
 var
-  lData: TBytes;
   lSealed: TBytes;
 begin
   lSealed := TRdcCrypto.Encrypt(aKey, Utf8(cVaultCheckText), Utf8(cRdcVaultTarget));
-  SetLength(lData, 1 + SizeOf(Cardinal) + cRdcSaltSize + Length(lSealed));
-  lData[0] := cFormatVersion;
-  Move(aIterations, lData[1], SizeOf(Cardinal));
-  Move(aSalt[0], lData[1 + SizeOf(Cardinal)], cRdcSaltSize);
-  Move(lSealed[0], lData[1 + SizeOf(Cardinal) + cRdcSaltSize], Length(lSealed));
-  Result := FStore.Write(cRdcVaultTarget, 'RDCManagerX', lData);
+  SetLength(Result, 1 + SizeOf(Cardinal) + cRdcSaltSize + Length(lSealed));
+  Result[0] := cFormatVersion;
+  Move(aIterations, Result[1], SizeOf(Cardinal));
+  Move(aSalt[0], Result[1 + SizeOf(Cardinal)], cRdcSaltSize);
+  Move(lSealed[0], Result[1 + SizeOf(Cardinal) + cRdcSaltSize], Length(lSealed));
+end;
+
+function TRdcPasswordVault.WriteVaultItem(const aKey: TBytes; const aSalt: TBytes; aIterations: Cardinal): Boolean;
+begin
+  Result := FStore.Write(cRdcVaultTarget, 'RDCManagerX', BuildVaultItem(aKey, aSalt, aIterations));
 end;
 
 function TRdcPasswordVault.DeriveAndCheck(const aMasterPassword: string; out aKey: TBytes): Boolean;
@@ -415,20 +434,32 @@ begin
     WipeBytes(aKey);
 end;
 
-function TRdcPasswordVault.SealPassword(const aKey: TBytes; const aTarget, aPassword: string): TBytes;
+function TRdcPasswordVault.SealBytes(const aKey: TBytes; const aTarget: string; const aPlain: TBytes): TBytes;
 var
-  lPlain: TBytes;
   lSealed: TBytes;
 begin
-  lPlain := Utf8(aPassword);
-  try
-    lSealed := TRdcCrypto.Encrypt(aKey, lPlain, TargetAad(aTarget));
-  finally
-    WipeBytes(lPlain);
-  end;
+  lSealed := TRdcCrypto.Encrypt(aKey, aPlain, TargetAad(aTarget));
   SetLength(Result, 1 + Length(lSealed));
   Result[0] := cFormatVersion;
   Move(lSealed[0], Result[1], Length(lSealed));
+end;
+
+function TRdcPasswordVault.OpenBytes(const aKey: TBytes; const aTarget: string; const aData: TBytes; out aPlain: TBytes): Boolean;
+begin
+  aPlain := nil;
+  Result := (Length(aData) > 1) and (aData[0] = cFormatVersion) and TRdcCrypto.TryDecrypt(aKey, Copy(aData, 1, MaxInt), TargetAad(aTarget), aPlain);
+end;
+
+function TRdcPasswordVault.SealPassword(const aKey: TBytes; const aTarget, aPassword: string): TBytes;
+var
+  lPlain: TBytes;
+begin
+  lPlain := Utf8(aPassword);
+  try
+    Result := SealBytes(aKey, aTarget, lPlain);
+  finally
+    WipeBytes(lPlain);
+  end;
 end;
 
 function TRdcPasswordVault.OpenPassword(const aKey: TBytes; const aTarget: string; const aData: TBytes; out aPassword: string): Boolean;
@@ -436,7 +467,7 @@ var
   lPlain: TBytes;
 begin
   aPassword := '';
-  Result := (Length(aData) > 1) and (aData[0] = cFormatVersion) and TRdcCrypto.TryDecrypt(aKey, Copy(aData, 1, MaxInt), TargetAad(aTarget), lPlain);
+  Result := OpenBytes(aKey, aTarget, aData, lPlain);
   if Result then
   begin
     aPassword := TEncoding.UTF8.GetString(lPlain);
@@ -451,8 +482,63 @@ var
 begin
   Result := [];
   for lTarget in FStore.Targets(cTargetPrefix) do
-    if not SameText(lTarget, cRdcVaultTarget) then
+    if not SameText(lTarget, cRdcVaultTarget) and not lTarget.StartsWith(cStagingPrefix, True) then
       Result := Result + [lTarget];
+end;
+
+function TRdcPasswordVault.StagedTargets: TArray<string>;
+var
+  lTarget: string;
+begin
+  Result := [];
+  for lTarget in FStore.Targets(cStagingPrefix) do
+    if lTarget.StartsWith(cStagingPrefix, True) and not SameText(lTarget, cStagedVaultTarget) then
+      Result := Result + [lTarget];
+end;
+
+procedure TRdcPasswordVault.DeleteStaged;
+var
+  lTarget: string;
+begin
+  for lTarget in StagedTargets do
+    FStore.Delete(lTarget);
+  FStore.Delete(cStagedVaultTarget);
+end;
+
+function TRdcPasswordVault.CommitStaged: Boolean;
+var
+  lData: TBytes;
+  lTarget: string;
+begin
+  // Copy every staged item over its real target (staging name = cStagingPrefix + real target). The staging area is
+  // only removed when all copies succeeded, so a failed copy is retried at the next start.
+  Result := True;
+  for lTarget in StagedTargets do
+    if FStore.Read(lTarget, lData) then
+      Result := FStore.Write(Copy(lTarget, Length(cStagingPrefix) + 1, MaxInt), 'RDCManagerX', lData) and Result
+    else
+      Result := False;
+  if Result then
+    DeleteStaged;
+end;
+
+procedure TRdcPasswordVault.RecoverInterruptedChange;
+var
+  lCurrent: TBytes;
+  lStaged: TBytes;
+begin
+  if not FStore.Read(cStagedVaultTarget, lStaged) then
+  begin
+    // Leftovers without a staged vault item: an aborted first phase.
+    if Length(StagedTargets) > 0 then
+      DeleteStaged;
+    Exit;
+  end;
+  // Committed (the vault item already is the new one): finish copying. Not committed: the old items are intact.
+  if FStore.Read(cRdcVaultTarget, lCurrent) and (Length(lCurrent) = Length(lStaged)) and (Length(lStaged) > 0) and CompareMem(@lCurrent[0], @lStaged[0], Length(lStaged)) then
+    CommitStaged
+  else
+    DeleteStaged;
 end;
 
 function TRdcPasswordVault.Initialize(const aMasterPassword: string): Boolean;
@@ -557,51 +643,82 @@ begin
     Inc(Result);
   end;
   FStore.Delete(cRdcVaultTarget);
+  DeleteStaged;
 end;
 
 function TRdcPasswordVault.ChangeMasterPassword(const aOldMasterPassword, aNewMasterPassword: string): Boolean;
 var
+  lCommitted: Boolean;
   lData: TBytes;
-  lNewKey: TBytes;
-  lOldKey: TBytes;
-  lPassword: string;
-  lSalt: TBytes;
-  lTarget: string;
-  lTargets: TArray<string>;
-  lPasswords: TArray<string>;
   lIndex: Integer;
+  lNewKey: TBytes;
+  lNewVault: TBytes;
+  lOk: Boolean;
+  lOldData: TArray<TBytes>;
+  lOldKey: TBytes;
+  lOldVault: TBytes;
+  lPlain: TArray<TBytes>;
+  lSalt: TBytes;
+  lTargets: TArray<string>;
 begin
   if not IsStrongEnough(aNewMasterPassword) or not DeriveAndCheck(aOldMasterPassword, lOldKey) then
     Exit(False);
+  Result := False;
+  lCommitted := False;
   try
-    // Eerst alles ontsleutelen (niets wijzigen als dat niet lukt), dan met de nieuwe sleutel terugschrijven.
+    // Nothing is changed until everything is decrypted. Unreadable items stay nil and are dropped after the commit.
+    DeleteStaged;
+    if not FStore.Read(cRdcVaultTarget, lOldVault) then
+      Exit;
     lTargets := PasswordTargets;
-    SetLength(lPasswords, Length(lTargets));
+    SetLength(lPlain, Length(lTargets));
+    SetLength(lOldData, Length(lTargets));
     for lIndex := 0 to High(lTargets) do
-    begin
-      lTarget := lTargets[lIndex];
-      if FStore.Read(lTarget, lData) and OpenPassword(lOldKey, lTarget, lData, lPassword) then
-        lPasswords[lIndex] := lPassword
-      else
-        lPasswords[lIndex] := ''; // onleesbaar item: vervalt
-      WipeString(lPassword);
-      WipeBytes(lData);
-    end;
+      if FStore.Read(lTargets[lIndex], lData) then
+      begin
+        lOldData[lIndex] := lData;
+        if not OpenBytes(lOldKey, lTargets[lIndex], lData, lPlain[lIndex]) then
+          lPlain[lIndex] := nil;
+      end;
     lSalt := TRdcCrypto.RandomBytes(cRdcSaltSize);
     lNewKey := TRdcCrypto.DeriveKey(aNewMasterPassword, lSalt, FIterations);
-    Result := WriteVaultItem(lNewKey, lSalt, FIterations);
-    if Result then
+    lNewVault := BuildVaultItem(lNewKey, lSalt, FIterations);
+
+    // Phase 1: stage everything; any failed write leaves the vault as it was.
+    lOk := True;
+    for lIndex := 0 to High(lTargets) do
+      if lOk and (lPlain[lIndex] <> nil) then
+        lOk := FStore.Write(cStagingPrefix + lTargets[lIndex], 'RDCManagerX', SealBytes(lNewKey, lTargets[lIndex], lPlain[lIndex]));
+    lOk := lOk and FStore.Write(cStagedVaultTarget, 'RDCManagerX', lNewVault);
+    if not lOk then
+      Exit;
+
+    // Phase 2: the vault item switches to the new key (commit point), then the staged items replace the old ones.
+    if not FStore.Write(cRdcVaultTarget, 'RDCManagerX', lNewVault) then
+      Exit;
+    lCommitted := True;
+    if not CommitStaged then
     begin
+      // Roll back: old items first, the old vault item last. If that fails too, the staging area stays and the next
+      // start finishes the change (RecoverInterruptedChange), so the items always match one vault key.
+      lOk := True;
       for lIndex := 0 to High(lTargets) do
-        if lPasswords[lIndex] <> '' then
-          FStore.Write(lTargets[lIndex], 'RDCManagerX', SealPassword(lNewKey, lTargets[lIndex], lPasswords[lIndex]))
-        else
-          FStore.Delete(lTargets[lIndex]);
-      SetKey(lNewKey);
+        if lOldData[lIndex] <> nil then
+          lOk := FStore.Write(lTargets[lIndex], 'RDCManagerX', lOldData[lIndex]) and lOk;
+      if lOk and FStore.Write(cRdcVaultTarget, 'RDCManagerX', lOldVault) then
+        DeleteStaged;
+      Exit;
     end;
+    for lIndex := 0 to High(lTargets) do
+      if lPlain[lIndex] = nil then
+        FStore.Delete(lTargets[lIndex]); // unreadable under the old key: worthless
+    SetKey(lNewKey);
+    Result := True;
   finally
-    for lIndex := 0 to High(lPasswords) do
-      WipeString(lPasswords[lIndex]);
+    if not lCommitted then
+      DeleteStaged;
+    for lIndex := 0 to High(lPlain) do
+      WipeBytes(lPlain[lIndex]);
     WipeBytes(lOldKey);
     WipeBytes(lNewKey);
   end;

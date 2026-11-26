@@ -16,7 +16,12 @@ type
   TMemoryBlobStore = class(TInterfacedObject, IRdcBlobStore)
   private
     FItems: TDictionary<string, TBytes>;
+    FWriteCount: Integer;
   public
+    /// <summary>Write number FailAt (1-based, 0 = never) fails: returns False, or raises when FailRaises
+    /// (simulates a crash halfway).</summary>
+    FailAt: Integer;
+    FailRaises: Boolean;
     constructor Create;
     destructor Destroy; override;
     function Read(const aTarget: string; out aData: TBytes): Boolean;
@@ -57,6 +62,10 @@ type
     procedure SwappedItemIsRejected;
     [Test]
     procedure ChangeMasterPasswordReencrypts;
+    [Test]
+    procedure ChangeMasterPasswordFailedWriteChangesNothing;
+    [Test]
+    procedure ChangeMasterPasswordCrashIsRecovered;
     [Test]
     procedure ResetRemovesEverything;
     [Test]
@@ -104,6 +113,13 @@ end;
 
 function TMemoryBlobStore.Write(const aTarget, aUserName: string; const aData: TBytes): Boolean;
 begin
+  Inc(FWriteCount);
+  if (FailAt > 0) and (FWriteCount = FailAt) then
+  begin
+    if FailRaises then
+      raise EAbort.Create('simulated crash');
+    Exit(False);
+  end;
   FItems.AddOrSetValue(LowerCase(aTarget), Copy(aData));
   Result := True;
 end;
@@ -295,6 +311,92 @@ begin
     Assert.AreEqual('Ander!', lPassword);
   finally
     lVault.Free;
+  end;
+end;
+
+function MasterThatOpensAll(const aStore: IRdcBlobStore): string;
+var
+  lA: string;
+  lB: string;
+  lMaster: string;
+  lVault: TRdcPasswordVault;
+begin
+  // Which master password opens the vault AND both items? '' = none (items and vault key out of step).
+  Result := '';
+  lVault := TRdcPasswordVault.Create(aStore, cIterations); // also runs the recovery of an interrupted change
+  try
+    for lMaster in [cMaster, 'Nieuw-Hoofdwachtwoord'] do
+      if lVault.Unlock(lMaster) and lVault.TryLoad(cTargetA, lA) and lVault.TryLoad(cTargetB, lB) and (lA = 'S3cret!') and (lB = 'Ander!') then
+        Exit(lMaster);
+  finally
+    lVault.Free;
+  end;
+end;
+
+procedure TVaultTests.ChangeMasterPasswordFailedWriteChangesNothing;
+var
+  lFailAt: Integer;
+  lStore: TMemoryBlobStore;
+  lStoreRef: IRdcBlobStore;
+  lVault: TRdcPasswordVault;
+begin
+  // Two items: 2 staged writes + staged vault + vault + 2 copies = 6 writes. Each one failing must leave the old
+  // master password working for everything, with no staging leftovers; a 7th never happens, so that one succeeds.
+  for lFailAt := 1 to 7 do
+  begin
+    lStore := TMemoryBlobStore.Create;
+    lStoreRef := lStore;
+    lVault := TRdcPasswordVault.Create(lStoreRef, cIterations);
+    try
+      lVault.Initialize(cMaster);
+      lVault.Save(cTargetA, 'corp\beheer', 'S3cret!');
+      lVault.Save(cTargetB, 'admin', 'Ander!');
+      lStore.FWriteCount := 0;
+      lStore.FailAt := lFailAt;
+      Assert.AreEqual(lFailAt = 7, lVault.ChangeMasterPassword(cMaster, 'Nieuw-Hoofdwachtwoord'), Format('write %d', [lFailAt]));
+      lStore.FailAt := 0;
+      Assert.AreEqual(Integer(0), Integer(Length(lStore.Targets('RDCManagerX:~'))), Format('staging left after write %d', [lFailAt]));
+      if lFailAt = 7 then
+        Assert.AreEqual('Nieuw-Hoofdwachtwoord', MasterThatOpensAll(lStoreRef))
+      else
+        Assert.AreEqual(cMaster, MasterThatOpensAll(lStoreRef), Format('write %d', [lFailAt]));
+    finally
+      lVault.Free;
+    end;
+  end;
+end;
+
+procedure TVaultTests.ChangeMasterPasswordCrashIsRecovered;
+var
+  lFailAt: Integer;
+  lStore: TMemoryBlobStore;
+  lStoreRef: IRdcBlobStore;
+  lVault: TRdcPasswordVault;
+begin
+  // A crash at any write: after the next start (recovery in the constructor) one of the two master passwords opens
+  // the vault and every item. Up to and including the vault write the old one, after it the new one.
+  for lFailAt := 1 to 6 do
+  begin
+    lStore := TMemoryBlobStore.Create;
+    lStoreRef := lStore;
+    lVault := TRdcPasswordVault.Create(lStoreRef, cIterations);
+    try
+      lVault.Initialize(cMaster);
+      lVault.Save(cTargetA, 'corp\beheer', 'S3cret!');
+      lVault.Save(cTargetB, 'admin', 'Ander!');
+      lStore.FWriteCount := 0;
+      lStore.FailAt := lFailAt;
+      lStore.FailRaises := True;
+      Assert.WillRaise(procedure begin lVault.ChangeMasterPassword(cMaster, 'Nieuw-Hoofdwachtwoord'); end, EAbort);
+    finally
+      lVault.Free;
+    end;
+    lStore.FailAt := 0;
+    if lFailAt <= 4 then
+      Assert.AreEqual(cMaster, MasterThatOpensAll(lStoreRef), Format('crash at write %d', [lFailAt]))
+    else
+      Assert.AreEqual('Nieuw-Hoofdwachtwoord', MasterThatOpensAll(lStoreRef), Format('crash at write %d', [lFailAt]));
+    Assert.AreEqual(Integer(0), Integer(Length(lStore.Targets('RDCManagerX:~'))), Format('staging left after crash at write %d', [lFailAt]));
   end;
 end;
 
