@@ -1043,6 +1043,18 @@ msgstr "Share local drives with the server"
 msgid "Lokale poorten (COM/LPT) delen met de server"
 msgstr "Share local ports (COM/LPT) with the server"
 
+#: Source/RdcmX.Redirections.pas
+msgid "Printers van deze computer delen met de server"
+msgstr "Share this computer's printers with the server"
+
+#: Source/RdcmX.Redirections.pas
+msgid "Plug-and-play-apparaten delen met de server"
+msgstr "Share plug-and-play devices with the server"
+
+#: Source/RdcmX.Redirections.pas
+msgid "Microfoon van deze computer naar de server"
+msgstr "Send this computer's microphone to the server"
+
 #: Source/RdcmX.Redirections.pas Source/RdcmX.UI.Properties.pas
 msgid "Programma starten na aanmelden"
 msgstr "Start program after logon"

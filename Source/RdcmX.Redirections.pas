@@ -21,7 +21,7 @@ uses
   RdcmX.Model;
 
 type
-  TRdcRedirectionKind = (rrkDrives, rrkPorts, rrkStartProgram, rrkKeyboardHook, rrkKeepAlive);
+  TRdcRedirectionKind = (rrkDrives, rrkPorts, rrkPrinters, rrkPnpDevices, rrkMicrophone, rrkStartProgram, rrkKeyboardHook, rrkKeepAlive);
 
   TRdcRedirectionFinding = record
     Server: TRdcServer;
@@ -74,6 +74,13 @@ begin
         Add(rrkDrives);
       if lLocal.RedirectPorts then
         Add(rrkPorts);
+      // Off by default in RDCMan, so only a deliberate (or foreign) setting is reported.
+      if lLocal.RedirectPrinters then
+        Add(rrkPrinters);
+      if lLocal.RedirectPnpDevices then
+        Add(rrkPnpDevices);
+      if lLocal.AudioCapture = acRecord then
+        Add(rrkMicrophone);
       if Trim(lServer.EffectiveConnection.StartProgram) <> '' then
         Add(rrkStartProgram, Trim(lServer.EffectiveConnection.StartProgram));
       if lLocal.KeyboardHook = khRemote then
@@ -146,6 +153,12 @@ begin
           lWhat := _('Lokale schijven delen met de server');
         rrkPorts:
           lWhat := _('Lokale poorten (COM/LPT) delen met de server');
+        rrkPrinters:
+          lWhat := _('Printers van deze computer delen met de server');
+        rrkPnpDevices:
+          lWhat := _('Plug-and-play-apparaten delen met de server');
+        rrkMicrophone:
+          lWhat := _('Microfoon van deze computer naar de server');
         rrkStartProgram:
           lWhat := _('Programma starten na aanmelden');
         rrkKeepAlive:

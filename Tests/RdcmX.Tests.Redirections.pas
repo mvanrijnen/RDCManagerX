@@ -25,6 +25,8 @@ type
     procedure FingerprintChangesOnlyWithRiskySettings;
     [Test]
     procedure KeepAliveIsReported;
+    [Test]
+    procedure PrintersPnpAndMicrophoneAreReported;
   end;
 
 implementation
@@ -150,6 +152,30 @@ begin
     Assert.AreEqual(Integer(2), Integer(Length(lFindings)));
     Assert.AreEqual(Ord(rrkKeepAlive), Ord(lFindings[0].Kind));
     Assert.AreNotEqual('', RdcRedirectionFingerprint(lFile, lFindings));
+  finally
+    lFile.Free;
+  end;
+end;
+
+procedure TRedirectionTests.PrintersPnpAndMicrophoneAreReported;
+var
+  lFile: TRdcFile;
+  lFindings: TArray<TRdcRedirectionFinding>;
+  lGroup: TRdcGroup;
+  lServer1: TRdcServer;
+  lServer2: TRdcServer;
+begin
+  lFile := NewFile(lGroup, lServer1, lServer2);
+  try
+    lServer1.Settings.LocalResources.Inherit := False;
+    lServer1.Settings.LocalResources.Values['redirectPrinters'] := 'True';
+    lServer1.Settings.LocalResources.Values['redirectPnpDevices'] := 'True';
+    lServer1.Settings.LocalResources.Values['audioCaptureRedirection'] := 'Record';
+    lFindings := RdcRiskyRedirections(lFile);
+    Assert.AreEqual(Integer(3), Integer(Length(lFindings)));
+    Assert.AreEqual(Ord(rrkPrinters), Ord(lFindings[0].Kind));
+    Assert.AreEqual(Ord(rrkPnpDevices), Ord(lFindings[1].Kind));
+    Assert.AreEqual(Ord(rrkMicrophone), Ord(lFindings[2].Kind));
   finally
     lFile.Free;
   end;
