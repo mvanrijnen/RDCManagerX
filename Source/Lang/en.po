@@ -1795,6 +1795,14 @@ msgid "Het huidige hoofdwachtwoord is onjuist; er is niets gewijzigd."
 msgstr "The current master password is incorrect; nothing has been changed."
 
 #: Source/RdcmX.UI.Main.pas
+msgid "Het hoofdwachtwoord kon niet volledig worden gewijzigd en ook niet worden teruggezet. De kluis is vergrendeld; start RDCManagerX opnieuw, dan wordt de wijziging afgemaakt. Ontgrendel daarna met het nieuwe hoofdwachtwoord (lukt dat niet: het oude)."
+msgstr "The master password could not be changed completely, nor be restored. The vault is locked; restart RDCManagerX to finish the change. Then unlock with the new master password (if that fails: the old one)."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Het hoofdwachtwoord kon niet worden gewijzigd (Windows Referentiebeheer gaf een fout, of een andere RDCManagerX is bezig); er is niets gewijzigd."
+msgstr "The master password could not be changed (Windows Credential Manager reported an error, or another RDCManagerX is busy); nothing was changed."
+
+#: Source/RdcmX.UI.Main.pas
 msgid "%d servers in \"%s\" verbinden?"
 msgstr "Connect %d servers in \"%s\"?"
 

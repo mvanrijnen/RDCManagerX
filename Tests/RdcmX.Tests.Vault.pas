@@ -8,7 +8,8 @@
 interface
 
 uses
-  System.Generics.Collections, System.SysUtils,
+  Winapi.Windows,
+  System.Classes, System.Generics.Collections, System.SyncObjs, System.SysUtils,
   DUnitX.TestFramework,
   RdcmX.Credentials, RdcmX.Crypto;
 
@@ -22,6 +23,10 @@ type
     /// (simulates a crash halfway).</summary>
     FailAt: Integer;
     FailRaises: Boolean;
+    /// <summary>Further write numbers that fail (returns False).</summary>
+    FailAlso: TArray<Integer>;
+    /// <summary>Reads of this target fail (lower case).</summary>
+    FailReadTarget: string;
     constructor Create;
     destructor Destroy; override;
     function Read(const aTarget: string; out aData: TBytes): Boolean;
@@ -81,6 +86,12 @@ type
     [Test]
     procedure AuthenticationLevelIsForcedForVaultPasswords;
     [Test]
+    procedure ReadErrorAbortsChange;
+    [Test]
+    procedure FailedRollbackLocksVault;
+    [Test]
+    procedure RecoveryWaitsForRunningChange;
+    [Test]
     procedure ResetRemovesEverything;
     [Test]
     procedure WeakMasterPasswordIsRefused;
@@ -120,6 +131,11 @@ end;
 
 function TMemoryBlobStore.Read(const aTarget: string; out aData: TBytes): Boolean;
 begin
+  if (FailReadTarget <> '') and SameText(aTarget, FailReadTarget) then
+  begin
+    aData := nil;
+    Exit(False);
+  end;
   Result := FItems.TryGetValue(LowerCase(aTarget), aData);
   if Result then
     aData := Copy(aData);
@@ -134,6 +150,9 @@ begin
       raise EAbort.Create('simulated crash');
     Exit(False);
   end;
+  for var lFail in FailAlso do
+    if lFail = FWriteCount then
+      Exit(False);
   FItems.AddOrSetValue(LowerCase(aTarget), Copy(aData));
   Result := True;
 end;
@@ -560,6 +579,82 @@ begin
   Assert.AreEqual(Cardinal(1), TRdcPasswordVault.AuthenticationLevelFor(1, True));
   Assert.AreEqual(Cardinal(2), TRdcPasswordVault.AuthenticationLevelFor(2, True));
   Assert.AreEqual(Cardinal(0), TRdcPasswordVault.AuthenticationLevelFor(0, False), 'typed password: as in the file');
+end;
+
+procedure TVaultTests.ReadErrorAbortsChange;
+begin
+  // A transient read error must not count as "undecryptable" (which would delete the item after the commit).
+  FVault.Initialize(cMaster);
+  FVault.Save(cTargetA, 'corp\beheer', 'S3cret!');
+  FVault.Save(cTargetB, 'admin', 'Ander!');
+  FStore.FailReadTarget := LowerCase(cTargetB);
+  Assert.IsFalse(FVault.ChangeMasterPassword(cMaster, 'Nieuw-Hoofdwachtwoord'));
+  Assert.AreEqual(Ord(crStoreError), Ord(FVault.LastChangeResult));
+  FStore.FailReadTarget := '';
+  Assert.AreEqual(cMaster, MasterThatOpensAll(FStoreRef));
+  Assert.IsTrue(FVault.IsUnlocked, 'nothing changed: still unlocked with the old key');
+end;
+
+procedure TVaultTests.FailedRollbackLocksVault;
+begin
+  // Writes: stage A, stage B, staged vault, vault (commit), copy A, copy B, rollback A, rollback B, old vault.
+  FVault.Initialize(cMaster);
+  FVault.Save(cTargetA, 'corp\beheer', 'S3cret!');
+  FVault.Save(cTargetB, 'admin', 'Ander!');
+  FStore.FWriteCount := 0;
+  FStore.FailAt := 5;           // copy A fails
+  FStore.FailAlso := [9];       // and restoring the old vault item fails
+  Assert.IsFalse(FVault.ChangeMasterPassword(cMaster, 'Nieuw-Hoofdwachtwoord'));
+  Assert.AreEqual(Ord(crInconsistent), Ord(FVault.LastChangeResult));
+  Assert.IsFalse(FVault.IsUnlocked, 'locked: memory and store disagree');
+  FStore.FailAt := 0;
+  FStore.FailAlso := [];
+  // The next start finishes the change: one master password opens everything.
+  Assert.AreEqual('Nieuw-Hoofdwachtwoord', MasterThatOpensAll(FStoreRef));
+end;
+
+procedure TVaultTests.RecoveryWaitsForRunningChange;
+var
+  lHeld: TEvent;
+  lRelease: TEvent;
+  lThread: TThread;
+  lVault: TRdcPasswordVault;
+begin
+  // Another instance holds the change mutex (phase 1: staged items, no staged vault item yet). A starting instance
+  // must not clean up that staging area; once the mutex is free, leftovers are removed.
+  TRdcPasswordVault.ChangeMutexName := 'Local\RDCManagerX.VaultChange.Test.' + IntToStr(GetCurrentProcessId);
+  FStore.Write('RDCManagerX:~staging:' + cTargetA, 'x', TBytes.Create(1, 2, 3));
+  lHeld := TEvent.Create(nil, True, False, '');
+  lRelease := TEvent.Create(nil, True, False, '');
+  lThread := TThread.CreateAnonymousThread(
+    procedure
+    var
+      lMutex: THandle;
+    begin
+      lMutex := CreateMutex(nil, True, PChar(TRdcPasswordVault.ChangeMutexName));
+      lHeld.SetEvent;
+      lRelease.WaitFor(10000);
+      ReleaseMutex(lMutex);
+      CloseHandle(lMutex);
+    end);
+  lThread.FreeOnTerminate := False;
+  try
+    lThread.Start;
+    lHeld.WaitFor(10000);
+    lVault := TRdcPasswordVault.Create(FStoreRef, cIterations);
+    lVault.Free;
+    Assert.AreEqual(Integer(1), Integer(Length(FStore.Targets('RDCManagerX:~'))), 'staging left alone while the mutex is held');
+    lRelease.SetEvent;
+    lThread.WaitFor;
+    lVault := TRdcPasswordVault.Create(FStoreRef, cIterations);
+    lVault.Free;
+    Assert.AreEqual(Integer(0), Integer(Length(FStore.Targets('RDCManagerX:~'))), 'cleaned up afterwards');
+  finally
+    lThread.Free;
+    lHeld.Free;
+    lRelease.Free;
+    TRdcPasswordVault.ChangeMutexName := 'Local\RDCManagerX.VaultChange';
+  end;
 end;
 
 procedure TVaultTests.ResetRemovesEverything;

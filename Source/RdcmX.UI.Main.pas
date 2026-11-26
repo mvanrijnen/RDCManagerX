@@ -3685,7 +3685,14 @@ begin
     if FVault.ChangeMasterPassword(lOld, lNew) then
       sbStatus.Panels[0].Text := _('Hoofdwachtwoord gewijzigd; alle onthouden wachtwoorden zijn opnieuw versleuteld.')
     else
-      MessageDlg(_('Het huidige hoofdwachtwoord is onjuist; er is niets gewijzigd.'), mtWarning, [mbOK], 0);
+      case FVault.LastChangeResult of
+        crWrongPassword:
+          MessageDlg(_('Het huidige hoofdwachtwoord is onjuist; er is niets gewijzigd.'), mtWarning, [mbOK], 0);
+        crInconsistent:
+          MessageDlg(_('Het hoofdwachtwoord kon niet volledig worden gewijzigd en ook niet worden teruggezet. De kluis is vergrendeld; start RDCManagerX opnieuw, dan wordt de wijziging afgemaakt. Ontgrendel daarna met het nieuwe hoofdwachtwoord (lukt dat niet: het oude).'), mtError, [mbOK], 0);
+      else
+        MessageDlg(_('Het hoofdwachtwoord kon niet worden gewijzigd (Windows Referentiebeheer gaf een fout, of een andere RDCManagerX is bezig); er is niets gewijzigd.'), mtWarning, [mbOK], 0);
+      end;
   finally
     WipeString(lNew);
     WipeString(lOld);

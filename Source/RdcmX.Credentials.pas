@@ -54,6 +54,11 @@ type
   /// <summary>Asks whether the remembered password may be used for these not yet approved hosts (default: no).</summary>
   TRdcApproveHostsFunc = reference to function(const aMissing: TArray<TRdcHostRef>): Boolean;
 
+  /// <summary>Outcome of ChangeMasterPassword. crStoreError: nothing changed (a read/write failed, or another instance
+  /// is changing it). crInconsistent: copying and rolling back both failed; the vault is locked, the next start
+  /// finishes the change (RecoverInterruptedChange).</summary>
+  TRdcChangeResult = (crOk, crWrongPassword, crStoreError, crInconsistent);
+
   /// <summary>rlrNone: nothing stored, vault locked or unreadable; rlrDeclined: the user did not approve a host.</summary>
   TRdcLoadResult = (rlrNone, rlrDeclined, rlrLoaded);
 
@@ -96,6 +101,9 @@ type
     FIterations: Cardinal;
     FKey: TBytes; // versleuteld in het geheugen (CryptProtectMemory) zolang ontgrendeld
     FLastUse: TDateTime;
+    FLastChangeResult: TRdcChangeResult;
+    class var FChangeMutexName: string;
+    class constructor CreateClass;
     function DeriveAndCheck(const aMasterPassword: string; out aKey: TBytes): Boolean;
     function BuildVaultItem(const aKey: TBytes; const aSalt: TBytes; aIterations: Cardinal): TBytes;
     function WriteVaultItem(const aKey: TBytes; const aSalt: TBytes; aIterations: Cardinal): Boolean;
@@ -109,6 +117,8 @@ type
     function CommitStaged: Boolean;
     procedure DeleteStaged;
     procedure RecoverInterruptedChange;
+    procedure RecoverStaging;
+    function DoChangeMasterPassword(const aOldMasterPassword, aNewMasterPassword: string): TRdcChangeResult;
     function PasswordTargets: TArray<string>;
     function UseKey: TBytes;
     procedure ReleaseKey(var aKey: TBytes);
@@ -184,6 +194,11 @@ type
     function ChangeMasterPassword(const aOldMasterPassword, aNewMasterPassword: string): Boolean;
     /// <summary>Tijdstip van het laatste gebruik (voor automatisch vergrendelen).</summary>
     property LastUse: TDateTime read FLastUse;
+    /// <summary>Why the last ChangeMasterPassword returned False.</summary>
+    property LastChangeResult: TRdcChangeResult read FLastChangeResult;
+    /// <summary>Named mutex held during a master password change (and taken by the recovery at startup, which is
+    /// skipped while another instance holds it). Tests use their own name.</summary>
+    class property ChangeMutexName: string read FChangeMutexName write FChangeMutexName;
   end;
 
 /// <summary>Inhoud van een string (bijv. een wachtwoord) overschrijven en de string leegmaken.</summary>
@@ -321,35 +336,42 @@ var
 begin
   aPassword := '';
   aHostKeys := [];
-  if (Length(aPlain) < 2) or (aPlain[0] <> cAccountPayloadMarker) then
-  begin
-    // Old item: the whole payload is the password, nothing approved yet.
-    aPassword := TEncoding.UTF8.GetString(aPlain);
-    Exit(aPassword <> '');
-  end;
   Result := False;
-  if aPlain[1] <> cAccountPayloadVersion then
-    Exit;
-  lOffset := 2;
-  if not ReadBytes(aPlain, lOffset, lData) then
-    Exit;
-  aPassword := TEncoding.UTF8.GetString(lData);
-  WipeBytes(lData);
-  if lOffset + SizeOf(Cardinal) > Length(aPlain) then
-    Exit;
-  Move(aPlain[lOffset], lCount, SizeOf(Cardinal));
-  Inc(lOffset, SizeOf(Cardinal));
-  if lCount > 10000 then
-    Exit;
-  for lIndex := 1 to lCount do
-  begin
+  try
+    if (Length(aPlain) < 2) or (aPlain[0] <> cAccountPayloadMarker) then
+    begin
+      // Old item: the whole payload is the password, nothing approved yet.
+      aPassword := TEncoding.UTF8.GetString(aPlain);
+      Exit(aPassword <> '');
+    end;
+    if aPlain[1] <> cAccountPayloadVersion then
+      Exit;
+    lOffset := 2;
     if not ReadBytes(aPlain, lOffset, lData) then
       Exit;
-    aHostKeys := aHostKeys + [TEncoding.UTF8.GetString(lData)];
+    aPassword := TEncoding.UTF8.GetString(lData);
+    WipeBytes(lData);
+    if lOffset + SizeOf(Cardinal) > Length(aPlain) then
+      Exit;
+    Move(aPlain[lOffset], lCount, SizeOf(Cardinal));
+    Inc(lOffset, SizeOf(Cardinal));
+    if lCount > 10000 then
+      Exit;
+    for lIndex := 1 to lCount do
+    begin
+      if not ReadBytes(aPlain, lOffset, lData) then
+        Exit;
+      aHostKeys := aHostKeys + [TEncoding.UTF8.GetString(lData)];
+    end;
+    Result := aPassword <> '';
+  finally
+    // A payload that breaks off halfway must not leave the password behind.
+    if not Result then
+    begin
+      WipeString(aPassword);
+      aHostKeys := [];
+    end;
   end;
-  Result := aPassword <> '';
-  if not Result then
-    WipeString(aPassword);
 end;
 
 function ContainsKey(const aKeys: TArray<string>; const aKey: string): Boolean;
@@ -438,6 +460,11 @@ begin
 end;
 
 { TRdcPasswordVault }
+
+class constructor TRdcPasswordVault.CreateClass;
+begin
+  FChangeMutexName := 'Local\RDCManagerX.VaultChange';
+end;
 
 constructor TRdcPasswordVault.Create(const aStore: IRdcBlobStore; aIterations: Cardinal);
 begin
@@ -706,7 +733,36 @@ begin
     DeleteStaged;
 end;
 
+function OpenChangeMutex: THandle;
+begin
+  Result := CreateMutex(nil, False, PChar(TRdcPasswordVault.ChangeMutexName));
+end;
+
 procedure TRdcPasswordVault.RecoverInterruptedChange;
+var
+  lMutex: THandle;
+  lWait: DWORD;
+begin
+  // Another instance in the middle of a change (phase 1 has staged items but no staged vault item yet): leave its
+  // staging area alone.
+  lMutex := OpenChangeMutex;
+  if lMutex = 0 then
+    Exit;
+  try
+    lWait := WaitForSingleObject(lMutex, 0);
+    if not (lWait in [WAIT_OBJECT_0, WAIT_ABANDONED]) then
+      Exit;
+    try
+      RecoverStaging;
+    finally
+      ReleaseMutex(lMutex);
+    end;
+  finally
+    CloseHandle(lMutex);
+  end;
+end;
+
+procedure TRdcPasswordVault.RecoverStaging;
 var
   lCurrent: TBytes;
   lStaged: TBytes;
@@ -943,6 +999,33 @@ begin
 end;
 
 function TRdcPasswordVault.ChangeMasterPassword(const aOldMasterPassword, aNewMasterPassword: string): Boolean;
+const
+  cWaitMs = 10000;
+var
+  lMutex: THandle;
+  lWait: DWORD;
+begin
+  // One change at a time, and no recovery by another instance while it runs.
+  FLastChangeResult := crStoreError;
+  lMutex := OpenChangeMutex;
+  if lMutex = 0 then
+    Exit(False);
+  try
+    lWait := WaitForSingleObject(lMutex, cWaitMs);
+    if not (lWait in [WAIT_OBJECT_0, WAIT_ABANDONED]) then
+      Exit(False);
+    try
+      FLastChangeResult := DoChangeMasterPassword(aOldMasterPassword, aNewMasterPassword);
+    finally
+      ReleaseMutex(lMutex);
+    end;
+  finally
+    CloseHandle(lMutex);
+  end;
+  Result := FLastChangeResult = crOk;
+end;
+
+function TRdcPasswordVault.DoChangeMasterPassword(const aOldMasterPassword, aNewMasterPassword: string): TRdcChangeResult;
 var
   lCommitted: Boolean;
   lData: TBytes;
@@ -958,11 +1041,13 @@ var
   lTargets: TArray<string>;
 begin
   if not IsStrongEnough(aNewMasterPassword) or not DeriveAndCheck(aOldMasterPassword, lOldKey) then
-    Exit(False);
-  Result := False;
+    Exit(crWrongPassword);
+  Result := crStoreError;
   lCommitted := False;
   try
-    // Nothing is changed until everything is decrypted. Unreadable items stay nil and are dropped after the commit.
+    // Nothing is changed until everything is read and decrypted. An item that cannot be READ aborts (a store error
+    // is not a reason to throw a password away); an item that cannot be DECRYPTED under the old key is worthless
+    // and dropped after the commit.
     DeleteStaged;
     if not FStore.Read(cRdcVaultTarget, lOldVault) then
       Exit;
@@ -970,12 +1055,13 @@ begin
     SetLength(lPlain, Length(lTargets));
     SetLength(lOldData, Length(lTargets));
     for lIndex := 0 to High(lTargets) do
-      if FStore.Read(lTargets[lIndex], lData) then
-      begin
-        lOldData[lIndex] := lData;
-        if not OpenBytes(lOldKey, lTargets[lIndex], lData, lPlain[lIndex]) then
-          lPlain[lIndex] := nil;
-      end;
+    begin
+      if not FStore.Read(lTargets[lIndex], lData) then
+        Exit;
+      lOldData[lIndex] := lData;
+      if not OpenBytes(lOldKey, lTargets[lIndex], lData, lPlain[lIndex]) then
+        lPlain[lIndex] := nil;
+    end;
     lSalt := TRdcCrypto.RandomBytes(cRdcSaltSize);
     lNewKey := TRdcCrypto.DeriveKey(aNewMasterPassword, lSalt, FIterations);
     lNewVault := BuildVaultItem(lNewKey, lSalt, FIterations);
@@ -1002,14 +1088,19 @@ begin
         if lOldData[lIndex] <> nil then
           lOk := FStore.Write(lTargets[lIndex], 'RDCManagerX', lOldData[lIndex]) and lOk;
       if lOk and FStore.Write(cRdcVaultTarget, 'RDCManagerX', lOldVault) then
+      begin
         DeleteStaged;
-      Exit;
+        Exit(crStoreError); // back as it was; the key in memory still matches
+      end;
+      // Store and memory no longer agree on the key: do not keep working with the old key.
+      Lock;
+      Exit(crInconsistent);
     end;
     for lIndex := 0 to High(lTargets) do
       if lPlain[lIndex] = nil then
-        FStore.Delete(lTargets[lIndex]); // unreadable under the old key: worthless
+        FStore.Delete(lTargets[lIndex]); // undecryptable under the old key: worthless
     SetKey(lNewKey);
-    Result := True;
+    Result := crOk;
   finally
     if not lCommitted then
       DeleteStaged;
