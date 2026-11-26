@@ -3,9 +3,8 @@
 {
   Reads the OUs and computers below an OU from Active Directory, for RdcmX.AdSync. Uses ADSI through the ADO
   provider ADsDSOObject (late bound, no type library), with the current Windows account. The bind is authenticated
-  (ADS_SECURE_AUTHENTICATION: Kerberos/Negotiate, which signs and seals LDAP by default), first with explicit
-  signing and sealing; when the provider refuses that combination ("property value is not valid"), once more with
-  secure authentication only. ADS_SERVER_BIND with a server. Errors name the step that failed.
+  (ADS_SECURE_AUTHENTICATION: Kerberos/Negotiate) with explicit signing and sealing, never without them (no
+  fallback an attacker could force). ADS_SERVER_BIND with a server. Errors name the step that failed.
   Read only. Call from a background thread: it initialises COM for that thread itself.
 
   The OU and server come from the file. They are validated (no characters that change the query), and the caller
@@ -244,7 +243,6 @@ end;
 function RdcAdQuery(const aServer, aOuDn: string; out aEntries: TArray<TRdcAdEntry>; out aError: string): Boolean;
 var
   lBase: string;
-  lFirstError: string;
   lFlags: Integer;
 begin
   aEntries := [];
@@ -262,13 +260,9 @@ begin
 
   CoInitializeEx(nil, COINIT_APARTMENTTHREADED);
   try
-    Result := QueryWithFlags(lBase, lFlags or ADS_USE_SIGNING or ADS_USE_SEALING, aEntries, lFirstError);
-    if not Result then
-    begin
-      Result := QueryWithFlags(lBase, lFlags, aEntries, aError);
-      if not Result then
-        aError := lFirstError + sLineBreak + aError;
-    end;
+    // Always signed and sealed; no retry without them: an attacker in between could force that fallback unseen
+    // (third security review).
+    Result := QueryWithFlags(lBase, lFlags or ADS_USE_SIGNING or ADS_USE_SEALING, aEntries, aError);
   finally
     CoUninitialize;
   end;
