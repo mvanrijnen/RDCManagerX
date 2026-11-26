@@ -104,7 +104,9 @@ begin
     lStep := 'connect';
     lConnection := CreateOleObject('ADODB.Connection');
     lConnection.Provider := 'ADsDSOObject';
-    lConnection.Properties.Item['ADSI Flag'].Value := aFlags;
+    // A variable goes by reference (VT_BYREF) in a late-bound call, which ADO refuses for Property.Value ("the
+    // property value is not valid"): pass a value.
+    lConnection.Properties.Item['ADSI Flag'].Value := VarAsType(aFlags, varInteger);
     lConnection.Open('Active Directory Provider');
     try
       lCommand := CreateOleObject('ADODB.Command');
