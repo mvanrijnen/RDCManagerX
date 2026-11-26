@@ -858,8 +858,10 @@ begin
     lAdv7.NetworkConnectionType := FSettings.NetworkConnectionType;
   aAdv.PerformanceFlags := FSettings.PerformanceFlags;
   aAdv.BitmapPersistence := Ord(FSettings.BitmapCaching);
-  if FSettings.KeepAlive then
-    aAdv.keepAliveInterval := cKeepAliveMs; // network keep-alive: idle connections are not dropped
+  // Network keep-alive always (not only with "keep session active"): without it the client does not notice a
+  // connection that died on the way (a sleeping laptop, a dropped Tailscale path), shows a black screen as
+  // "connected" and never starts its automatic reconnect.
+  aAdv.keepAliveInterval := cKeepAliveMs;
   Log(Format('Gebruikerservaring: verbindingstype %d, PerformanceFlags $%x, bitmapcache %s, automatisch opnieuw verbinden %s, actief houden %s', [FSettings.NetworkConnectionType, FSettings.PerformanceFlags, BoolToStr(FSettings.BitmapCaching, True), BoolToStr(FSettings.AutoReconnect, True), BoolToStr(FSettings.KeepAlive, True)]));
 end;
 
@@ -896,9 +898,13 @@ begin
     Exit;
   lInput := FindInputWindow(FControl.Handle);
   if lInput = 0 then
+  begin
+    Log('Sessie actief houden: invoervenster (IHWindowClass) niet gevonden');
     Exit;
+  end;
   PostMessage(lInput, WM_MOUSEMOVE, 0, MakeLParam(2, 2));
   PostMessage(lInput, WM_MOUSEMOVE, 0, MakeLParam(1, 1));
+  Log('Sessie actief houden: muisbeweging verstuurd');
 end;
 
 procedure TRdpSession.BeginPrepare(const aText: string);
