@@ -52,6 +52,9 @@ type
     FRememberPasswords: Boolean;
     FAutoLockMinutes: Integer;
     FPingIntervalSec: Integer;
+    FCheckForUpdates: Boolean;
+    FLastUpdateCheck: string;
+    FAnnouncedVersion: string;
     FFileName: string;
     FOpenFiles: TStringList;
     FRecentFiles: TStringList;
@@ -111,6 +114,12 @@ type
     property AutoLockMinutes: Integer read FAutoLockMinutes write FAutoLockMinutes;
     /// <summary>Bereikbaarheid (ping) controleren elke zoveel seconden (Opties; 5..3600, standaard 30).</summary>
     property PingIntervalSec: Integer read FPingIntervalSec write FPingIntervalSec;
+    /// <summary>Once a day at startup ask GitHub for the latest release (Options; on by default).</summary>
+    property CheckForUpdates: Boolean read FCheckForUpdates write FCheckForUpdates;
+    /// <summary>Date (yyyy-mm-dd) of the last successful update check.</summary>
+    property LastUpdateCheck: string read FLastUpdateCheck write FLastUpdateCheck;
+    /// <summary>Newer version the user was already told about at startup (asked once per version).</summary>
+    property AnnouncedVersion: string read FAnnouncedVersion write FAnnouncedVersion;
     /// <summary>Tailnets (TRdcPasswordVault.TailnetBindingKey) whose targets may also match the host name a device
     /// chose itself / devices shared in from another tailnet. Client-side on purpose: a file cannot loosen this.</summary>
     property TailnetHostNameMatch: TStringList read FTailnetHostNameMatch;
@@ -159,6 +168,7 @@ begin
   FRecentServerCount := 5;
   FAutoLockMinutes := 15;
   FPingIntervalSec := 30;
+  FCheckForUpdates := True;
   FFileName := TPath.Combine(TPath.Combine(GetEnvironmentVariable('APPDATA'), cAppFolder), 'settings.json');
 end;
 
@@ -297,6 +307,9 @@ begin
         FRememberPasswords := TJSONObject(lRoot).GetValue<Boolean>('rememberPasswords', FRememberPasswords);
         FAutoLockMinutes := EnsureRange(TJSONObject(lRoot).GetValue<Integer>('autoLockMinutes', FAutoLockMinutes), 0, 1440);
         FPingIntervalSec := EnsureRange(TJSONObject(lRoot).GetValue<Integer>('pingIntervalSec', FPingIntervalSec), 5, 3600);
+        FCheckForUpdates := TJSONObject(lRoot).GetValue<Boolean>('checkForUpdates', FCheckForUpdates);
+        FLastUpdateCheck := TJSONObject(lRoot).GetValue<string>('lastUpdateCheck', FLastUpdateCheck);
+        FAnnouncedVersion := TJSONObject(lRoot).GetValue<string>('announcedVersion', FAnnouncedVersion);
         lValue := TJSONObject(lRoot).GetValue('layouts');
         if lValue is TJSONObject then
           for lPair in TJSONObject(lValue) do
@@ -461,6 +474,9 @@ begin
     lRoot.AddPair('rememberPasswords', TJSONBool.Create(FRememberPasswords));
     lRoot.AddPair('autoLockMinutes', TJSONNumber.Create(FAutoLockMinutes));
     lRoot.AddPair('pingIntervalSec', TJSONNumber.Create(FPingIntervalSec));
+    lRoot.AddPair('checkForUpdates', TJSONBool.Create(FCheckForUpdates));
+    lRoot.AddPair('lastUpdateCheck', FLastUpdateCheck);
+    lRoot.AddPair('announcedVersion', FAnnouncedVersion);
     lLayouts := TJSONObject.Create;
     for lPair in FLayouts do
     begin

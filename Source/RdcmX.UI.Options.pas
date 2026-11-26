@@ -24,6 +24,8 @@ type
     AutoLockMinutes: Integer;
     /// <summary>Bereikbaarheid controleren elke zoveel seconden.</summary>
     PingIntervalSec: Integer;
+    /// <summary>Daily check for a newer release on GitHub.</summary>
+    CheckForUpdates: Boolean;
   end;
 
   TfrmOptions = class(TForm)
@@ -44,6 +46,7 @@ type
     btnChangeMasterPassword: TButton;
     lblPingInterval: TLabel;
     sePingInterval: TSpinEdit;
+    chkCheckForUpdates: TCheckBox;
     pnlButtons: TPanel;
     btnOk: TButton;
     btnCancel: TButton;
@@ -135,6 +138,7 @@ begin
   chkRememberPasswords.Checked := aOptions.RememberPasswords;
   seAutoLock.Value := aOptions.AutoLockMinutes;
   sePingInterval.Value := aOptions.PingIntervalSec;
+  chkCheckForUpdates.Checked := aOptions.CheckForUpdates;
 end;
 
 procedure TfrmOptions.SaveOptions(var aOptions: TRdcOptions);
@@ -148,6 +152,7 @@ begin
   aOptions.RememberPasswords := chkRememberPasswords.Checked;
   aOptions.AutoLockMinutes := seAutoLock.Value;
   aOptions.PingIntervalSec := sePingInterval.Value;
+  aOptions.CheckForUpdates := chkCheckForUpdates.Checked;
 end;
 
 end.

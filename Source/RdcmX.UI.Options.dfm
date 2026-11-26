@@ -4,7 +4,7 @@ object frmOptions: TfrmOptions
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Opties'
-  ClientHeight = 596
+  ClientHeight = 636
   ClientWidth = 460
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -240,9 +240,21 @@ object frmOptions: TfrmOptions
     TabOrder = 8
     Value = 30
   end
+  object chkCheckForUpdates: TCheckBox
+    Hint =
+      'Eens per dag bij het starten bij GitHub navragen of er een nieuwe ' +
+      'versie is. Er wordt niets gedownload of bijgewerkt; je krijgt alleen' +
+      ' een melding met een link naar de downloadpagina.'
+    Left = 16
+    Top = 544
+    Width = 428
+    Height = 19
+    Caption = 'Dagelijks controleren op een nieuwe versie (via GitHub)'
+    TabOrder = 9
+  end
   object pnlButtons: TPanel
     Left = 0
-    Top = 542
+    Top = 582
     Width = 460
     Height = 54
     Align = alBottom

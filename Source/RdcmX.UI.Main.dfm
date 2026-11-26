@@ -355,6 +355,9 @@ object frmMain: TfrmMain
       object miHelpOnline: TMenuItem
         Action = actHelpOnline
       end
+      object miHelpCheckUpdates: TMenuItem
+        Action = actHelpCheckUpdates
+      end
     end
   end
   object alMain: TActionList
@@ -486,6 +489,11 @@ object frmMain: TfrmMain
       Caption = 'Online handleiding'
       Hint = 'De handleiding op de website openen (altijd de nieuwste versie)'
       OnExecute = actHelpOnlineExecute
+    end
+    object actHelpCheckUpdates: TAction
+      Caption = 'Controleren op updates...'
+      Hint = 'Bij GitHub navragen of er een nieuwe versie is (er wordt niets gedownload)'
+      OnExecute = actHelpCheckUpdatesExecute
     end
     object actGrid11: TAction
       Tag = 11

@@ -39,6 +39,7 @@ uses
   RdcmX.UI.SessionWindow in 'Source\RdcmX.UI.SessionWindow.pas',
   RdcmX.UI.TabStrip in 'Source\RdcmX.UI.TabStrip.pas',
   RdcmX.UI.Theme in 'Source\RdcmX.UI.Theme.pas',
+  RdcmX.UpdateCheck in 'Source\RdcmX.UpdateCheck.pas',
   RdcmX.WakeOnLan in 'Source\RdcmX.WakeOnLan.pas',
   RdcmX.XmlTree in 'Source\RdcmX.XmlTree.pas';
 

@@ -28,7 +28,7 @@ uses
   Winapi.CommCtrl, Winapi.Messages, Winapi.MultiMon, Winapi.Windows,
   System.Actions, System.Classes, System.DateUtils, System.Generics.Collections, System.ImageList, System.Math, System.StrUtils, System.SysUtils, System.Types, System.UITypes,
   Vcl.ActnList, Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Graphics, Vcl.ImgList, Vcl.Menus, Vcl.StdCtrls, Vcl.WinXCtrls,
-  RdcmX.AdLdap, RdcmX.AdSync, RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Lang, RdcmX.Model, RdcmX.Ping, RdcmX.Rdp.Session, RdcmX.Redirections, RdcmX.Sessions, RdcmX.Shortcuts, RdcmX.Storage, RdcmX.Tailscale, RdcmX.UI.SessionPanes, RdcmX.UI.SessionWindow, RdcmX.UI.Theme;
+  RdcmX.AdLdap, RdcmX.AdSync, RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Lang, RdcmX.Model, RdcmX.Ping, RdcmX.Rdp.Session, RdcmX.Redirections, RdcmX.Sessions, RdcmX.Shortcuts, RdcmX.Storage, RdcmX.Tailscale, RdcmX.UI.SessionPanes, RdcmX.UI.SessionWindow, RdcmX.UI.Theme, RdcmX.UpdateCheck;
 
 type
   TRdcTreeShortcutKind = (tskFavoritesHeader, tskRecentHeader, tskFavorite, tskRecent, tskConnectedHeader, tskConnected);
@@ -132,6 +132,7 @@ type
     actOptions: TAction;
     actHelpManual: TAction;
     actHelpOnline: TAction;
+    actHelpCheckUpdates: TAction;
     actGrid11: TAction;
     actGrid21: TAction;
     actGrid31: TAction;
@@ -237,6 +238,7 @@ type
     procedure actOptionsExecute(Sender: TObject);
     procedure actHelpManualExecute(Sender: TObject);
     procedure actHelpOnlineExecute(Sender: TObject);
+    procedure actHelpCheckUpdatesExecute(Sender: TObject);
     procedure actTabReconnectExecute(Sender: TObject);
     procedure actTabDisconnectExecute(Sender: TObject);
     procedure actTabCloseExecute(Sender: TObject);
@@ -330,6 +332,13 @@ type
     procedure CollapseAllFiles;
     procedure ShowManual;
     procedure ShowOnlineManual;
+    /// <summary>At startup, at most once a day and only with the option on (in the background, no question when
+    /// nothing is new).</summary>
+    procedure StartAutomaticUpdateCheck;
+    /// <summary>Asks GitHub for the latest release in a background thread; aInteractive (Help menu) always reports
+    /// the result.</summary>
+    procedure CheckForUpdates(aInteractive: Boolean);
+    procedure UpdateCheckFinished(aOk: Boolean; const aRelease: TRdcLatestRelease; const aError: string; aInteractive: Boolean);
     procedure WarnIfStartedFromDownloads;
     procedure UpdatePingTargets;
     procedure PingResultsArrived(const aResults: TArray<TRdcPingResult>);
@@ -526,6 +535,8 @@ type
     procedure UpdateActionStates;
     procedure UpdateStatusBar;
     function AppVersionText: string;
+    /// <summary>yyyy.mm.dd.xxx of this exe ('' without version info).</summary>
+    function AppVersionNumber: string;
     procedure LayoutStatusBar;
     procedure UpdateTabImages;
   end;
@@ -767,6 +778,11 @@ end;
 procedure TfrmMain.actHelpOnlineExecute(Sender: TObject);
 begin
   ShowOnlineManual;
+end;
+
+procedure TfrmMain.actHelpCheckUpdatesExecute(Sender: TObject);
+begin
+  CheckForUpdates(True);
 end;
 
 procedure TfrmMain.actOptionsExecute(Sender: TObject);
@@ -1036,6 +1052,7 @@ begin
     FShown := True;
     RestoreTreeWidth;
     TThread.ForceQueue(nil, WarnIfStartedFromDownloads);
+    TThread.ForceQueue(nil, StartAutomaticUpdateCheck);
   end;
 end;
 
@@ -1347,6 +1364,73 @@ begin
     ShellExecute(Handle, 'open', PChar(cOnlineManual + 'en/'), nil, nil, SW_SHOWNORMAL)
   else
     ShellExecute(Handle, 'open', PChar(cOnlineManual + 'nl/'), nil, nil, SW_SHOWNORMAL);
+end;
+
+procedure TfrmMain.StartAutomaticUpdateCheck;
+begin
+  if FAppSettings.CheckForUpdates and (FAppSettings.LastUpdateCheck <> FormatDateTime('yyyy-mm-dd', Date)) then
+    CheckForUpdates(False);
+end;
+
+procedure TfrmMain.CheckForUpdates(aInteractive: Boolean);
+var
+  lGuard: IRdcCallbackGuard;
+begin
+  lGuard := FAdGuard; // valid as long as the form lives
+  if aInteractive then
+    sbStatus.Panels[0].Text := _('Controleren op een nieuwe versie...');
+  TThread.CreateAnonymousThread(
+    procedure
+    var
+      lError: string;
+      lOk: Boolean;
+      lRelease: TRdcLatestRelease;
+    begin
+      lOk := RdcFetchLatestRelease(lRelease, lError);
+      TThread.Queue(nil,
+        procedure
+        begin
+          if lGuard.IsValid then
+            UpdateCheckFinished(lOk, lRelease, lError, aInteractive);
+        end);
+    end).Start;
+end;
+
+procedure TfrmMain.UpdateCheckFinished(aOk: Boolean; const aRelease: TRdcLatestRelease; const aError: string; aInteractive: Boolean);
+var
+  lCurrent: string;
+begin
+  if FClosing then
+    Exit;
+  if not aOk then
+  begin
+    TRdcLog.Write('Update check failed: ' + aError);
+    if aInteractive then
+    begin
+      sbStatus.Panels[0].Text := '';
+      MessageDlg(Format(_('Controleren op een nieuwe versie is mislukt: %s'), [aError]), mtWarning, [mbOK], 0);
+    end;
+    Exit;
+  end;
+  FAppSettings.LastUpdateCheck := FormatDateTime('yyyy-mm-dd', Date);
+  lCurrent := AppVersionNumber;
+  TRdcLog.Write(Format('Update check: latest %s, this %s', [aRelease.Version, lCurrent]));
+  if (lCurrent <> '') and (RdcCompareVersions(aRelease.Version, lCurrent) <= 0) then
+  begin
+    if aInteractive then
+    begin
+      sbStatus.Panels[0].Text := '';
+      MessageDlg(Format(_('U hebt de nieuwste versie (%s).'), [lCurrent]), mtInformation, [mbOK], 0);
+    end;
+    Exit;
+  end;
+  sbStatus.Panels[0].Text := Format(_('Nieuwe versie %s beschikbaar (Help > Controleren op updates)'), [aRelease.Version]);
+  // At startup only once per version; from the Help menu always.
+  if not aInteractive and SameText(FAppSettings.AnnouncedVersion, aRelease.Version) then
+    Exit;
+  FAppSettings.AnnouncedVersion := aRelease.Version;
+  if MessageDlg(Format(_('Versie %s van RDCManagerX is beschikbaar (u hebt %s).'#13#10#13#10'De downloadpagina openen? Er wordt niets automatisch gedownload of geïnstalleerd.'), [aRelease.Version, lCurrent]), mtInformation, [mbYes, mbNo], 0, mbYes) = mrYes then
+    ShellExecute(Handle, 'open', PChar(aRelease.PageUrl), nil, nil, SW_SHOWNORMAL); // always a github.com release page (RdcParseLatestRelease)
 end;
 
 procedure TfrmMain.ShowManual;
@@ -1990,6 +2074,7 @@ begin
   lOptions.RememberPasswords := FAppSettings.RememberPasswords;
   lOptions.AutoLockMinutes := FAppSettings.AutoLockMinutes;
   lOptions.PingIntervalSec := FAppSettings.PingIntervalSec;
+  lOptions.CheckForUpdates := FAppSettings.CheckForUpdates;
   lOldTheme := lOptions.Theme;
   lOldLanguage := lOptions.Language;
   if not TfrmOptions.Execute(lOptions, FAppSettings.RememberPasswords and FVault.IsInitialized,
@@ -2003,6 +2088,7 @@ begin
   FAppSettings.AutoSave := lOptions.AutoSave;
   FAppSettings.AutoLockMinutes := lOptions.AutoLockMinutes;
   FAppSettings.PingIntervalSec := lOptions.PingIntervalSec;
+  FAppSettings.CheckForUpdates := lOptions.CheckForUpdates;
   FPinger.SetInterval(lOptions.PingIntervalSec * 1000);
   lOptions.RememberPasswords := ApplyRememberPasswordsOption(lOptions.RememberPasswords);
   FAppSettings.RememberPasswords := lOptions.RememberPasswords;
@@ -4251,6 +4337,13 @@ begin
 end;
 
 function TfrmMain.AppVersionText: string;
+begin
+  Result := AppVersionNumber;
+  if Result <> '' then
+    Result := Format(_('versie %s'), [Result]);
+end;
+
+function TfrmMain.AppVersionNumber: string;
 var
   lHandle: DWORD;
   lInfo: Pointer;
@@ -4267,7 +4360,7 @@ begin
   try
     if GetFileVersionInfo(PChar(ParamStr(0)), 0, lSize, lInfo) and VerQueryValue(lInfo, '\', Pointer(lFixed), lFixedSize) then
       // Versieschema yyyy.mm.dd.xxx (xxx = buildnummer van die dag), zie Tools\NextVersion.ps1.
-      Result := Format(_('versie %d.%.2d.%.2d.%.3d'), [HiWord(lFixed.dwFileVersionMS), LoWord(lFixed.dwFileVersionMS), HiWord(lFixed.dwFileVersionLS), LoWord(lFixed.dwFileVersionLS)]);
+      Result := Format('%d.%.2d.%.2d.%.3d', [HiWord(lFixed.dwFileVersionMS), LoWord(lFixed.dwFileVersionMS), HiWord(lFixed.dwFileVersionLS), LoWord(lFixed.dwFileVersionLS)]);
   finally
     FreeMem(lInfo);
   end;

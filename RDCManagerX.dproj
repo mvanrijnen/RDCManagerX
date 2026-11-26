@@ -140,6 +140,7 @@
         <DCCReference Include="Source\RdcmX.UI.SessionWindow.pas"/>
         <DCCReference Include="Source\RdcmX.UI.TabStrip.pas"/>
         <DCCReference Include="Source\RdcmX.UI.Theme.pas"/>
+        <DCCReference Include="Source\RdcmX.UpdateCheck.pas"/>
         <DCCReference Include="Source\RdcmX.WakeOnLan.pas"/>
         <DCCReference Include="Source\RdcmX.XmlTree.pas"/>
         <RcCompile Include="Source\Version.rc">

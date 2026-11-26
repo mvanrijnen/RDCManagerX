@@ -84,6 +84,7 @@
         <DCCReference Include="..\Source\RdcmX.Storage.Json.pas"/>
         <DCCReference Include="..\Source\RdcmX.Storage.Rdg.pas"/>
         <DCCReference Include="..\Source\RdcmX.Storage.Sidecar.pas"/>
+        <DCCReference Include="..\Source\RdcmX.UpdateCheck.pas"/>
         <DCCReference Include="..\Source\RdcmX.WakeOnLan.pas"/>
         <DCCReference Include="..\Source\RdcmX.XmlTree.pas"/>
         <DCCReference Include="RdcmX.Tests.Storage.pas"/>
@@ -92,6 +93,7 @@
         <DCCReference Include="RdcmX.Tests.AppSettings.pas"/>
         <DCCReference Include="RdcmX.Tests.Ping.pas"/>
         <DCCReference Include="RdcmX.Tests.Redirections.pas"/>
+        <DCCReference Include="RdcmX.Tests.UpdateCheck.pas"/>
         <DCCReference Include="RdcmX.Tests.Experience.pas"/>
         <DCCReference Include="..\Source\RdcmX.AdSync.pas"/>
         <DCCReference Include="..\Source\RdcmX.AdLdap.pas"/>

@@ -382,6 +382,10 @@ msgid "Online handleiding"
 msgstr "Online manual"
 
 #: Source/RdcmX.UI.Main.dfm
+msgid "Controleren op updates..."
+msgstr "Check for updates..."
+
+#: Source/RdcmX.UI.Main.dfm
 msgid "1 vak (niet splitsen)"
 msgstr "1 pane (no split)"
 
@@ -604,6 +608,14 @@ msgstr "How often servers with \"Show reachability\" (Properties > Route) are ch
 #: Source/RdcmX.UI.Options.dfm
 msgid "Bereikbaarheid controleren elke (seconden)"
 msgstr "Check reachability every (seconds)"
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Eens per dag bij het starten bij GitHub navragen of er een nieuwe versie is. Er wordt niets gedownload of bijgewerkt; je krijgt alleen een melding met een link naar de downloadpagina."
+msgstr "Once a day at startup, ask GitHub whether there is a new version. Nothing is downloaded or updated; you only get a message with a link to the download page."
+
+#: Source/RdcmX.UI.Options.dfm
+msgid "Dagelijks controleren op een nieuwe versie (via GitHub)"
+msgstr "Check daily for a new version (via GitHub)"
 
 #: Source/RdcmX.UI.Options.dfm
 msgid "Instellingen opslaan."
@@ -1590,6 +1602,29 @@ msgid "%s is niet bereikbaar"
 msgstr "%s is not reachable"
 
 #: Source/RdcmX.UI.Main.pas
+msgid "Controleren op een nieuwe versie..."
+msgstr "Checking for a new version..."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Controleren op een nieuwe versie is mislukt: %s"
+msgstr "Checking for a new version failed: %s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "U hebt de nieuwste versie (%s)."
+msgstr "You have the latest version (%s)."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Nieuwe versie %s beschikbaar (Help > Controleren op updates)"
+msgstr "New version %s available (Help > Check for updates)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Versie %s van RDCManagerX is beschikbaar (u hebt %s).\r\n"
+"\r\n"
+"De downloadpagina openen? Er wordt niets automatisch gedownload of geïnstalleerd."
+msgstr "Version %s of RDCManagerX is available (you have %s).\r\n\r\nOpen the download page? Nothing is downloaded or installed automatically."
+
+#: Source/RdcmX.UI.Main.pas
 msgid "De handleiding kon niet worden geopend: %s"
 msgstr "The manual could not be opened: %s"
 
@@ -1935,8 +1970,8 @@ msgid "Uit recent verwijderen\tDel"
 msgstr "Remove from recent\tDel"
 
 #: Source/RdcmX.UI.Main.pas
-msgid "versie %d.%.2d.%.2d.%.3d"
-msgstr "version %d.%.2d.%.2d.%.3d"
+msgid "versie %s"
+msgstr "version %s"
 
 #: Source/RdcmX.UI.Main.pas
 msgid "dynamisch: %s"
@@ -2841,6 +2876,14 @@ msgstr "Connected."
 #: Source/RdcmX.UI.Tailnets.pas
 msgid "Niet gelukt: %s"
 msgstr "Failed: %s"
+
+#: Source/RdcmX.UpdateCheck.pas
+msgid "antwoord te groot"
+msgstr "answer too large"
+
+#: Source/RdcmX.UpdateCheck.pas
+msgid "geen versie in het antwoord"
+msgstr "no version in the answer"
 
 #: Source/RdcmX.WakeOnLan.pas
 msgid "Ongeldig MAC-adres \"%s\"."
