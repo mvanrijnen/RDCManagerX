@@ -21,7 +21,7 @@ Remove-Item $zip -Force -ErrorAction SilentlyContinue
 Compress-Archive -Path (Join-Path $staging '*') -DestinationPath $zip -CompressionLevel Optimal
 Remove-Item $staging -Recurse -Force
 
-Write-Host "Zip:     $zip"
-Write-Host "Version: $version"
-Write-Host ("SHA-256 zip: " + (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLower())
-Write-Host ("SHA-256 exe: " + (Get-FileHash -Algorithm SHA256 $exe).Hash.ToLower())
+Write-Output "Zip:     $zip"
+Write-Output "Version: $version"
+Write-Output ("SHA-256 zip: " + (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLower())
+Write-Output ("SHA-256 exe: " + (Get-FileHash -Algorithm SHA256 $exe).Hash.ToLower())

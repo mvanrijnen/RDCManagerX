@@ -132,7 +132,8 @@ def strip_pascal_comments(text):
 
 
 def extract_pas(path, texts, problems):
-    raw = open(path, encoding='utf-8-sig').read()
+    with open(path, encoding='utf-8-sig') as handle:
+        raw = handle.read()
     text = strip_pascal_comments(raw)
     rel = os.path.relpath(path, ROOT).replace('\\', '/')
     for m in re.finditer(r'(?<![A-Za-z0-9_.])_\(', text):
@@ -148,14 +149,15 @@ def extract_pas(path, texts, problems):
 
 
 def extract_dfm(path, texts):
-    text = open(path, encoding='utf-8-sig', errors='replace').read()
+    with open(path, encoding='utf-8-sig', errors='replace') as handle:
+        text = handle.read()
     rel = os.path.relpath(path, ROOT).replace('\\', '/')
     joined = text
     # Walk "Name = value" assignments; track whether we are inside a collection (item ... end within < >).
     collection_depth = 0
     i = 0
     n = len(joined)
-    line_re = re.compile(r'[ \t]*(?:(item)\s*$|(end)>?\s*$|([A-Za-z_][\w.]*)\s*=\s*)', re.M)
+    line_re = re.compile(r'[ \t]*(?:(item)\s*$|(end)>?\s*$|([A-Za-z_][\w.]*)\s*=\s*)', re.MULTILINE)
     while i < n:
         m = line_re.match(joined, i)
         eol = joined.find('\n', i)
@@ -242,8 +244,9 @@ def read_po(path):
         if msgid:
             entries[msgid] = msgstr or ''
 
-    for line in open(path, encoding='utf-8-sig'):
-        line = line.rstrip('\r\n')
+    with open(path, encoding='utf-8-sig') as handle:
+        lines = handle.read().splitlines()
+    for line in lines:
         if line.startswith('msgid '):
             flush()
             msgid, msgstr, part = po_unescape(line[7:-1]), '', 'id'

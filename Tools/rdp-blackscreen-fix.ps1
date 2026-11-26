@@ -19,7 +19,7 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 function Get-Val($path, $name) {
     try { (Get-ItemProperty -Path $path -Name $name -ErrorAction Stop).$name } catch { $null }
 }
-function Set-Val($path, $name, $value, $type) {
+function Write-RegValue($Path, $Name, $Value, $Type) {
     if ($null -eq $value) {
         Remove-ItemProperty -Path $path -Name $name -ErrorAction SilentlyContinue
     } else {
@@ -37,9 +37,9 @@ function Get-MonitorTimeoutAc {
 if ($Undo) {
     if (-not (Test-Path $backup)) { throw "No backup found: $backup" }
     $b = Get-Content $backup -Raw | ConvertFrom-Json
-    Set-Val $desk 'ScreenSaveActive' $b.ScreenSaveActive String
-    Set-Val $desk 'ScreenSaverIsSecure' $b.ScreenSaverIsSecure String
-    Set-Val $ts 'fEnableWddmDriver' $b.fEnableWddmDriver DWord
+    Write-RegValue -Path $desk -Name 'ScreenSaveActive' -Value $b.ScreenSaveActive -Type String
+    Write-RegValue -Path $desk -Name 'ScreenSaverIsSecure' -Value $b.ScreenSaverIsSecure -Type String
+    Write-RegValue -Path $ts -Name 'fEnableWddmDriver' -Value $b.fEnableWddmDriver -Type DWord
     if ($null -ne $b.MonitorTimeoutAcSeconds) { powercfg /change monitor-timeout-ac ([int][math]::Ceiling($b.MonitorTimeoutAcSeconds / 60)) }
     'Previous settings restored. Restart the PC (for the WDDM setting).'
     return
@@ -57,12 +57,12 @@ if (-not (Test-Path $backup)) {
 }
 
 # 1. Screen saver off (current user). A policy can enforce it; then this user setting does not help.
-Set-Val $desk 'ScreenSaveActive' '0' String
+Write-RegValue -Path $desk -Name 'ScreenSaveActive' -Value '0' -Type String
 $policy = 'HKCU:\Software\Policies\Microsoft\Windows\Control Panel\Desktop'
 if ($null -ne (Get-Val $policy 'ScreenSaveActive')) { "NOTE: the screen saver is set by a policy ($policy); change that policy." }
 
 # 2. WDDM display driver for RDP off (policy; takes effect after a restart).
-Set-Val $ts 'fEnableWddmDriver' 0 DWord
+Write-RegValue -Path $ts -Name 'fEnableWddmDriver' -Value 0 -Type DWord
 
 # 3. Display on AC power never off.
 powercfg /change monitor-timeout-ac 0

@@ -10,7 +10,8 @@ import re
 import sys
 
 src, out, lang, pdf = sys.argv[1:5]
-text = open(src, encoding='utf-8').read()
+with open(src, encoding='utf-8') as handle:
+    text = handle.read()
 
 labels = {
     'en': {'contents': 'Contents', 'home': 'Home', 'menu': 'Contents'},
@@ -18,7 +19,7 @@ labels = {
 }[lang]
 
 # The in-page table of contents is replaced by the side pane.
-text = re.sub(r'<nav class="toc">.*?</nav>', '', text, count=1, flags=re.S)
+text = re.sub(r'<nav class="toc">.*?</nav>', '', text, count=1, flags=re.DOTALL)
 
 # Headings: every h2 and h3 needs an id for the tree.
 used = set(re.findall(r'id="([^"]+)"', text))
@@ -38,10 +39,10 @@ def ensure_id(match):
     return f'<{tag}{attrs}>{inner}</{tag}>'
 
 
-text = re.sub(r'<(h[23])([^>]*)>(.*?)</\1>', ensure_id, text, flags=re.S)
+text = re.sub(r'<(h[23])([^>]*)>(.*?)</\1>', ensure_id, text, flags=re.DOTALL)
 
 items = []
-for match in re.finditer(r'<(h[23])[^>]*id="([^"]+)"[^>]*>(.*?)</\1>', text, flags=re.S):
+for match in re.finditer(r'<(h[23])[^>]*id="([^"]+)"[^>]*>(.*?)</\1>', text, flags=re.DOTALL):
     level, hid, inner = match.group(1), match.group(2), match.group(3)
     title = html.unescape(re.sub(r'<[^>]+>', '', inner)).strip()
     items.append((level, hid, title))
@@ -144,5 +145,6 @@ js = """
 text = text.replace('</head>', css + '</head>', 1)
 text = text.replace('<div class="page">', topbar + side + '<div class="page">', 1)
 text = text.replace('</body>', js + '</body>', 1)
-open(out, 'w', encoding='utf-8').write(text)
+with open(out, 'w', encoding='utf-8') as handle:
+    handle.write(text)
 print(f'{out}: {len(items)} entries in the contents tree')
