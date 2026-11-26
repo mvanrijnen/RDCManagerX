@@ -2764,6 +2764,13 @@ begin
       if aNode is TRdcServer then
         FStoredPasswordUsed.Remove(TRdcServer(aNode));
     end);
+  if lResult.InvalidFilter then
+  begin
+    sbStatus.Panels[0].Text := Format(_('%s: het naamfilter "%s" is ongeldig; er is niets gewijzigd.'), [lGroup.Caption, lGroup.Settings.Ad.NameFilter]);
+    if aInteractive then
+      MessageDlg(Format(_('Het naamfilter "%s" is ongeldig (gebruik * en ?; [ ] alleen als paar). Er is niets gewijzigd; pas het filter aan in Eigenschappen > Active Directory.'), [lGroup.Settings.Ad.NameFilter]), mtWarning, [mbOK], 0);
+    Exit;
+  end;
   if lResult.Added + lResult.Updated + lResult.Removed > 0 then
   begin
     BuildTree;

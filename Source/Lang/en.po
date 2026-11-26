@@ -845,6 +845,10 @@ msgstr "\"%s\" is not a distinguished name (e.g. OU=Computers,DC=contoso,DC=com)
 msgid "De domeincontroller \"%s\" bevat een ongeldig teken."
 msgstr "The domain controller \"%s\" contains an invalid character."
 
+#: Source/RdcmX.AdLdap.pas
+msgid "Meer dan %d objecten in deze OU; kies een kleinere OU of gebruik het naamfilter."
+msgstr "More than %d objects in this OU; choose a smaller OU or use the name filter."
+
 #: Source/RdcmX.Crypto.pas
 msgid "%s mislukt (status $%.8x)"
 msgstr "%s failed (status $%.8x)"
@@ -1614,6 +1618,14 @@ msgstr ""
 "Getting computers from Active Directory failed:\r\n"
 "\r\n"
 "%s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%s: het naamfilter \"%s\" is ongeldig; er is niets gewijzigd."
+msgstr "%s: the name filter \"%s\" is not valid; nothing was changed."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Het naamfilter \"%s\" is ongeldig (gebruik * en ?; [ ] alleen als paar). Er is niets gewijzigd; pas het filter aan in Eigenschappen > Active Directory."
+msgstr "The name filter \"%s\" is not valid (use * and ?; [ ] only as a pair). Nothing was changed; correct the filter in Properties > Active Directory."
 
 #: Source/RdcmX.UI.Main.pas
 msgid "%s: Active Directory ververst (%d nieuw, %d bijgewerkt, %d verwijderd, %d behouden)."
@@ -2545,6 +2557,10 @@ msgstr "The UDP port must be a number between 1 and 65535 (usually 9 or 7)."
 #: Source/RdcmX.UI.Properties.pas
 msgid "Ongeldige vaste grootte. Gebruik breedte x hoogte, bijvoorbeeld 1920 x 1080."
 msgstr "Invalid fixed size. Use width x height, for example 1920 x 1080."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Ongeldig naamfilter. Gebruik * en ? als jokertekens (bijv. SRV*); [ ] alleen als paar."
+msgstr "Invalid name filter. Use * and ? as wildcards (e.g. SRV*); [ ] only as a pair."
 
 #: Source/RdcmX.UI.SectionPage.pas
 msgid "Aan: deze instellingen komen van de bovenliggende groep (of de standaard). Uit: eigen instellingen voor deze server of groep."

@@ -73,6 +73,7 @@ type
     FPages: TObjectList<TRdcSectionPage>;
     FDisplayPage: TRdcSectionPage;
     FExperiencePage: TRdcSectionPage;
+    FAdPage: TRdcSectionPage;
     FSpeedCombo: TComboBox;
     FSpeedChangedByPage: TNotifyEvent;
     FInitialDisplayMode: string;
@@ -123,7 +124,7 @@ type
 implementation
 
 uses
-  RdcmX.Lang, RdcmX.WakeOnLan;
+  RdcmX.AdSync, RdcmX.Lang, RdcmX.WakeOnLan;
 
 {$R *.dfm}
 
@@ -429,6 +430,7 @@ begin
   FWork.Ad.Inherit := False;
   lPage := TRdcSectionPage.Create(pcPages, _('Active Directory'), '', FWork.Ad, TRdcNode.AppDefaults.Ad);
   FPages.Add(lPage);
+  FAdPage := lPage;
   lPage.HideInherit;
   lPage.AddText('ouDn', _('OU (distinguished name)'), 300);
   lPage.AddText('server', _('Domeincontroller (optioneel)'), 300);
@@ -880,6 +882,11 @@ begin
   if FDisplayPage.IsOwn and not TryParseDesktopSize(FDisplayPage.FieldValue('size'), lWidth, lHeight) then
   begin
     ShowInvalid(FDisplayPage.Sheet, nil, _('Ongeldige vaste grootte. Gebruik breedte x hoogte, bijvoorbeeld 1920 x 1080.'));
+    Exit;
+  end;
+  if (FAdPage <> nil) and not RdcAdIsValidNameFilter(FAdPage.FieldValue('nameFilter')) then
+  begin
+    ShowInvalid(FAdPage.Sheet, nil, _('Ongeldig naamfilter. Gebruik * en ? als jokertekens (bijv. SRV*); [ ] alleen als paar.'));
     Exit;
   end;
   Result := True;

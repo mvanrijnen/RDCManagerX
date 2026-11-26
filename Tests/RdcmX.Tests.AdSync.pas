@@ -41,6 +41,8 @@ type
     [Test]
     procedure EmptyOusAreNotShown;
     [Test]
+    procedure InvalidNameFilterChangesNothing;
+    [Test]
     procedure AdSettingDoesNotInherit;
   end;
 
@@ -215,6 +217,22 @@ begin
     TRdcAdEntry.Ou('OU=Room1,OU=Floor1,OU=Branch,' + cBase, 'Room1')]);
   Assert.AreEqual(4, lResult.Removed, 'PC01 and the three OU groups');
   Assert.IsNull(FFile.FindByPath('Contoso\AD servers\Branch'));
+end;
+
+procedure TAdSyncTests.InvalidNameFilterChangesNothing;
+var
+  lResult: TRdcAdSyncResult;
+begin
+  Assert.IsTrue(RdcAdIsValidNameFilter(''));
+  Assert.IsTrue(RdcAdIsValidNameFilter('SRV*'));
+  Assert.IsTrue(RdcAdIsValidNameFilter('[ab]*'));
+  Assert.IsFalse(RdcAdIsValidNameFilter('[a'));
+  Sync(Entries);
+  FGroup.Settings.Ad.Values['nameFilter'] := '[a';
+  lResult := Sync([]); // would remove everything if the filter were applied
+  Assert.IsTrue(lResult.InvalidFilter);
+  Assert.AreEqual(0, lResult.Removed);
+  Assert.IsNotNull(FindServer('Datacenter\DC01'));
 end;
 
 procedure TAdSyncTests.AdSettingDoesNotInherit;

@@ -43,7 +43,12 @@ type
     Removed: Integer;
     /// <summary>Gone from AD but kept (open session, or a group that still holds other nodes).</summary>
     Kept: Integer;
+    /// <summary>The name filter is not a valid mask: nothing was changed (no computer removed).</summary>
+    InvalidFilter: Boolean;
   end;
+
+/// <summary>Is aFilter usable as name filter (empty, or a valid wildcard mask; e.g. "[a" is not)?</summary>
+function RdcAdIsValidNameFilter(const aFilter: string): Boolean;
 
 /// <summary>DN without its first RDN ("OU=a,OU=b,DC=x" -> "OU=b,DC=x"); escaped commas (\,) are respected.</summary>
 function RdcAdParentDn(const aDn: string): string;
@@ -174,6 +179,26 @@ begin
   end;
 end;
 
+function RdcAdIsValidNameFilter(const aFilter: string): Boolean;
+var
+  lMask: TMask;
+begin
+  if Trim(aFilter) = '' then
+    Exit(True);
+  try
+    lMask := TMask.Create(aFilter);
+    try
+      lMask.Matches('test'); // the pattern is parsed here
+    finally
+      lMask.Free;
+    end;
+    Result := True;
+  except
+    on EMaskException do
+      Result := False;
+  end;
+end;
+
 function IncludedComputer(const aEntry: TRdcAdEntry; aConfig: TRdcxAdSettings): Boolean;
 begin
   Result := (aEntry.Kind = aekComputer) and not (aConfig.SkipDisabled and aEntry.Disabled)
@@ -226,6 +251,13 @@ var
 begin
   Result := Default(TRdcAdSyncResult);
   lConfig := aGroup.Settings.Ad;
+  // A filter from the file that is not a valid mask would raise on the main thread, and matching nothing would
+  // remove every synced server: change nothing.
+  if not RdcAdIsValidNameFilter(lConfig.NameFilter) then
+  begin
+    Result.InvalidFilter := True;
+    Exit;
+  end;
   lBase := RdcAdNormalizeDn(lConfig.OuDn);
   lExisting := TDictionary<string, TRdcNode>.Create;
   lOuGroups := TDictionary<string, TRdcGroup>.Create;

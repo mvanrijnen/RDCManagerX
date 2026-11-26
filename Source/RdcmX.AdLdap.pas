@@ -27,7 +27,7 @@ implementation
 
 uses
   Winapi.ActiveX,
-  System.SysUtils, System.Variants, System.Win.ComObj,
+  System.Generics.Collections, System.SysUtils, System.Variants, System.Win.ComObj,
   RdcmX.Lang;
 
 const
@@ -38,6 +38,10 @@ const
   ADS_UF_ACCOUNTDISABLE = $2;
   cPageSize = 1000;
   cSearchScopeSubtree = 2;
+  /// <summary>More entries than this: refused with a message (narrow the OU or use the name filter).</summary>
+  cMaxEntries = 5000;
+  /// <summary>Seconds; a hanging server must not block the refresh of this group forever.</summary>
+  cTimeoutSeconds = 60;
 
 function RdcAdIsValidPath(const aServer, aOuDn: string; out aError: string): Boolean;
 var
@@ -87,9 +91,17 @@ function QueryWithFlags(const aBase: string; aFlags: Integer; out aEntries: TArr
 var
   lCommand: OleVariant;
   lConnection: OleVariant;
+  lList: TList<TRdcAdEntry>;
   lRecords: OleVariant;
   lStep: string;
   lUac: Integer;
+
+  procedure AddEntry(const aEntry: TRdcAdEntry);
+  begin
+    if lList.Count >= cMaxEntries then
+      raise Exception.CreateFmt(_('Meer dan %d objecten in deze OU; kies een kleinere OU of gebruik het naamfilter.'), [cMaxEntries]);
+    lList.Add(aEntry);
+  end;
 
   procedure Run(const aFilter, aAttributes: string);
   begin
@@ -100,7 +112,9 @@ var
 begin
   aEntries := [];
   aError := '';
+  lList := TList<TRdcAdEntry>.Create;
   try
+    lList.Capacity := cPageSize;
     lStep := 'connect';
     lConnection := CreateOleObject('ADODB.Connection');
     lConnection.Provider := 'ADsDSOObject';
@@ -113,12 +127,16 @@ begin
       lCommand.ActiveConnection := lConnection;
       lCommand.Properties.Item['Page Size'].Value := cPageSize;
       lCommand.Properties.Item['Searchscope'].Value := cSearchScopeSubtree;
+      // Server-side time limit and client-side timeout (seconds).
+      lCommand.Properties.Item['Time Limit'].Value := cTimeoutSeconds;
+      lCommand.Properties.Item['Timeout'].Value := cTimeoutSeconds;
+      lCommand.CommandTimeout := cTimeoutSeconds;
 
       lStep := 'OUs';
       Run('(objectCategory=organizationalUnit)', 'distinguishedName,name');
       while not lRecords.EOF do
       begin
-        aEntries := aEntries + [TRdcAdEntry.Ou(FieldText(lRecords, 'distinguishedName'), FieldText(lRecords, 'name'))];
+        AddEntry(TRdcAdEntry.Ou(FieldText(lRecords, 'distinguishedName'), FieldText(lRecords, 'name')));
         lRecords.MoveNext;
       end;
       lRecords.Close;
@@ -128,13 +146,14 @@ begin
       while not lRecords.EOF do
       begin
         lUac := StrToIntDef(FieldText(lRecords, 'userAccountControl'), 0);
-        aEntries := aEntries + [TRdcAdEntry.Computer(FieldText(lRecords, 'distinguishedName'), FieldText(lRecords, 'name'), FieldText(lRecords, 'dNSHostName'), (lUac and ADS_UF_ACCOUNTDISABLE) <> 0)];
+        AddEntry(TRdcAdEntry.Computer(FieldText(lRecords, 'distinguishedName'), FieldText(lRecords, 'name'), FieldText(lRecords, 'dNSHostName'), (lUac and ADS_UF_ACCOUNTDISABLE) <> 0));
         lRecords.MoveNext;
       end;
       lRecords.Close;
     finally
       lConnection.Close;
     end;
+    aEntries := lList.ToArray;
     Result := True;
   except
     on E: Exception do
@@ -144,6 +163,7 @@ begin
       Result := False;
     end;
   end;
+  lList.Free;
   lRecords := Unassigned;
   lCommand := Unassigned;
   lConnection := Unassigned;
