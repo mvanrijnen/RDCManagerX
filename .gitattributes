@@ -1,0 +1,5 @@
+# Go sources of the Tailscale bridge always with LF: cgo hashes the file contents into its export symbol
+# names, so CRLF (autocrlf on a Windows checkout) would give another tsbridge.dll than cTsBridgeSha256.
+Bridge/tsbridge/*.go text eol=lf
+Bridge/tsbridge/go.mod text eol=lf
+Bridge/tsbridge/go.sum text eol=lf

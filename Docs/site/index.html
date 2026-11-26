@@ -4,22 +4,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RDCManagerX - Manual / Handleiding</title>
-<meta name="description" content="RDCManagerX: RDP connection manager for Windows (Delphi), RDCMan-compatible, with dynamic resolution, password vault, RD Gateway and Tailscale routes.">
+<meta name="description" content="RDCManagerX: RDP connection manager for Windows (Delphi), RDCMan-compatible, with dynamic resolution, multi-view, password vault, Active Directory groups, RD Gateway and Tailscale routes.">
 <style>
   :root { --text: #1f2328; --muted: #57606a; --line: #d0d7de; --bg: #ffffff; --panel: #f6f8fa; --accent: #2f7fd8; }
   @media (prefers-color-scheme: dark) { :root { --text: #e6edf3; --muted: #9da7b3; --line: #30363d; --bg: #0d1117; --panel: #161b22; } }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 "Segoe UI", system-ui, sans-serif; }
-  .page { max-width: 760px; margin: 0 auto; padding: 48px 16px 64px; }
+  .page { max-width: 960px; margin: 0 auto; padding: 48px 16px 64px; }
   header { border-bottom: 3px solid var(--accent); padding-bottom: 16px; margin-bottom: 28px; }
   h1 { font-size: 34px; margin: 0 0 4px; }
   header p { margin: 0; color: var(--muted); }
+  h2 { font-size: 22px; margin: 36px 0 12px; }
+  .download { display: inline-block; margin-top: 16px; background: var(--accent); color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+  .download:hover { filter: brightness(1.1); }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
-  .card h2 { font-size: 20px; margin: 0 0 6px; }
+  .card h3 { font-size: 20px; margin: 0 0 6px; }
   .card p { margin: 0 0 12px; color: var(--muted); }
   .card a { color: var(--accent); text-decoration: none; font-weight: 600; margin-right: 14px; }
   .card a:hover { text-decoration: underline; }
+  .card ul { margin: 0; padding-left: 20px; }
+  .shot { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; display: block; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 16px; }
+  .gallery figure { margin: 0; }
+  .gallery figcaption { color: var(--muted); font-size: 14px; margin-top: 6px; }
   footer { margin-top: 40px; color: var(--muted); font-size: 14px; }
   footer a { color: var(--accent); }
 </style>
@@ -29,21 +37,62 @@
   <header>
     <h1>RDCManagerX</h1>
     <p>RDP connection manager for Windows &middot; RDP-verbindingsbeheer voor Windows</p>
+    <a class="download" href="https://github.com/mvanrijnen/RDCManagerX/releases/latest">Download (zip, Windows 10/11 64-bit)</a>
   </header>
+
   <div class="cards">
     <div class="card">
-      <h2>English</h2>
+      <h3>English</h3>
       <p>Administrator manual</p>
       <a href="en/">Read online</a><a href="en/RDCManagerX-Manual.pdf">PDF</a>
     </div>
     <div class="card">
-      <h2>Nederlands</h2>
+      <h3>Nederlands</h3>
       <p>Handleiding voor beheerders</p>
       <a href="nl/">Online lezen</a><a href="nl/RDCManagerX-Handleiding.pdf">PDF</a>
     </div>
   </div>
+
+  <h2>Features &middot; Functies</h2>
+  <div class="cards">
+    <div class="card">
+      <ul>
+        <li>Reads and writes RDCMan <code>.rdg</code> files</li>
+        <li>Dynamic resolution: the session follows the pane or window</li>
+        <li>Multi-view: a grid of panes, each with its own tabs</li>
+        <li>Experience settings as in mstsc, keep session active</li>
+        <li>Groups linked to an Active Directory OU</li>
+        <li>Password vault (optional), bound to approved hosts</li>
+        <li>Routes via Tailscale or an RD Gateway</li>
+        <li>Reachability check, Wake-on-LAN, light/dark theme</li>
+      </ul>
+    </div>
+    <div class="card">
+      <ul>
+        <li>Leest en schrijft RDCMan-bestanden (<code>.rdg</code>)</li>
+        <li>Dynamische resolutie: de sessie volgt het vak of venster</li>
+        <li>Multi-view: een raster van vakken, elk met eigen tabs</li>
+        <li>Gebruikerservaring zoals mstsc, sessie actief houden</li>
+        <li>Groepen gekoppeld aan een Active Directory-OU</li>
+        <li>Wachtwoordkluis (optioneel), gebonden aan goedgekeurde hosts</li>
+        <li>Routes via Tailscale of een RD Gateway</li>
+        <li>Bereikbaarheid, Wake-on-LAN, licht/donker thema</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Screenshots</h2>
+  <img class="shot" src="images/screenshot-en.png" alt="RDCManagerX with the fictional Contoso demo file">
+  <div class="gallery">
+    <figure><img class="shot" src="images/splitview-en.png" alt="Multi-view: four sessions in a 2x2 grid"><figcaption>Multi-view, dark theme (demo servers are not reachable)</figcaption></figure>
+    <figure><img class="shot" src="images/settings-experience-en.png" alt="Experience tab"><figcaption>Experience &middot; Gebruikerservaring</figcaption></figure>
+    <figure><img class="shot" src="images/settings-route-en.png" alt="Route tab with a Tailscale network"><figcaption>Route via Tailscale</figcaption></figure>
+    <figure><img class="shot" src="images/logon-en.png" alt="Logon prompt"><figcaption>Logon &middot; Aanmelden</figcaption></figure>
+  </div>
+
   <footer>
-    Source code, build instructions and Tailscale setup: <a href="https://github.com/mvanrijnen/RDCManagerX">github.com/mvanrijnen/RDCManagerX</a>
+    Source code, build instructions and Tailscale setup: <a href="https://github.com/mvanrijnen/RDCManagerX">github.com/mvanrijnen/RDCManagerX</a>.
+    All screenshots use fictional demo data (Contoso).
   </footer>
 </div>
 </body>
