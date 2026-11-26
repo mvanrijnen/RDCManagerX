@@ -208,7 +208,9 @@ ping &eacute;&eacute;n keer in voor een hele groep.</p>
     Het gateway-wachtwoord kan in de kluis. <strong>Nog niet getest</strong> met een echte RD Gateway.</td></tr>
   <tr><td>Via Tailscale-netwerk</td><td>Een netwerk uit <em>Bestand &gt; Tailscale-netwerken</em>. RDCManagerX wordt zelf tijdelijk een apparaat
     in het tailnet; Tailscale hoeft op deze pc niet ge&iuml;nstalleerd te zijn. Vul bij <em>Adres in het tailnet</em> de
-    machinenaam of het 100.x-adres in.</td></tr>
+    MagicDNS-naam (bijv. <code>srv01</code>) of het 100.x-adres in. De naam die een apparaat zichzelf geeft en apparaten die vanuit
+    een ander tailnet gedeeld zijn tellen standaard niet mee; toestaan kan per netwerk in <em>Bestand &gt; Tailscale-netwerken</em>
+    (opgeslagen op deze pc, niet in het bestand). De verbindingsstatus toont het gekozen apparaat met zijn 100.x-adres.</td></tr>
 </table>
 <p>Netwerken en gateways horen bij het bestand; auth keys en wachtwoorden staan alleen in de kluis van je eigen pc. Via
 Tailscale verschijnt een certificaatwaarschuwing (naam <code>127.0.0.2</code>); de verbinding zelf is door Tailscale versleuteld.</p>
@@ -281,7 +283,7 @@ geheugen, dan kan alleen de kluis worden geleegd.</p>
 <ul>
   <li>Op de doel-pc moet Tailscale draaien, en de firewall moet RDP (TCP 3389) toestaan vanaf <code>100.64.0.0/10</code> op de adapter <code>Tailscale</code>.</li>
   <li>Lukt verbinden niet sinds de ACL? Controleer of de doel-pc de tag <code>tag:rdpserver</code> heeft en de auth key de tag <code>tag:rdpclient</code>.</li>
-  <li>Vul bij <em>Adres in het tailnet</em> de machinenaam of het 100.x-adres in, niet het e-mailadres van het account.</li>
+  <li>Vul bij <em>Adres in het tailnet</em> de MagicDNS-naam of het 100.x-adres in, niet het e-mailadres van het account.</li>
   <li><em>Test verbinding</em> in Bestand &gt; Tailscale-netwerken laat zien of het netwerk opstart.</li>
 </ul>
 <h3>Dynamische resolutie werkt niet direct na het aanmelden</h3>

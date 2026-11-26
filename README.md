@@ -277,9 +277,14 @@ The RDP client connects to `127.0.0.2`, not to the real server name. That has tw
     file is ignored.
   - The port is claimed exclusively, so another program cannot hijack it.
   - Only connections from the RDCManagerX process itself are forwarded; other programs on the PC are refused.
-- **Tailnet only.** The target is resolved among the devices in the tailnet (MagicDNS name, host name or 100.x
-  address, or an address in an approved subnet route). A name or address outside the tailnet is refused;
-  RDCManagerX never silently connects outside Tailscale. An exit node does not count.
+- **Tailnet only.** The target is resolved among the devices in the tailnet (MagicDNS name or 100.x address, or an
+  address in an approved subnet route). A name or address outside the tailnet is refused; RDCManagerX never silently
+  connects outside Tailscale. An exit node does not count.
+- **MagicDNS names of your own tailnet only.** The name a device gives itself does not count by default (otherwise a
+  foreign device calling itself `srv` could take over when the real server is gone or renamed), and devices shared
+  with you from another tailnet are never chosen. Both can be allowed per network in *File > Tailscale networks*;
+  that choice is stored on this PC, not in the file. The connection status shows which device was chosen, e.g.
+  `srv01.tail1234.ts.net (100.64.0.10)`.
 - **Secrets belong to one server.** A stored auth key and node key belong to the control server they were entered
   for, a gateway password to that gateway (host and port).
   - A file that points a network or gateway at a different server therefore does not get the secret.

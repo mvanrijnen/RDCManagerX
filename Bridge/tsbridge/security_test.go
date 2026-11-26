@@ -113,6 +113,63 @@ func peersForTest() []tailnetPeer {
 		},
 		{DNSName: "dubbel.tail1234.ts.net.", HostName: "server", IPs: []netip.Addr{netip.MustParseAddr("100.64.0.10")}},
 		{DNSName: "server.tail1234.ts.net.", HostName: "anders", IPs: []netip.Addr{netip.MustParseAddr("100.64.0.11")}},
+		{DNSName: "gedeeld.other-net.ts.net.", HostName: "gedeeld", IPs: []netip.Addr{netip.MustParseAddr("100.64.0.20")}, Shared: true},
+	}
+}
+
+func TestSelfChosenHostNameNeedsOptIn(t *testing.T) {
+	// The real server "srv" is gone; a foreign device calls itself "srv". Without the opt-in it must not win, and
+	// the error must point at the device and the opt-in.
+	peers := []tailnetPeer{{DNSName: "laptop-x.tail1234.ts.net.", HostName: "srv", IPs: []netip.Addr{netip.MustParseAddr("100.64.0.30")}}}
+	_, err := resolveInTailnet("srv", peers, resolveOptions{})
+	if err == nil {
+		t.Fatal("self-chosen host name matched without opt-in")
+	}
+	if !strings.Contains(err.Error(), "laptop-x") || !strings.Contains(err.Error(), "apparaatnaam") {
+		t.Errorf("unclear message: %v", err)
+	}
+	if got, err := resolveInTailnet("srv", peers, resolveOptions{MatchHostName: true}); err != nil || got.String() != "100.64.0.30" {
+		t.Errorf("with opt-in: %v %v", got, err)
+	}
+	// With the opt-in a host name that is also another device's MagicDNS label is ambiguous, not "first wins".
+	peers = append(peers, tailnetPeer{DNSName: "srv.tail1234.ts.net.", HostName: "srv-real", IPs: []netip.Addr{netip.MustParseAddr("100.64.0.31")}})
+	if _, err := resolveInTailnet("srv", peers, resolveOptions{MatchHostName: true}); err == nil {
+		t.Error("ambiguous name resolved")
+	}
+	if got, err := resolveInTailnet("srv", peers, resolveOptions{}); err != nil || got.String() != "100.64.0.31" {
+		t.Errorf("MagicDNS name: %v %v", got, err)
+	}
+}
+
+func TestSharedDevicesNeedOptIn(t *testing.T) {
+	peers := peersForTest()
+	for _, host := range []string{"gedeeld", "gedeeld.other-net.ts.net", "100.64.0.20"} {
+		if _, err := resolveInTailnet(host, peers, resolveOptions{}); err == nil {
+			t.Errorf("%q: shared-in device resolved without opt-in", host)
+		}
+		if got, err := resolveInTailnet(host, peers, resolveOptions{AllowShared: true}); err != nil || got.String() != "100.64.0.20" {
+			t.Errorf("%q with opt-in: %v %v", host, got, err)
+		}
+	}
+}
+
+func TestIsSharedPeer(t *testing.T) {
+	cases := []struct {
+		dns, suffix string
+		sharer      bool
+		want        bool
+	}{
+		{"srv.tail1234.ts.net.", "tail1234.ts.net", false, false},
+		{"SRV.Tail1234.ts.net", "tail1234.ts.net.", false, false},
+		{"srv.other.ts.net.", "tail1234.ts.net", false, true},
+		{"srv.tail1234.ts.net.", "tail1234.ts.net", true, true},  // reported as shared by the control server
+		{"srv.whatever.", "", false, false},                      // no suffix known: only the sharer field counts
+		{"eviltail1234.ts.net.", "tail1234.ts.net", false, true}, // suffix must follow a dot
+	}
+	for _, c := range cases {
+		if got := isSharedPeer(c.dns, c.suffix, c.sharer); got != c.want {
+			t.Errorf("isSharedPeer(%q, %q, %v) = %v", c.dns, c.suffix, c.sharer, got)
+		}
 	}
 }
 
@@ -120,30 +177,33 @@ func TestResolveInTailnet(t *testing.T) {
 	peers := peersForTest()
 	ok := map[string]string{
 		"thuis-pc":                  "100.101.102.103",
-		"THUIS-PC":                  "100.101.102.103",
+		"THUIS-PC":                  "100.101.102.103", // first MagicDNS label, case-insensitive
 		"thuis-pc.tail1234.ts.net":  "100.101.102.103",
 		"thuis-pc.tail1234.ts.net.": "100.101.102.103",
 		"100.101.102.103":           "100.101.102.103",
 		"192.168.50.20":             "192.168.50.20", // goedgekeurde subnet-route
 		"[fd7a:115c:a1e0::1]":       "fd7a:115c:a1e0::1",
+		"server":                    "100.64.0.11", // MagicDNS label; the self-chosen host name "server" of another device does not count
 	}
 	for host, want := range ok {
-		got, err := resolveInTailnet(host, peers)
+		got, err := resolveInTailnet(host, peers, resolveOptions{})
 		if err != nil || got.String() != want {
 			t.Errorf("%q: %v %v, verwacht %s", host, got, err, want)
 		}
 	}
 	bad := []string{
-		"8.8.8.8",          // alleen via de exit-node-route 0.0.0.0/0: niet toegestaan
-		"192.168.1.10",     // geen route
-		"www.example.com",  // geen apparaat in het tailnet (en geen systeem-DNS)
-		"onbekend",         // idem
-		"server",           // twee apparaten: hostnaam van de een, eerste label van de ander
-		"",                 // leeg
-		"100.64.0.99",      // Tailscale-bereik, maar geen apparaat
+		"8.8.8.8",         // alleen via de exit-node-route 0.0.0.0/0: niet toegestaan
+		"192.168.1.10",    // geen route
+		"www.example.com", // geen apparaat in het tailnet (en geen systeem-DNS)
+		"onbekend",        // idem
+		"anders",          // only the self-chosen host name of server.tail1234.ts.net
+		"gedeeld",         // shared-in device (another tailnet)
+		"100.64.0.20",     // its address: shared-in, not allowed by default
+		"",                // leeg
+		"100.64.0.99",     // Tailscale-bereik, maar geen apparaat
 	}
 	for _, host := range bad {
-		if got, err := resolveInTailnet(host, peers); err == nil {
+		if got, err := resolveInTailnet(host, peers, resolveOptions{}); err == nil {
 			t.Errorf("%q opgelost naar %v, verwacht een fout", host, got)
 		}
 	}
@@ -153,7 +213,7 @@ func TestOfflinePeerGivesClearError(t *testing.T) {
 	peers := peersForTest()
 	peers[0].Online = false
 	peers[0].LastSeen = time.Date(2026, 11, 25, 14, 3, 0, 0, time.Local)
-	_, peer, err := resolvePeer("thuis-pc", peers)
+	_, peer, err := resolvePeer("thuis-pc", peers, resolveOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,7 +225,7 @@ func TestOfflinePeerGivesClearError(t *testing.T) {
 		t.Fatalf("code %d", codeFor(err))
 	}
 	peers[0].Online = true
-	_, peer, _ = resolvePeer("192.168.50.20", peers) // via de subnet-router
+	_, peer, _ = resolvePeer("192.168.50.20", peers, resolveOptions{}) // via de subnet-router
 	if err := checkPeerOnline(peer); err != nil {
 		t.Fatalf("online router gaf fout: %v", err)
 	}

@@ -42,6 +42,8 @@ type
   /// <summary>aFromVault: the password came from the vault (then AuthenticationLevel is never 0).</summary>
   TRdcCredentialRequest = function(aServer: TRdcServer; const aContext: TRdcCredentialContext; var aUserName, aDomain: string; out aPassword: string; out aFromVault: Boolean): Boolean of object;
   TRdcPlaceHostEvent = procedure(aServer: TRdcServer; aHost: TControl) of object;
+  /// <summary>The client-side opt-ins of a tailnet (see TRdcTailnetConfig.MatchHostName/AllowShared).</summary>
+  TRdcTailnetOptionsEvent = procedure(aDef: TRdcTailnetDef; out aMatchHostName, aAllowShared: Boolean) of object;
 
   /// <summary>Tailscale-route van één sessie: het netwerk (refcount in TRdcTailnetManager) en de lokale forward.
   /// Blijft bestaan zolang de sessie bestaat (ook na verbreken: "Opnieuw verbinden" en automatisch opnieuw verbinden
@@ -71,6 +73,7 @@ type
     FMsgWnd: HWND;
     FOnActivated: TRdcSessionEvent;
     FOnCredentialRequest: TRdcCredentialRequest;
+    FOnTailnetOptions: TRdcTailnetOptionsEvent;
     FOnPlaceHost: TRdcPlaceHostEvent;
     FOnDisplayChanged: TRdcSessionEvent;
     FOnStateChanged: TRdcSessionEvent;
@@ -78,6 +81,7 @@ type
     function ApplyGatewayRoute(aServer: TRdcServer; var aSettings: TRdpConnectionSettings; out aError: string): Boolean;
     procedure ConnectViaTailnet(aServer: TRdcServer; aSession: TRdpSession);
     procedure TunnelReady(aSession: TRdpSession; aSuccess: Boolean; const aError: string);
+    function TailnetDisplayName(aSession: TRdpSession; const aResolved: string): string;
     procedure ReleaseTunnel(aSession: TRdpSession);
     procedure TunnelTimerFired(aSender: TObject);
     procedure FreePendingSessions;
@@ -132,6 +136,7 @@ type
     property OnActivated: TRdcSessionEvent read FOnActivated write FOnActivated;
     property OnPlaceHost: TRdcPlaceHostEvent read FOnPlaceHost write FOnPlaceHost;
     property OnCredentialRequest: TRdcCredentialRequest read FOnCredentialRequest write FOnCredentialRequest;
+    property OnTailnetOptions: TRdcTailnetOptionsEvent read FOnTailnetOptions write FOnTailnetOptions;
     property OnDisplayChanged: TRdcSessionEvent read FOnDisplayChanged write FOnDisplayChanged;
     property OnStateChanged: TRdcSessionEvent read FOnStateChanged write FOnStateChanged;
     /// <summary>Voor de route via Tailscale (van het hoofdvenster; moet langer leven dan deze manager).</summary>
@@ -332,6 +337,7 @@ var
   lError: string;
   lGuard: IRdcCallbackGuard;
   lHost: string;
+  lResolved: string;
   lRoute: TRdcxRouteSettings;
   lTarget: string;
   lTunnel: TRdcTunnel;
@@ -366,13 +372,13 @@ begin
   begin
     if SameText(lTunnel.TailnetId, lDef.Id) and SameText(lTunnel.Target, lTarget) and (lTunnel.Port > 0) and FTailnets.IsRunning(lDef.Id) then
     begin
-      if not FTailnets.CheckTarget(lDef.Id, lTarget, lError) then
+      if not FTailnets.CheckTarget(lDef.Id, lTarget, lError, lResolved) then
       begin
         aSession.PrepareFailed(lError);
         Exit;
       end;
-      aSession.SetEndpoint(lTunnel.LocalAddress, lTunnel.Port);
-      TRdcLog.Write(Format('%s: via Tailscale "%s", bestaande forward %s:%d -> %s', [aServer.Caption, lDef.Name, lTunnel.LocalAddress, lTunnel.Port, lTarget]));
+      aSession.SetEndpoint(lTunnel.LocalAddress, lTunnel.Port, TailnetDisplayName(aSession, lResolved));
+      TRdcLog.Write(Format('%s: via Tailscale "%s", bestaande forward %s:%d -> %s = %s', [aServer.Caption, lDef.Name, lTunnel.LocalAddress, lTunnel.Port, lTarget, lResolved]));
       aSession.Connect;
       Exit;
     end;
@@ -384,6 +390,9 @@ begin
     aSession.PrepareFailed(Format(_('Tailscale-netwerk "%s": %s'), [lDef.Name, lError]));
     Exit;
   end;
+  // Opt-ins from the app settings (not from the file); they apply when the network starts.
+  if Assigned(FOnTailnetOptions) then
+    FOnTailnetOptions(lDef, lConfig.MatchHostName, lConfig.AllowShared);
   lTunnel := TRdcTunnel.Create;
   lTunnel.TailnetId := lDef.Id;
   lTunnel.TailnetName := lDef.Name;
@@ -404,9 +413,20 @@ begin
   FTunnelTimer.Enabled := True;
 end;
 
+function TRdcSessionManager.TailnetDisplayName(aSession: TRdpSession; const aResolved: string): string;
+begin
+  // The status shows which device the tailnet picked: "Verbinden met srv01 via Tailscale: srv01.tail1234.ts.net
+  // (100.64.0.10)...".
+  if aResolved = '' then
+    Result := ''
+  else
+    Result := Format(_('%s via Tailscale: %s'), [aSession.Settings.DisplayName, aResolved]);
+end;
+
 procedure TRdcSessionManager.TunnelReady(aSession: TRdpSession; aSuccess: Boolean; const aError: string);
 var
   lError: string;
+  lResolved: string;
   lTunnel: TRdcTunnel;
 begin
   if not FTunnels.TryGetValue(aSession, lTunnel) then
@@ -418,7 +438,7 @@ begin
     Exit;
   end;
   // Doel offline of niet in het tailnet: nu een duidelijke melding, in plaats van straks een algemene RDP-fout.
-  if not FTailnets.CheckTarget(lTunnel.TailnetId, lTunnel.Target, lError) then
+  if not FTailnets.CheckTarget(lTunnel.TailnetId, lTunnel.Target, lError, lResolved) then
   begin
     ReleaseTunnel(aSession);
     aSession.PrepareFailed(lError);
@@ -435,9 +455,10 @@ begin
       Exit;
     end;
   end;
-  TRdcLog.Write(Format('Tailscale-forward %s:%d -> %s', [lTunnel.LocalAddress, lTunnel.Port, lTunnel.Target]));
-  // De control verbindt met de lokale forward; tab, boom en statusteksten houden de echte servernaam.
-  aSession.SetEndpoint(lTunnel.LocalAddress, lTunnel.Port);
+  TRdcLog.Write(Format('Tailscale-forward %s:%d -> %s = %s', [lTunnel.LocalAddress, lTunnel.Port, lTunnel.Target, lResolved]));
+  // De control verbindt met de lokale forward; tab en boom houden de echte servernaam, the status adds what the
+  // tailnet resolved.
+  aSession.SetEndpoint(lTunnel.LocalAddress, lTunnel.Port, TailnetDisplayName(aSession, lResolved));
   aSession.Connect;
 end;
 

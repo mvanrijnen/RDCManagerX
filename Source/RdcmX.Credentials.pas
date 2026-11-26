@@ -127,6 +127,9 @@ type
     class function TailnetAuthKeyTarget(const aTailnetId, aControlUrl: string): string; static;
     class function TailnetStateKeyTarget(const aTailnetId, aControlUrl: string): string; static;
     class function TailnetTargetPrefix(const aTailnetId: string): string; static;
+    /// <summary>Key for client-side settings of a tailnet (id + hash of the control URL), as for its secrets: a file
+    /// with the same id but another control server does not get them.</summary>
+    class function TailnetBindingKey(const aTailnetId, aControlUrl: string): string; static;
     class function GatewayTarget(const aGatewayId, aGatewayAddress: string): string; static;
     class function GatewayTargetPrefix(const aGatewayId: string): string; static;
     /// <summary>Approval keys for the hosts an account password goes to: the RDP server on route Direct or Gateway,
@@ -484,6 +487,11 @@ end;
 class function TRdcPasswordVault.TailnetTargetPrefix(const aTailnetId: string): string;
 begin
   Result := cTargetPrefix + 'tailnet:' + LowerCase(Trim(aTailnetId)) + ':';
+end;
+
+class function TRdcPasswordVault.TailnetBindingKey(const aTailnetId, aControlUrl: string): string;
+begin
+  Result := LowerCase(Trim(aTailnetId)) + ':' + BindingHash(NormalizeControlUrl(aControlUrl));
 end;
 
 class function TRdcPasswordVault.TailnetAuthKeyTarget(const aTailnetId, aControlUrl: string): string;

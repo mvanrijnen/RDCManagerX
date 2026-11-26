@@ -4,7 +4,7 @@ object frmTailnets: TfrmTailnets
   Top = 0
   BorderStyle = bsDialog
   Caption = 'Tailscale-netwerken'
-  ClientHeight = 560
+  ClientHeight = 610
   ClientWidth = 620
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -70,7 +70,7 @@ object frmTailnets: TfrmTailnets
   end
   object lblTestStatus: TLabel
     Left = 150
-    Top = 374
+    Top = 424
     Width = 458
     Height = 48
     AutoSize = False
@@ -79,7 +79,7 @@ object frmTailnets: TfrmTailnets
   end
   object lblHint: TLabel
     Left = 12
-    Top = 430
+    Top = 480
     Width = 596
     Height = 64
     AutoSize = False
@@ -232,26 +232,54 @@ object frmTailnets: TfrmTailnets
     TextHint = '127.0.0.2'
     OnChange = FieldChange
   end
+  object chkMatchHostName: TCheckBox
+    Hint =
+      'Uit (aanbevolen): alleen de MagicDNS-naam (bijv. srv of srv.tail1234.ts.' +
+      'net) telt. Aan: ook de naam die een apparaat zichzelf geeft; een vreemd ' +
+      'apparaat met dezelfde naam kan dan het doel worden. Geldt bij de volgen' +
+      'de start van het netwerk; staat in de instellingen van deze pc, niet in ' +
+      'het bestand.'
+    Left = 150
+    Top = 366
+    Width = 458
+    Height = 19
+    Caption = 'Ook op apparaatnaam zoeken (niet alleen op MagicDNS-naam)'
+    TabOrder = 10
+    OnClick = FieldChange
+  end
+  object chkAllowShared: TCheckBox
+    Hint =
+      'Uit (aanbevolen): apparaten die vanuit een ander tailnet met je gedeeld' +
+      ' zijn, worden nooit als doel gekozen. Geldt bij de volgende start van h' +
+      'et netwerk; staat in de instellingen van deze pc, niet in het bestand.'
+    Left = 150
+    Top = 390
+    Width = 458
+    Height = 19
+    Caption = 'Gedeelde apparaten uit andere tailnets toestaan'
+    TabOrder = 11
+    OnClick = FieldChange
+  end
   object btnTest: TButton
     Hint =
       'Het netwerk opstarten, het adres in het tailnet tonen en weer sluiten' +
       '. Zonder auth key opent de login-pagina in de browser.'
     Left = 12
-    Top = 370
+    Top = 420
     Width = 125
     Height = 26
     Caption = 'Test verbinding'
-    TabOrder = 10
+    TabOrder = 12
     OnClick = btnTestClick
   end
   object pnlButtons: TPanel
     Left = 0
-    Top = 506
+    Top = 556
     Width = 620
     Height = 54
     Align = alBottom
     BevelOuter = bvNone
-    TabOrder = 11
+    TabOrder = 13
     object btnOk: TButton
       Hint = 'Wijzigingen opslaan.'
       Left = 440

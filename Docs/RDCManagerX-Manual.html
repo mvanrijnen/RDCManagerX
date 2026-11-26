@@ -208,7 +208,9 @@ group.</p>
     The gateway password can be stored in the vault. <strong>Not tested yet</strong> against a real RD Gateway.</td></tr>
   <tr><td>Via Tailscale network</td><td>A network from <em>File &gt; Tailscale networks</em>. RDCManagerX itself temporarily becomes a device
     in the tailnet; Tailscale does not need to be installed on this PC. In <em>Address in the tailnet</em> enter the
-    machine name or the 100.x address.</td></tr>
+    MagicDNS name (e.g. <code>srv01</code>) or the 100.x address. The name a device gives itself and devices shared from another
+    tailnet do not count by default; they can be allowed per network in <em>File &gt; Tailscale networks</em> (stored on this PC,
+    not in the file). The connection status shows the chosen device with its 100.x address.</td></tr>
 </table>
 <p>Networks and gateways belong to the file; auth keys and passwords are stored only in the vault on your own PC. Via
 Tailscale a certificate warning appears (name <code>127.0.0.2</code>); the connection itself is encrypted by Tailscale.</p>
@@ -281,7 +283,7 @@ password, the vault can only be emptied.</p>
 <ul>
   <li>Tailscale must be running on the target PC, and the firewall must allow RDP (TCP 3389) from <code>100.64.0.0/10</code> on the adapter <code>Tailscale</code>.</li>
   <li>Connecting fails since you set up the ACL? Check that the target PC has the tag <code>tag:rdpserver</code> and the auth key the tag <code>tag:rdpclient</code>.</li>
-  <li>In <em>Address in the tailnet</em> enter the machine name or the 100.x address, not the account's e-mail address.</li>
+  <li>In <em>Address in the tailnet</em> enter the MagicDNS name or the 100.x address, not the account's e-mail address.</li>
   <li><em>Test connection</em> in File &gt; Tailscale networks shows whether the network starts.</li>
 </ul>
 <h3>Dynamic resolution does not work right after logon</h3>

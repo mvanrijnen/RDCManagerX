@@ -63,6 +63,8 @@ type
     FRowRatios: TArray<Double>;
     FTheme: string;
     FLanguage: string;
+    FTailnetHostNameMatch: TStringList;
+    FTailnetAllowShared: TStringList;
     FSnapshot: TDictionary<string, string>; // sleutel -> JSON zoals bij laden/laatste opslaan
     procedure MigrateSplitMode(const aSplitMode: string; aSplitRatio: Double);
     function BuildJson: TJSONObject;
@@ -107,6 +109,10 @@ type
     property AutoLockMinutes: Integer read FAutoLockMinutes write FAutoLockMinutes;
     /// <summary>Bereikbaarheid (ping) controleren elke zoveel seconden (Opties; 5..3600, standaard 30).</summary>
     property PingIntervalSec: Integer read FPingIntervalSec write FPingIntervalSec;
+    /// <summary>Tailnets (TRdcPasswordVault.TailnetBindingKey) whose targets may also match the host name a device
+    /// chose itself / devices shared in from another tailnet. Client-side on purpose: a file cannot loosen this.</summary>
+    property TailnetHostNameMatch: TStringList read FTailnetHostNameMatch;
+    property TailnetAllowShared: TStringList read FTailnetAllowShared;
   end;
 
 const
@@ -126,6 +132,10 @@ begin
   inherited Create;
   FOpenFiles := TStringList.Create;
   FRecentFiles := TStringList.Create;
+  FTailnetHostNameMatch := TStringList.Create;
+  FTailnetHostNameMatch.CaseSensitive := False;
+  FTailnetAllowShared := TStringList.Create;
+  FTailnetAllowShared.CaseSensitive := False;
   FLayouts := TDictionary<string, TRdcWindowLayout>.Create;
   FSnapshot := TDictionary<string, string>.Create;
   FGridColumns := 1;
@@ -144,6 +154,8 @@ begin
   FLayouts.Free;
   FRecentFiles.Free;
   FOpenFiles.Free;
+  FTailnetHostNameMatch.Free;
+  FTailnetAllowShared.Free;
   inherited Destroy;
 end;
 
@@ -246,6 +258,8 @@ begin
       begin
         ReadList(TJSONObject(lRoot), 'recentFiles', FRecentFiles);
         ReadList(TJSONObject(lRoot), 'openFiles', FOpenFiles);
+        ReadList(TJSONObject(lRoot), 'tailnetHostNameMatch', FTailnetHostNameMatch);
+        ReadList(TJSONObject(lRoot), 'tailnetAllowShared', FTailnetAllowShared);
         FLastLayoutKey := TJSONObject(lRoot).GetValue<string>('lastLayout', '');
         if TJSONObject(lRoot).GetValue('gridColumns') <> nil then
         begin
@@ -411,6 +425,8 @@ begin
   try
     lRoot.AddPair('recentFiles', WriteList(FRecentFiles));
     lRoot.AddPair('openFiles', WriteList(FOpenFiles));
+    lRoot.AddPair('tailnetHostNameMatch', WriteList(FTailnetHostNameMatch));
+    lRoot.AddPair('tailnetAllowShared', WriteList(FTailnetAllowShared));
     lRoot.AddPair('lastLayout', FLastLayoutKey);
     lRoot.AddPair('gridColumns', TJSONNumber.Create(FGridColumns));
     lRoot.AddPair('gridRows', TJSONNumber.Create(FGridRows));

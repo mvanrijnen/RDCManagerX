@@ -158,6 +158,16 @@ func TsNetCheckTarget(h C.int, target *C.char) C.int {
 	return codeFor(err)
 }
 
+//export TsNetResolvedTarget
+func TsNetResolvedTarget(h C.int, buf *C.char, buflen C.int) C.int {
+	n := lookup(h)
+	if n == nil {
+		return codeInvalidHandle
+	}
+	data, _ := json.Marshal(n.lastResolved())
+	return writeBuf(buf, buflen, string(data))
+}
+
 //export TsNetRemoveForward
 func TsNetRemoveForward(h C.int, localPort C.int) C.int {
 	n := lookup(h)

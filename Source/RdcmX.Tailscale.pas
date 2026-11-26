@@ -54,6 +54,10 @@ type
     Dir: string;
     StateKey: string; // base64, 32 bytes; verplicht bij niet-ephemeral
     LogFile: string;
+    /// <summary>Opt-ins for resolving targets (from the app settings, never from the file): also match the host name a
+    /// device chose itself; also devices shared in from another tailnet. Off = MagicDNS names of our own tailnet.</summary>
+    MatchHostName: Boolean;
+    AllowShared: Boolean;
     function ToJson: string;
     procedure Wipe;
   end;
@@ -108,6 +112,8 @@ type
     /// <summary>Staat aTarget (host:poort) in het tailnet en is het apparaat online? False met uitleg (bijv.
     /// "thuis-pc is offline in het tailnet (laatst gezien ...)").</summary>
     function CheckTarget(const aTarget: string; out aError: string): Boolean;
+    /// <summary>What the last successful CheckTarget resolved to: "magicdns-name (100.x.y.z)"; '' if unknown.</summary>
+    function ResolvedTargetText: string;
     /// <summary>Sluit de node (breekt een lopende Up af). Mag vanuit elke thread.</summary>
     procedure Close;
     property Handle: Integer read FHandle;
@@ -164,7 +170,9 @@ type
     function AddForward(const aId, aLocalAddress, aTarget: string): Integer;
     procedure RemoveForward(const aId: string; aLocalPort: Integer);
     /// <summary>Zie TRdcTailnet.CheckTarget; False ook als het netwerk niet draait.</summary>
-    function CheckTarget(const aId, aTarget: string; out aError: string): Boolean;
+    function CheckTarget(const aId, aTarget: string; out aError: string): Boolean; overload;
+    /// <summary>Also returns what the target resolved to ("magicdns-name (100.x.y.z)") for the connection status.</summary>
+    function CheckTarget(const aId, aTarget: string; out aError, aResolved: string): Boolean; overload;
     /// <summary>Alles sluiten (afsluiten van de app); blokkeert kort.</summary>
     procedure CloseAll;
     property UpTimeoutMs: Integer read FUpTimeoutMs write FUpTimeoutMs;
@@ -456,6 +464,7 @@ type
   TTsNetAddForward = function(aHandle: Integer; aLocalAddr, aTarget: PAnsiChar): Integer; cdecl;
   TTsNetRemoveForward = function(aHandle, aLocalPort: Integer): Integer; cdecl;
   TTsNetCheckTarget = function(aHandle: Integer; aTarget: PAnsiChar): Integer; cdecl;
+  TTsNetResolvedTarget = function(aHandle: Integer; aBuf: PAnsiChar; aBufLen: Integer): Integer; cdecl;
   TTsNetClose = function(aHandle: Integer): Integer; cdecl;
   TTsLastError = function(aHandle: Integer; aBuf: PAnsiChar; aBufLen: Integer): Integer; cdecl;
 
@@ -467,6 +476,7 @@ var
   GTsNetAddForward: TTsNetAddForward;
   GTsNetRemoveForward: TTsNetRemoveForward;
   GTsNetCheckTarget: TTsNetCheckTarget;
+  GTsNetResolvedTarget: TTsNetResolvedTarget;
   GTsNetClose: TTsNetClose;
   GTsLastError: TTsLastError;
 
@@ -528,6 +538,8 @@ begin
     lObject.AddPair('dir', Dir);
     lObject.AddPair('stateKey', StateKey);
     lObject.AddPair('logFile', LogFile);
+    lObject.AddPair('matchHostName', TJSONBool.Create(MatchHostName));
+    lObject.AddPair('allowShared', TJSONBool.Create(AllowShared));
     Result := lObject.ToJSON;
   finally
     lObject.Free;
@@ -784,6 +796,7 @@ begin
       @GTsNetAddForward := Bind('TsNetAddForward');
       @GTsNetRemoveForward := Bind('TsNetRemoveForward');
       @GTsNetCheckTarget := Bind('TsNetCheckTarget');
+      @GTsNetResolvedTarget := Bind('TsNetResolvedTarget');
       @GTsNetClose := Bind('TsNetClose');
       @GTsLastError := Bind('TsLastError');
       FAvailable := True;
@@ -959,6 +972,37 @@ begin
     aError := LastErrorText;
     if aError = '' then
       aError := TRdcTsBridge.CodeText(lCode);
+  end;
+end;
+
+function TRdcTailnet.ResolvedTargetText: string;
+var
+  lHandle: Integer;
+  lJson: TJSONValue;
+  lIp: string;
+  lName: string;
+begin
+  Result := '';
+  lHandle := FHandle;
+  if lHandle <= 0 then
+    Exit;
+  lJson := TJSONObject.ParseJSONValue(ReadText(
+    function(aBuf: PAnsiChar; aBufLen: Integer): Integer
+    begin
+      Result := GTsNetResolvedTarget(lHandle, aBuf, aBufLen);
+    end));
+  try
+    if lJson is TJSONObject then
+    begin
+      lName := TJSONObject(lJson).GetValue<string>('name', '');
+      lIp := TJSONObject(lJson).GetValue<string>('ip', '');
+      if (lName <> '') and (lIp <> '') then
+        Result := Format('%s (%s)', [lName, lIp])
+      else
+        Result := lIp;
+    end;
+  finally
+    lJson.Free;
   end;
 end;
 
@@ -1219,6 +1263,16 @@ begin
     Exit(False);
   end;
   Result := lEntry.Net.CheckTarget(aTarget, aError);
+end;
+
+function TRdcTailnetManager.CheckTarget(const aId, aTarget: string; out aError, aResolved: string): Boolean;
+var
+  lEntry: TEntry;
+begin
+  aResolved := '';
+  Result := CheckTarget(aId, aTarget, aError);
+  if Result and FEntries.TryGetValue(aId, lEntry) and (lEntry.Net <> nil) then
+    aResolved := lEntry.Net.ResolvedTargetText;
 end;
 
 procedure TRdcTailnetManager.CloseAll;

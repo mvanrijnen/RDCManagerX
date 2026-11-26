@@ -19,7 +19,7 @@ uses
   Winapi.Windows,
   System.Classes, System.Generics.Collections, System.IOUtils, System.SysUtils, System.UITypes,
   Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Graphics, Vcl.StdCtrls,
-  RdcmX.Credentials, RdcmX.Model, RdcmX.Tailscale;
+  RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Model, RdcmX.Tailscale;
 
 type
   TRdcTailnetEdit = class
@@ -32,6 +32,9 @@ type
     NewAuthKey: string;
     HasStoredAuthKey: Boolean;
     ClearAuthKey: Boolean;
+    /// <summary>Client-side opt-ins (app settings, not the file).</summary>
+    MatchHostName: Boolean;
+    AllowShared: Boolean;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -48,6 +51,8 @@ type
     edtAuthKey: TEdit;
     btnClearAuthKey: TButton;
     chkEphemeral: TCheckBox;
+    chkMatchHostName: TCheckBox;
+    chkAllowShared: TCheckBox;
     lblControlUrl: TLabel;
     edtControlUrl: TEdit;
     lblLocalAddress: TLabel;
@@ -74,6 +79,7 @@ type
     FFile: TRdcFile;
     FSecrets: IRdcSecretAccess;
     FManager: TRdcTailnetManager;
+    FSettings: TRdcAppSettings;
     FIdInUseElsewhere: TFunc<string, Boolean>;
     FEdits: TObjectList<TRdcTailnetEdit>;
     FDeletedIds: TList<string>;
@@ -97,6 +103,7 @@ type
     function ValidateAll: Boolean;
     function SaveSecrets: Boolean;
     procedure ApplyToFile;
+    procedure ApplyOptions;
     procedure DeleteLocalData(const aId: string; aForce: Boolean);
     function ControlUrlChanged(aEdit: TRdcTailnetEdit): Boolean;
     function IsTesting: Boolean;
@@ -112,7 +119,7 @@ type
   public
     /// <summary>True als er iets gewijzigd is (en toegepast op het bestand). aIdInUseElsewhere: staat dit id ook
     /// in een ander open bestand (dan de geheimen bij verwijderen laten staan).</summary>
-    class function Execute(aFile: TRdcFile; const aSecrets: IRdcSecretAccess; aManager: TRdcTailnetManager; const aIdInUseElsewhere: TFunc<string, Boolean>): Boolean; static;
+    class function Execute(aFile: TRdcFile; const aSecrets: IRdcSecretAccess; aManager: TRdcTailnetManager; aSettings: TRdcAppSettings; const aIdInUseElsewhere: TFunc<string, Boolean>): Boolean; static;
   end;
 
 implementation
@@ -139,7 +146,7 @@ end;
 
 { TfrmTailnets }
 
-class function TfrmTailnets.Execute(aFile: TRdcFile; const aSecrets: IRdcSecretAccess; aManager: TRdcTailnetManager; const aIdInUseElsewhere: TFunc<string, Boolean>): Boolean;
+class function TfrmTailnets.Execute(aFile: TRdcFile; const aSecrets: IRdcSecretAccess; aManager: TRdcTailnetManager; aSettings: TRdcAppSettings; const aIdInUseElsewhere: TFunc<string, Boolean>): Boolean;
 var
   lForm: TfrmTailnets;
 begin
@@ -148,11 +155,15 @@ begin
     lForm.FFile := aFile;
     lForm.FSecrets := aSecrets;
     lForm.FManager := aManager;
+    lForm.FSettings := aSettings;
     lForm.FIdInUseElsewhere := aIdInUseElsewhere;
     lForm.LoadTailnets;
     Result := (lForm.ShowModal = mrOk) and lForm.FChanged;
     if Result then
+    begin
       lForm.ApplyToFile;
+      lForm.ApplyOptions;
+    end;
   finally
     lForm.Free;
   end;
@@ -238,6 +249,8 @@ begin
     lEdit.Def.Assign(lDef);
     lEdit.OriginalControlUrl := lDef.ControlUrl;
     lEdit.HasStoredAuthKey := FSecrets.HasSecret(TRdcPasswordVault.TailnetAuthKeyTarget(lDef.Id, lDef.ControlUrl));
+    lEdit.MatchHostName := FSettings.TailnetHostNameMatch.IndexOf(TRdcPasswordVault.TailnetBindingKey(lDef.Id, lDef.ControlUrl)) >= 0;
+    lEdit.AllowShared := FSettings.TailnetAllowShared.IndexOf(TRdcPasswordVault.TailnetBindingKey(lDef.Id, lDef.ControlUrl)) >= 0;
     FEdits.Add(lEdit);
   end;
   if FEdits.Count > 0 then
@@ -322,6 +335,8 @@ begin
       edtNodeHost.Text := lEdit.Def.NodeHostName;
       edtAuthKey.Text := lEdit.NewAuthKey;
       chkEphemeral.Checked := lEdit.Def.Ephemeral;
+      chkMatchHostName.Checked := lEdit.MatchHostName;
+      chkAllowShared.Checked := lEdit.AllowShared;
       edtControlUrl.Text := lEdit.Def.ControlUrl;
       edtLocalAddress.Text := lEdit.Def.LocalAddress;
     end
@@ -331,6 +346,8 @@ begin
       edtNodeHost.Text := '';
       edtAuthKey.Text := '';
       chkEphemeral.Checked := False;
+      chkMatchHostName.Checked := False;
+      chkAllowShared.Checked := False;
       edtControlUrl.Text := '';
       edtLocalAddress.Text := '';
     end;
@@ -359,6 +376,8 @@ begin
   edtAuthKey.Enabled := lEnabled;
   btnClearAuthKey.Enabled := lEnabled and ((lEdit.NewAuthKey <> '') or (lEdit.HasStoredAuthKey and not lEdit.ClearAuthKey));
   chkEphemeral.Enabled := lEnabled;
+  chkMatchHostName.Enabled := lEnabled;
+  chkAllowShared.Enabled := lEnabled;
   edtControlUrl.Enabled := lEnabled;
   edtLocalAddress.Enabled := lEnabled;
   btnDelete.Enabled := lEnabled;
@@ -388,6 +407,8 @@ begin
       lEdit.ClearAuthKey := False;
   end;
   lEdit.Def.Ephemeral := chkEphemeral.Checked;
+  lEdit.MatchHostName := chkMatchHostName.Checked;
+  lEdit.AllowShared := chkAllowShared.Checked;
   lEdit.Def.ControlUrl := Trim(edtControlUrl.Text);
   lEdit.Def.LocalAddress := Trim(edtLocalAddress.Text);
   UpdateListItem(lvTailnets.Selected);
@@ -638,6 +659,40 @@ begin
   end;
 end;
 
+procedure TfrmTailnets.ApplyOptions;
+
+  procedure RemoveId(aList: TStringList; const aId: string);
+  var
+    lIndex: Integer;
+  begin
+    for lIndex := aList.Count - 1 downto 0 do
+      if aList[lIndex].StartsWith(LowerCase(Trim(aId)) + ':', True) then
+        aList.Delete(lIndex);
+  end;
+
+var
+  lEdit: TRdcTailnetEdit;
+  lId: string;
+  lKey: string;
+begin
+  // Stored per id + control URL; old bindings of these ids (other control URL, deleted network) are dropped.
+  for lId in FDeletedIds do
+  begin
+    RemoveId(FSettings.TailnetHostNameMatch, lId);
+    RemoveId(FSettings.TailnetAllowShared, lId);
+  end;
+  for lEdit in FEdits do
+  begin
+    RemoveId(FSettings.TailnetHostNameMatch, lEdit.Def.Id);
+    RemoveId(FSettings.TailnetAllowShared, lEdit.Def.Id);
+    lKey := TRdcPasswordVault.TailnetBindingKey(lEdit.Def.Id, lEdit.Def.ControlUrl);
+    if lEdit.MatchHostName then
+      FSettings.TailnetHostNameMatch.Add(lKey);
+    if lEdit.AllowShared then
+      FSettings.TailnetAllowShared.Add(lKey);
+  end;
+end;
+
 { Test }
 
 function TfrmTailnets.IsTesting: Boolean;
@@ -684,6 +739,8 @@ begin
     lblTestStatus.Caption := lError;
     Exit;
   end;
+  lConfig.MatchHostName := lEdit.MatchHostName;
+  lConfig.AllowShared := lEdit.AllowShared;
   FTestId := lEdit.Def.Id;
   FTestGuard := RdcNewCallbackGuard;
   FAuthUrlOpened := '';

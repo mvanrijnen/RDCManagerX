@@ -146,11 +146,31 @@ func connFromPid(c net.Conn, pid uint32) (bool, error) {
 // tailnetPeer: wat nodig is om een doel binnen het tailnet op te lossen.
 type tailnetPeer struct {
 	DNSName  string         // FQDN, met of zonder punt aan het eind
-	HostName string         // hostnaam van het apparaat
+	HostName string         // hostnaam van het apparaat (chosen by the device itself)
 	IPs      []netip.Addr   // Tailscale-adressen
 	Routes   []netip.Prefix // AllowedIPs (eigen adressen + goedgekeurde subnet-routes)
 	Online   bool           // verbonden met de control server
 	LastSeen time.Time      // alleen bekend als het apparaat offline is
+	Shared   bool           // shared into this tailnet from another one (not ours)
+}
+
+// resolveOptions: the explicit opt-ins of a tailnet (stored by RDCManagerX in its own settings, not in the file).
+type resolveOptions struct {
+	MatchHostName bool // also match the host name the device chose itself
+	AllowShared   bool // also devices shared into this tailnet
+}
+
+// isSharedPeer: a device from another tailnet. Shared-in devices keep the MagicDNS domain of their own tailnet, and
+// the control server reports who shared them. Without a known suffix only the sharer field counts.
+func isSharedPeer(dnsName, magicDNSSuffix string, altSharer bool) bool {
+	if altSharer {
+		return true
+	}
+	suffix := strings.ToLower(strings.Trim(magicDNSSuffix, "."))
+	if suffix == "" {
+		return false
+	}
+	return !strings.HasSuffix(strings.ToLower(strings.TrimSuffix(dnsName, ".")), "."+suffix)
 }
 
 // displayName: korte naam voor meldingen.
@@ -179,20 +199,31 @@ func checkPeerOnline(p tailnetPeer) error {
 }
 
 // resolveInTailnet zet host om in een adres dat via het tailnet bereikbaar is. Een naam moet bij precies één
-// apparaat horen (volledige MagicDNS-naam, eerste label daarvan, of hostnaam); een IP moet een Tailscale-adres
-// of in een goedgekeurde subnet-route liggen. Nooit systeem-DNS; nooit iets buiten het tailnet.
-func resolveInTailnet(host string, peers []tailnetPeer) (netip.Addr, error) {
-	ip, _, err := resolvePeer(host, peers)
+// apparaat horen: the full MagicDNS name or its first label (assigned by the control server, unique in the tailnet).
+// The host name a device chose itself only counts with opts.MatchHostName: otherwise any device calling itself
+// "srv" would win once the real server is gone or renamed. Devices shared in from another tailnet are skipped
+// unless opts.AllowShared. Een IP moet een Tailscale-adres of in een goedgekeurde subnet-route liggen. Nooit
+// systeem-DNS; nooit iets buiten het tailnet.
+func resolveInTailnet(host string, peers []tailnetPeer, opts resolveOptions) (netip.Addr, error) {
+	ip, _, err := resolvePeer(host, peers, opts)
 	return ip, err
 }
 
 // resolvePeer: zoals resolveInTailnet, plus het apparaat dat het doel bedient (zelf, of de subnet-router).
-func resolvePeer(host string, peers []tailnetPeer) (netip.Addr, tailnetPeer, error) {
-	ip, peer, err := resolvePeerInner(host, peers)
-	return ip, peer, err
+func resolvePeer(host string, peers []tailnetPeer, opts resolveOptions) (netip.Addr, tailnetPeer, error) {
+	if !opts.AllowShared {
+		own := make([]tailnetPeer, 0, len(peers))
+		for _, p := range peers {
+			if !p.Shared {
+				own = append(own, p)
+			}
+		}
+		peers = own
+	}
+	return resolvePeerInner(host, peers, opts)
 }
 
-func resolvePeerInner(host string, peers []tailnetPeer) (netip.Addr, tailnetPeer, error) {
+func resolvePeerInner(host string, peers []tailnetPeer, opts resolveOptions) (netip.Addr, tailnetPeer, error) {
 	host = strings.TrimSuffix(strings.TrimSpace(host), ".")
 	host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
 	if host == "" {
@@ -221,12 +252,19 @@ func resolvePeerInner(host string, peers []tailnetPeer) (netip.Addr, tailnetPeer
 	for _, p := range peers {
 		fqdn := strings.TrimSuffix(p.DNSName, ".")
 		first, _, _ := strings.Cut(fqdn, ".")
-		if strings.EqualFold(fqdn, host) || strings.EqualFold(first, host) || strings.EqualFold(p.HostName, host) {
+		if (fqdn != "" && (strings.EqualFold(fqdn, host) || strings.EqualFold(first, host))) || (opts.MatchHostName && strings.EqualFold(p.HostName, host)) {
 			matches = append(matches, p)
 		}
 	}
 	switch len(matches) {
 	case 0:
+		if !opts.MatchHostName {
+			for _, p := range peers {
+				if strings.EqualFold(p.HostName, host) {
+					return netip.Addr{}, tailnetPeer{}, fmt.Errorf("%q is geen MagicDNS-naam in dit tailnet; het apparaat %s noemt zichzelf zo. Gebruik de MagicDNS-naam (%s) of het 100.x-adres, of zet bij het Tailscale-netwerk \"ook op apparaatnaam zoeken\" aan", host, p.displayName(), strings.TrimSuffix(p.DNSName, "."))
+				}
+			}
+		}
 		return netip.Addr{}, tailnetPeer{}, fmt.Errorf("%q is geen apparaat in dit tailnet (controleer de naam of gebruik het 100.x-adres)", host)
 	case 1:
 	default:

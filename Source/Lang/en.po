@@ -790,6 +790,22 @@ msgid "standaard (Tailscale)"
 msgstr "default (Tailscale)"
 
 #: Source/RdcmX.UI.Tailnets.dfm
+msgid "Uit (aanbevolen): alleen de MagicDNS-naam (bijv. srv of srv.tail1234.ts.net) telt. Aan: ook de naam die een apparaat zichzelf geeft; een vreemd apparaat met dezelfde naam kan dan het doel worden. Geldt bij de volgende start van het netwerk; staat in de instellingen van deze pc, niet in het bestand."
+msgstr "Off (recommended): only the MagicDNS name (e.g. srv or srv.tail1234.ts.net) counts. On: also the name a device gives itself; a foreign device with the same name can then become the target. Applies at the next start of the network; stored in the settings of this PC, not in the file."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Ook op apparaatnaam zoeken (niet alleen op MagicDNS-naam)"
+msgstr "Also match device names (not only MagicDNS names)"
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Uit (aanbevolen): apparaten die vanuit een ander tailnet met je gedeeld zijn, worden nooit als doel gekozen. Geldt bij de volgende start van het netwerk; staat in de instellingen van deze pc, niet in het bestand."
+msgstr "Off (recommended): devices shared with you from another tailnet are never chosen as target. Applies at the next start of the network; stored in the settings of this PC, not in the file."
+
+#: Source/RdcmX.UI.Tailnets.dfm
+msgid "Gedeelde apparaten uit andere tailnets toestaan"
+msgstr "Allow devices shared from other tailnets"
+
+#: Source/RdcmX.UI.Tailnets.dfm
 msgid "Het netwerk opstarten, het adres in het tailnet tonen en weer sluiten. Zonder auth key opent de login-pagina in de browser."
 msgstr "Start the network, show the address in the tailnet and shut it down again. Without an auth key the login page opens in the browser."
 
@@ -1010,6 +1026,10 @@ msgstr "Tailscale network \"%s\": %s"
 #: Source/RdcmX.Sessions.pas
 msgid "Verbinden met Tailscale-netwerk \"%s\"..."
 msgstr "Connecting to Tailscale network \"%s\"..."
+
+#: Source/RdcmX.Sessions.pas
+msgid "%s via Tailscale: %s"
+msgstr "%s via Tailscale: %s"
 
 #: Source/RdcmX.Sessions.pas
 msgid "Het Tailscale-netwerk \"%s\" kon niet worden gestart: %s"
@@ -1596,12 +1616,7 @@ msgid ""
 "Onthouden wachtwoord voor %s gebruiken op:%s\r\n"
 "\r\n"
 "Dit wachtwoord is nog niet voor deze host(s) gebruikt. Kies alleen Ja als u ze vertrouwt; het antwoord wordt onthouden. Bij Nee typt u het wachtwoord zelf in."
-msgstr ""
-"Use the remembered password for %s on:%s
-"
-"
-"
-"This password has not been used for these host(s) yet. Only choose Yes if you trust them; the answer is remembered. With No you type the password yourself."
+msgstr "Use the remembered password for %s on:%This password has not been used for these host(s) yet. Only choose Yes if you trust them; the answer is remembered. With No you type the password yourself."
 
 #: Source/RdcmX.UI.Main.pas
 msgid "Ontgrendel de wachtwoordkluis om met %d servers te verbinden."

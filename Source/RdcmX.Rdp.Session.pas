@@ -203,7 +203,8 @@ type
     procedure BeginPrepare(const aText: string);
     procedure PrepareFailed(const aError: string);
     /// <summary>Adres en poort waarmee de control verbindt (de rest van de instellingen blijft).</summary>
-    procedure SetEndpoint(const aServer: string; aPort: Integer);
+    /// <summary>aDisplayName (optional): name in the status texts, e.g. the server plus what the tailnet resolved.</summary>
+    procedure SetEndpoint(const aServer: string; aPort: Integer; const aDisplayName: string = '');
     procedure Disconnect;
     procedure NotifyDpiChanged;
     class function DesktopScaleFromDpi(aDpi: Integer): Cardinal; static;
@@ -849,10 +850,12 @@ begin
   Log('Voorbereiden mislukt: ' + aError);
 end;
 
-procedure TRdpSession.SetEndpoint(const aServer: string; aPort: Integer);
+procedure TRdpSession.SetEndpoint(const aServer: string; aPort: Integer; const aDisplayName: string);
 begin
   FSettings.Server := aServer;
   FSettings.Port := aPort;
+  if aDisplayName <> '' then
+    FSettings.DisplayName := aDisplayName;
 end;
 
 

@@ -463,6 +463,7 @@ type
     procedure DisconnectSelectedGroup;
     function SelectedGroupServers: TArray<TRdcServer>;
     function CredentialRequest(aServer: TRdcServer; const aContext: TRdcCredentialContext; var aUserName, aDomain: string; out aPassword: string; out aFromVault: Boolean): Boolean;
+    procedure TailnetOptions(aDef: TRdcTailnetDef; out aMatchHostName, aAllowShared: Boolean);
     procedure DisconnectSelectedServer;
     procedure ShowTabOfSelectedServer;
     function OpenSessionsCloseQuestion(aActive: Integer): string;
@@ -892,6 +893,7 @@ begin
   FSessions.OnStateChanged := SessionsStateChanged;
   FSessions.OnDisplayChanged := SessionsDisplayChanged;
   FSessions.OnCredentialRequest := CredentialRequest;
+  FSessions.OnTailnetOptions := TailnetOptions;
   FSessions.OnPlaceHost := PlaceNewHost;
   FSessionWindows := TDictionary<TRdcServer, TfrmSessionWindow>.Create;
   FStoredPasswordUsed := TDictionary<TRdcServer, string>.Create;
@@ -2243,7 +2245,7 @@ begin
   lFile := SelectedFile;
   if lFile = nil then
     Exit;
-  if TfrmTailnets.Execute(lFile, Self, FTailnetManager,
+  if TfrmTailnets.Execute(lFile, Self, FTailnetManager, FAppSettings,
     function(aId: string): Boolean
     begin
       Result := IdInOtherFile(lFile, aId);
@@ -3144,6 +3146,16 @@ begin
   Result := TfrmCredentialPrompt.Execute(Format('%s (%s)', [aServer.Caption, aContext.HostText]), aUserName, aDomain, aPassword, FAppSettings.RememberPasswords, lRemember);
   if Result and lRemember then
     RememberPassword(aServer, aContext, aUserName, aDomain, aPassword);
+end;
+
+procedure TfrmMain.TailnetOptions(aDef: TRdcTailnetDef; out aMatchHostName, aAllowShared: Boolean);
+var
+  lKey: string;
+begin
+  // Client-side opt-ins (Tailscale networks dialog), bound to id + control URL like the tailnet's secrets.
+  lKey := TRdcPasswordVault.TailnetBindingKey(aDef.Id, aDef.ControlUrl);
+  aMatchHostName := FAppSettings.TailnetHostNameMatch.IndexOf(lKey) >= 0;
+  aAllowShared := FAppSettings.TailnetAllowShared.IndexOf(lKey) >= 0;
 end;
 
 function TfrmMain.CredentialTargetFor(aServer: TRdcServer; const aUserName, aDomain: string): string;

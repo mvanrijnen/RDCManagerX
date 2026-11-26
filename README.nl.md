@@ -284,9 +284,14 @@ De RDP-client verbindt met `127.0.0.2` en niet met de echte servernaam. Dat heef
   - De poort wordt exclusief geclaimd, zodat een ander programma hem niet kan kapen.
   - Alleen verbindingen uit het RDCManagerX-proces zelf worden doorgestuurd; andere programma's op de pc worden
     geweigerd.
-- **Alleen binnen het tailnet.** Het doel wordt opgezocht tussen de apparaten in het tailnet (MagicDNS-naam,
-  hostnaam of 100.x-adres, of een adres in een goedgekeurde subnet-route). Een naam of adres buiten het tailnet wordt
-  geweigerd; RDCManagerX verbindt nooit stilletjes buiten Tailscale om. Een exit-node telt niet mee.
+- **Alleen binnen het tailnet.** Het doel wordt opgezocht tussen de apparaten in het tailnet (MagicDNS-naam of
+  100.x-adres, of een adres in een goedgekeurde subnet-route). Een naam of adres buiten het tailnet wordt geweigerd;
+  RDCManagerX verbindt nooit stilletjes buiten Tailscale om. Een exit-node telt niet mee.
+- **Alleen MagicDNS-namen van je eigen tailnet.** De naam die een apparaat zichzelf geeft telt standaard niet mee
+  (anders kan een vreemd apparaat dat zich `srv` noemt het overnemen als de echte server weg of hernoemd is), en
+  apparaten die vanuit een ander tailnet met je gedeeld zijn worden nooit gekozen. Beide kun je per netwerk toestaan
+  in *Bestand > Tailscale-netwerken*; die keuze staat op deze pc, niet in het bestand. De verbindingsstatus toont welk
+  apparaat gekozen is, bijv. `srv01.tail1234.ts.net (100.64.0.10)`.
 - **Geheimen horen bij één server.** Een opgeslagen auth key en node-sleutel horen bij de control server waarvoor ze
   zijn ingevoerd, een gateway-wachtwoord bij die gateway (host en poort).
   - Een bestand dat een netwerk of gateway naar een andere server laat wijzen, krijgt het geheim dus niet.

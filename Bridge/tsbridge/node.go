@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,7 +27,16 @@ type nodeConfig struct {
 	ControlURL string `json:"controlUrl"`
 	Dir        string `json:"dir"`      // werkmap (state bij niet-ephemeral, logconfig); verplicht
 	StateKey   string `json:"stateKey"` // base64, 32 bytes uit de kluis van RDCManagerX; verplicht bij niet-ephemeral
-	LogFile    string `json:"logFile"` // leeg = geen logging
+	LogFile    string `json:"logFile"`  // leeg = geen logging
+	// Opt-ins for resolving targets (see resolveOptions); off = MagicDNS names of our own tailnet only.
+	MatchHostName bool `json:"matchHostName"`
+	AllowShared   bool `json:"allowShared"`
+}
+
+// resolvedTarget is the JSON TsNetResolvedTarget returns: what the last successful checkTarget resolved to.
+type resolvedTarget struct {
+	Name string `json:"name"` // MagicDNS name of the device that serves the target (itself or the subnet router)
+	IP   string `json:"ip"`   // address the forward dials
 }
 
 // nodeStatus is de JSON die TsNetGetStatus teruggeeft.
@@ -45,8 +55,10 @@ type node struct {
 	logf   func(string, ...any)
 	closer func()
 
+	opts     resolveOptions
 	mu       sync.Mutex
 	lastErr  string
+	resolved resolvedTarget
 	started  bool
 	closed   bool
 	forwards map[int]*Forwarder
@@ -100,7 +112,8 @@ func newNode(configJSON string) (*node, error) {
 		clear(stateKey)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	return &node{srv: srv, ctx: ctx, cancel: cancel, logf: logf, closer: closer, forwards: map[int]*Forwarder{}}, nil
+	opts := resolveOptions{MatchHostName: cfg.MatchHostName, AllowShared: cfg.AllowShared}
+	return &node{srv: srv, ctx: ctx, cancel: cancel, logf: logf, closer: closer, opts: opts, forwards: map[int]*Forwarder{}}, nil
 }
 
 func (n *node) setErr(err error) {
@@ -211,7 +224,7 @@ func (n *node) dialTailnet(ctx context.Context, network, address string) (net.Co
 	if err != nil {
 		return nil, err
 	}
-	ip, err := resolveInTailnet(host, peers)
+	ip, err := resolveInTailnet(host, peers, n.opts)
 	if err != nil {
 		return nil, err
 	}
@@ -228,9 +241,14 @@ func (n *node) peers(ctx context.Context) ([]tailnetPeer, error) {
 	if err != nil {
 		return nil, err
 	}
+	suffix := st.MagicDNSSuffix
+	if st.CurrentTailnet != nil && st.CurrentTailnet.MagicDNSSuffix != "" {
+		suffix = st.CurrentTailnet.MagicDNSSuffix
+	}
 	var peers []tailnetPeer
 	for _, ps := range st.Peer {
-		p := tailnetPeer{DNSName: ps.DNSName, HostName: ps.HostName, IPs: ps.TailscaleIPs, Online: ps.Online, LastSeen: ps.LastSeen}
+		p := tailnetPeer{DNSName: ps.DNSName, HostName: ps.HostName, IPs: ps.TailscaleIPs, Online: ps.Online, LastSeen: ps.LastSeen,
+			Shared: isSharedPeer(ps.DNSName, suffix, ps.AltSharerUserID != 0)}
 		if ps.AllowedIPs != nil {
 			p.Routes = ps.AllowedIPs.AsSlice()
 		}
@@ -252,11 +270,24 @@ func (n *node) checkTarget(address string) error {
 	if err != nil {
 		return err
 	}
-	_, peer, err := resolvePeer(host, peers)
+	ip, peer, err := resolvePeer(host, peers, n.opts)
 	if err != nil {
 		return err
 	}
-	return checkPeerOnline(peer)
+	if err := checkPeerOnline(peer); err != nil {
+		return err
+	}
+	n.mu.Lock()
+	n.resolved = resolvedTarget{Name: strings.TrimSuffix(peer.DNSName, "."), IP: ip.String()}
+	n.mu.Unlock()
+	return nil
+}
+
+// lastResolved: the target of the last successful checkTarget (for the connection status in RDCManagerX).
+func (n *node) lastResolved() resolvedTarget {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	return n.resolved
 }
 
 func (n *node) removeForward(port int) error {
