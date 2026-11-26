@@ -352,6 +352,9 @@ object frmMain: TfrmMain
       object miHelpManual: TMenuItem
         Action = actHelpManual
       end
+      object miHelpOnline: TMenuItem
+        Action = actHelpOnline
+      end
     end
   end
   object alMain: TActionList
@@ -478,6 +481,11 @@ object frmMain: TfrmMain
       Caption = 'Handleiding'#9'F1'
       Hint = 'De handleiding van RDCManagerX openen'
       OnExecute = actHelpManualExecute
+    end
+    object actHelpOnline: TAction
+      Caption = 'Online handleiding'
+      Hint = 'De handleiding op de website openen (altijd de nieuwste versie)'
+      OnExecute = actHelpOnlineExecute
     end
     object actGrid11: TAction
       Tag = 11

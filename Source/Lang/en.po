@@ -378,6 +378,10 @@ msgid "Handleiding\tF1"
 msgstr "Manual\tF1"
 
 #: Source/RdcmX.UI.Main.dfm
+msgid "Online handleiding"
+msgstr "Online manual"
+
+#: Source/RdcmX.UI.Main.dfm
 msgid "1 vak (niet splitsen)"
 msgstr "1 pane (no split)"
 

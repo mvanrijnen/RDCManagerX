@@ -81,6 +81,7 @@ type
     miView: TMenuItem;
     miHelp: TMenuItem;
     miHelpManual: TMenuItem;
+    miHelpOnline: TMenuItem;
     miGrid11: TMenuItem;
     miGrid21: TMenuItem;
     miGrid31: TMenuItem;
@@ -130,6 +131,7 @@ type
     pmiAdRefresh: TMenuItem;
     actOptions: TAction;
     actHelpManual: TAction;
+    actHelpOnline: TAction;
     actGrid11: TAction;
     actGrid21: TAction;
     actGrid31: TAction;
@@ -234,6 +236,7 @@ type
     procedure actAdRefreshExecute(Sender: TObject);
     procedure actOptionsExecute(Sender: TObject);
     procedure actHelpManualExecute(Sender: TObject);
+    procedure actHelpOnlineExecute(Sender: TObject);
     procedure actTabReconnectExecute(Sender: TObject);
     procedure actTabDisconnectExecute(Sender: TObject);
     procedure actTabCloseExecute(Sender: TObject);
@@ -320,6 +323,7 @@ type
     procedure OpenStartupFiles;
     procedure CollapseAllFiles;
     procedure ShowManual;
+    procedure ShowOnlineManual;
     procedure UpdatePingTargets;
     procedure PingResultsArrived(const aResults: TArray<TRdcPingResult>);
     function PingKeyOf(aServer: TRdcServer; out aKey: string): Boolean;
@@ -748,6 +752,11 @@ end;
 procedure TfrmMain.actHelpManualExecute(Sender: TObject);
 begin
   ShowManual;
+end;
+
+procedure TfrmMain.actHelpOnlineExecute(Sender: TObject);
+begin
+  ShowOnlineManual;
 end;
 
 procedure TfrmMain.actOptionsExecute(Sender: TObject);
@@ -1290,6 +1299,17 @@ begin
     sbStatus.Panels[0].Text := Format(_('%s is niet bereikbaar (sinds %s)'), [lServer.Caption, FormatDateTime('hh:nn', lSince)])
   else
     sbStatus.Panels[0].Text := Format(_('%s is niet bereikbaar'), [lServer.Caption]);
+end;
+
+procedure TfrmMain.ShowOnlineManual;
+const
+  cOnlineManual = 'https://mvanrijnen.github.io/RDCManagerX/';
+begin
+  // The manual site in the UI language (fixed https URL, opened in the default browser).
+  if UiLanguageCode = 'en' then
+    ShellExecute(Handle, 'open', PChar(cOnlineManual + 'en/'), nil, nil, SW_SHOWNORMAL)
+  else
+    ShellExecute(Handle, 'open', PChar(cOnlineManual + 'nl/'), nil, nil, SW_SHOWNORMAL);
 end;
 
 procedure TfrmMain.ShowManual;
