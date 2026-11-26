@@ -32,6 +32,8 @@ Wake-on-LAN, Windows.
 Work with several sessions at the same time: the session area can be split into a grid of panes, each with its own
 tabs. Choose a layout in the **View** menu (*Beeld*):
 
+![Four sessions in a 2x2 grid, dark theme (demo servers are not reachable, so each pane shows the disconnect reason)](Docs/images/splitview-en.png)
+
 - quick choices: 1 pane, 2/3/4 side by side, 2 stacked, 2×2, 3×2 and 4×2;
 - **Custom…** (*Aangepast…*): any grid up to 6 columns × 3 rows;
 - **Distribute evenly** (*Gelijk verdelen*) resets the splitters.
@@ -60,6 +62,17 @@ composition, window contents while dragging, animations, visual styles, persiste
 reconnect. On top of that, **Keep session active** sends a tiny mouse movement to the session now and then while you
 are not working in it, so the server does not lock or start its screen saver.
 
+<img src="Docs/images/settings-experience-en.png" width="480" alt="Properties, Experience tab">
+
+## Logon
+
+The password is asked at every connect, unless it is remembered in the password vault (*Remember passwords* in
+Options, off by default; the check box in the prompt is never ticked by itself). **Remember user name and domain** is
+separate from that: it stores the name with the server in the file (with the group when connecting a group), as on
+the *Logon* tab, never the password.
+
+<img src="Docs/images/logon-en.png" width="400" alt="Logon prompt">
+
 ## Connection routes
 
 For each server or group you choose how RDCManagerX reaches the server: **Properties > Route**
@@ -70,6 +83,8 @@ For each server or group you choose how RDCManagerX reaches the server: **Proper
 | **Direct** (default) | The usual behaviour. The settings on the *Gateway* tab (RDCMan-compatible) still apply. |
 | **Via Tailscale network** | RDCManagerX itself temporarily becomes a device in your tailnet and sends only its own RDP traffic through it. Tailscale does not need to be installed on this PC. ⚠️ **Only safe with an ACL in your tailnet** (see [Tailscale](#tailscale)). |
 | **Via RDP gateway** | Connect through a Microsoft RD Gateway from the file's gateway list. ⚠️ **Not tested yet.** |
+
+<img src="Docs/images/settings-route-en.png" width="480" alt="Properties, Route tab with a Tailscale network">
 
 The **definitions** of networks and gateways belong to the file. For an `.rdg` they are stored in the sidecar
 `<file>.rdg.rdcx.json`, for an `.rdcx` in the file itself. The `.rdg` file therefore stays unchanged and RDCMan can

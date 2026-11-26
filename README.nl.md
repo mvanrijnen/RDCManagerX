@@ -28,6 +28,8 @@ Wake-on-LAN, Windows.
 Werk met meerdere sessies tegelijk: het sessiegebied kan worden verdeeld in een raster van vakken, elk met eigen tabs.
 Kies een indeling in het menu **Beeld**:
 
+![Vier sessies in een raster van 2x2, donker thema (de demoservers zijn niet bereikbaar, dus elk vak toont de reden)](Docs/images/splitview-nl.png)
+
 - snelle keuzes: 1 vak, 2/3/4 naast elkaar, 2 boven elkaar, 2×2, 3×2 en 4×2;
 - **Aangepast…**: elk raster tot 6 kolommen × 3 rijen;
 - **Gelijk verdelen** zet de splitters terug.
@@ -57,6 +59,17 @@ vloeiende lettertypen, bureaubladsamenstelling, vensterinhoud tijdens slepen, an
 bitmapcache en automatisch opnieuw verbinden. Daarnaast stuurt **Sessie actief houden** af en toe een kleine
 muisbeweging naar de sessie zolang je er niet in werkt, zodat de server niet vergrendelt of de schermbeveiliging start.
 
+<img src="Docs/images/settings-experience-nl.png" width="480" alt="Eigenschappen, tabblad Gebruikerservaring">
+
+## Aanmelden
+
+Het wachtwoord wordt bij elke verbinding gevraagd, tenzij het onthouden is in de wachtwoordkluis (*Wachtwoorden
+onthouden* in Opties, standaard uit; het vinkje in de aanmeldvraag staat nooit vanzelf aan). **Gebruikersnaam en domein
+onthouden** staat daar los van: het zet de naam bij de server in het bestand (bij een groep verbinden: bij de groep),
+zoals op het tabblad *Aanmelden*, nooit het wachtwoord.
+
+<img src="Docs/images/logon-nl.png" width="400" alt="Aanmeldvraag">
+
 ## Verbindingsroutes
 
 Per server of groep stel je in hoe RDCManagerX de server bereikt: **Eigenschappen > Route**. Net als de andere
@@ -67,6 +80,8 @@ instellingen erft de route van de bovenliggende groep.
 | **Direct** (standaard) | Hetzelfde gedrag als vroeger. Ook de instellingen op de tab *Gateway* (RDCMan-compatibel) blijven gelden. |
 | **Via Tailscale-netwerk** | RDCManagerX wordt zelf, tijdelijk, een apparaat in je tailnet en stuurt alleen zijn eigen RDP-verkeer daarover. Tailscale hoeft op deze pc niet geïnstalleerd te zijn. ⚠️ **Alleen veilig met een ACL in je tailnet** (zie [Tailscale](#tailscale)). |
 | **Via RDP-gateway** | Verbinden via een Microsoft RD Gateway uit de lijst van het bestand. ⚠️ **Nog niet getest.** |
+
+<img src="Docs/images/settings-route-nl.png" width="480" alt="Eigenschappen, tabblad Route met een Tailscale-netwerk">
 
 De **definities** van netwerken en gateways horen bij het bestand. Bij een `.rdg` staan ze in de sidecar
 `<bestand>.rdg.rdcx.json`, bij een `.rdcx` in het bestand zelf. Het `.rdg`-bestand blijft daardoor ongewijzigd en
