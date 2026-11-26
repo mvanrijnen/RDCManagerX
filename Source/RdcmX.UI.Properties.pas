@@ -94,6 +94,7 @@ type
     procedure BuildSectionPages;
     procedure BuildRoutePage;
     procedure BuildExperiencePage;
+    procedure BuildAdPage;
     procedure cbConnectionSpeedChange(Sender: TObject);
     procedure ApplyExperiencePreset;
     procedure ApplyFieldHints;
@@ -377,6 +378,12 @@ begin
     lPage.SetHint('redirectPrinters', _('Printers van deze pc gebruiken in de sessie.'));
     lPage.SetHint('redirectPorts', _('COM- en LPT-poorten van deze pc doorgeven aan de sessie.'));
     lPage.SetHint('redirectSmartCards', _('Smartcards van deze pc gebruiken in de sessie (ook om aan te melden).'));
+    lPage.SetHint('ouDn', _('Distinguished name van de OU, bijv. OU=Computers,DC=contoso,DC=com. Leeg = geen koppeling.'));
+    lPage.SetHint('server', _('Domeincontroller of domein om te bevragen; leeg = het domein van deze pc.'));
+    lPage.SetHint('subOus', _('Aan: elke sub-OU wordt een subgroep. Uit: alle computers direct in deze groep.'));
+    lPage.SetHint('skipDisabled', _('Computeraccounts die in AD zijn uitgeschakeld niet tonen.'));
+    lPage.SetHint('nameFilter', _('Alleen computers waarvan de naam hierop past (* en ? als jokertekens); leeg = alle.'));
+    lPage.SetHint('refreshOnOpen', _('Bij het openen van het bestand automatisch verversen (alleen als deze OU op deze pc al eens is goedgekeurd).'));
     lPage.SetHint('connectionSpeed', _('Snelheid van de verbinding met deze server. Bij een keuze worden de vinkjes hieronder gezet zoals in Verbinding met extern bureaublad (mstsc); u kunt ze daarna aanpassen.'));
     lPage.SetHint('desktopBackground', _('Achtergrondafbeelding van het externe bureaublad tonen (kost bandbreedte).'));
     lPage.SetHint('fontSmoothing', _('ClearType-lettertypen in de sessie.'));
@@ -411,6 +418,25 @@ begin
   FExperiencePage.AddCheck('autoReconnect', _('Opnieuw verbinding maken als de verbinding wordt verbroken'));
   FExperiencePage.AddCheck('keepAlive', _('Sessie actief houden (vergrendelen en schermbeveiliging op de server voorkomen)'));
   FExperiencePage.AddHint(_('Bij "Automatisch detecteren" past de server de weergave aan de verbinding aan. Wijzigingen gelden bij de volgende verbinding.'));
+end;
+
+procedure TfrmProperties.BuildAdPage;
+var
+  lPage: TRdcSectionPage;
+begin
+  // AD link of this group (user request): does not inherit, so no inherit check box and the defaults (never the
+  // parent's link) as the start. Saved only when an OU is filled in (SaveToNode).
+  FWork.Ad.Inherit := False;
+  lPage := TRdcSectionPage.Create(pcPages, _('Active Directory'), '', FWork.Ad, TRdcNode.AppDefaults.Ad);
+  FPages.Add(lPage);
+  lPage.HideInherit;
+  lPage.AddText('ouDn', _('OU (distinguished name)'), 300);
+  lPage.AddText('server', _('Domeincontroller (optioneel)'), 300);
+  lPage.AddCheck('subOus', _('Sub-OU''s als subgroepen tonen'));
+  lPage.AddCheck('skipDisabled', _('Uitgeschakelde computeraccounts overslaan'));
+  lPage.AddText('nameFilter', _('Alleen computernamen als (bijv. SRV*)'), 160);
+  lPage.AddCheck('refreshOnOpen', _('Verversen bij het openen van het bestand'));
+  lPage.AddHint(_('Server > Verversen vanuit Active Directory vult deze groep met de computers in de OU (met je Windows-account). Ze worden gewone servers; verdwenen computers gaan bij verversen weg, zelf toegevoegde blijven. Erft niet over.'));
 end;
 
 procedure TfrmProperties.cbConnectionSpeedChange(Sender: TObject);
@@ -550,6 +576,9 @@ begin
 
   lPage := AddPage(_('Beveiliging'), TRdcSecuritySettings);
   lPage.AddChoice('authentication', _('Serverauthenticatie'), cRdcAuthenticationNames, [_('Verbinden zonder waarschuwing'), _('Niet verbinden als verificatie mislukt'), _('Waarschuwen als verificatie mislukt')]);
+
+  if FNode is TRdcGroup then
+    BuildAdPage;
 
   for lPage in FPages do
     lPage.Refresh;
@@ -775,6 +804,12 @@ begin
   for lPage in FPages do
     lPage.ApplyToWork;
   SyncRemoteDesktopWithDisplayMode;
+  // No OU = no AD link: no own section (so nothing in the sidecar), like Wake-on-LAN.
+  if FWork.Ad.OuDn = '' then
+  begin
+    FWork.Ad.Inherit := True;
+    FWork.Ad.Clear;
+  end;
   FNode.Settings.Assign(FWork);
 end;
 

@@ -350,6 +350,10 @@ msgid "Alle servers verbreken"
 msgstr "Disconnect all servers"
 
 #: Source/RdcmX.UI.Main.dfm
+msgid "Verversen vanuit Active Directory"
+msgstr "Refresh from Active Directory"
+
+#: Source/RdcmX.UI.Main.dfm
 msgid "Onthouden wachtwoord vergeten"
 msgstr "Forget remembered password"
 
@@ -820,6 +824,22 @@ msgstr "Start the network, show the address in the tailnet and shut it down agai
 #: Source/RdcmX.UI.Tailnets.dfm Source/RdcmX.UI.Tailnets.pas
 msgid "Test verbinding"
 msgstr "Test connection"
+
+#: Source/RdcmX.AdLdap.pas
+msgid "Geen OU opgegeven."
+msgstr "No OU specified."
+
+#: Source/RdcmX.AdLdap.pas
+msgid "De OU \"%s\" bevat een ongeldig teken."
+msgstr "The OU \"%s\" contains an invalid character."
+
+#: Source/RdcmX.AdLdap.pas
+msgid "\"%s\" is geen distinguished name (bijv. OU=Computers,DC=contoso,DC=com)."
+msgstr "\"%s\" is not a distinguished name (e.g. OU=Computers,DC=contoso,DC=com)."
+
+#: Source/RdcmX.AdLdap.pas
+msgid "De domeincontroller \"%s\" bevat een ongeldig teken."
+msgstr "The domain controller \"%s\" contains an invalid character."
 
 #: Source/RdcmX.Crypto.pas
 msgid "%s mislukt (status $%.8x)"
@@ -1554,6 +1574,48 @@ msgstr ""
 "%s"
 
 #: Source/RdcmX.UI.Main.pas
+msgid "(domein van deze pc)"
+msgstr "(domain of this PC)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Computers ophalen uit Active Directory?\r\n"
+"\r\n"
+"OU: %s\r\n"
+"Domeincontroller: %s\r\n"
+"\r\n"
+"Dit gebruikt uw Windows-account. Kies alleen Ja als u deze gegevens vertrouwt; het antwoord wordt op deze pc onthouden."
+msgstr ""
+"Get computers from Active Directory?\r\n"
+"\r\n"
+"OU: %s\r\n"
+"Domain controller: %s\r\n"
+"\r\n"
+"This uses your Windows account. Only choose Yes if you trust these details; the answer is remembered on this PC."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%s: ophalen uit Active Directory..."
+msgstr "%s: getting computers from Active Directory..."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%s: ophalen uit Active Directory mislukt."
+msgstr "%s: getting computers from Active Directory failed."
+
+#: Source/RdcmX.UI.Main.pas
+msgid ""
+"Ophalen uit Active Directory mislukt:\r\n"
+"\r\n"
+"%s"
+msgstr ""
+"Getting computers from Active Directory failed:\r\n"
+"\r\n"
+"%s"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "%s: Active Directory ververst (%d nieuw, %d bijgewerkt, %d verwijderd, %d behouden)."
+msgstr "%s: refreshed from Active Directory (%d new, %d updated, %d removed, %d kept)."
+
+#: Source/RdcmX.UI.Main.pas
 msgid "... en nog %d melding(en)."
 msgstr "... and %d more message(s)."
 
@@ -1985,6 +2047,30 @@ msgid "Smartcards van deze pc gebruiken in de sessie (ook om aan te melden)."
 msgstr "Use the smart cards of this PC in the session (also to log on)."
 
 #: Source/RdcmX.UI.Properties.pas
+msgid "Distinguished name van de OU, bijv. OU=Computers,DC=contoso,DC=com. Leeg = geen koppeling."
+msgstr "Distinguished name of the OU, e.g. OU=Computers,DC=contoso,DC=com. Empty = not linked."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Domeincontroller of domein om te bevragen; leeg = het domein van deze pc."
+msgstr "Domain controller or domain to query; empty = the domain of this PC."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Aan: elke sub-OU wordt een subgroep. Uit: alle computers direct in deze groep."
+msgstr "On: every sub-OU becomes a subgroup. Off: all computers directly in this group."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Computeraccounts die in AD zijn uitgeschakeld niet tonen."
+msgstr "Do not show computer accounts that are disabled in AD."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Alleen computers waarvan de naam hierop past (* en ? als jokertekens); leeg = alle."
+msgstr "Only computers whose name matches this (* and ? as wildcards); empty = all."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Bij het openen van het bestand automatisch verversen (alleen als deze OU op deze pc al eens is goedgekeurd)."
+msgstr "Refresh automatically when the file is opened (only if this OU was approved on this PC before)."
+
+#: Source/RdcmX.UI.Properties.pas
 msgid "Snelheid van de verbinding met deze server. Bij een keuze worden de vinkjes hieronder gezet zoals in Verbinding met extern bureaublad (mstsc); u kunt ze daarna aanpassen."
 msgstr "Speed of the connection to this server. Choosing one sets the check boxes below as in Remote Desktop Connection (mstsc); you can change them afterwards."
 
@@ -2103,6 +2189,38 @@ msgstr "Keep session active (prevent lock and screen saver on the server)"
 #: Source/RdcmX.UI.Properties.pas
 msgid "Bij \"Automatisch detecteren\" past de server de weergave aan de verbinding aan. Wijzigingen gelden bij de volgende verbinding."
 msgstr "With \"Detect automatically\" the server adapts the display to the connection. Changes apply at the next connection."
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Active Directory"
+msgstr "Active Directory"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "OU (distinguished name)"
+msgstr "OU (distinguished name)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Domeincontroller (optioneel)"
+msgstr "Domain controller (optional)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Sub-OU's als subgroepen tonen"
+msgstr "Show sub-OUs as subgroups"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Uitgeschakelde computeraccounts overslaan"
+msgstr "Skip disabled computer accounts"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Alleen computernamen als (bijv. SRV*)"
+msgstr "Only computer names like (e.g. SRV*)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Verversen bij het openen van het bestand"
+msgstr "Refresh when the file is opened"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Server > Verversen vanuit Active Directory vult deze groep met de computers in de OU (met je Windows-account). Ze worden gewone servers; verdwenen computers gaan bij verversen weg, zelf toegevoegde blijven. Erft niet over."
+msgstr "Server > Refresh from Active Directory fills this group with the computers in the OU (with your Windows account). They become normal servers; computers that are gone are removed on refresh, ones you added stay. Does not inherit."
 
 #: Source/RdcmX.UI.Properties.pas
 msgid "Route"

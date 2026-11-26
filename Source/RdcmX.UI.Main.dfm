@@ -231,6 +231,9 @@ object frmMain: TfrmMain
       object miDisconnectGroup: TMenuItem
         Action = actDisconnectGroup
       end
+      object miAdRefresh: TMenuItem
+        Action = actAdRefresh
+      end
       object miWakeOnLan: TMenuItem
         Action = actWakeOnLan
       end
@@ -447,6 +450,10 @@ object frmMain: TfrmMain
       Caption = 'Alle servers verbreken'
       OnExecute = actDisconnectGroupExecute
     end
+    object actAdRefresh: TAction
+      Caption = 'Verversen vanuit Active Directory'
+      OnExecute = actAdRefreshExecute
+    end
     object actForgetPassword: TAction
       Caption = 'Onthouden wachtwoord vergeten'
       OnExecute = actForgetPasswordExecute
@@ -576,6 +583,9 @@ object frmMain: TfrmMain
     end
     object pmiDisconnectGroup: TMenuItem
       Action = actDisconnectGroup
+    end
+    object pmiAdRefresh: TMenuItem
+      Action = actAdRefresh
     end
     object pmiWakeOnLan: TMenuItem
       Action = actWakeOnLan

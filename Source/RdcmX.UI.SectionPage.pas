@@ -109,6 +109,8 @@ type
     procedure SetFieldValue(const aElement, aText: string);
     /// <summary>Uitleg (tooltip) bij een veld en zijn label; onbekend veld = niets doen.</summary>
     procedure SetHint(const aElement, aHint: string);
+    /// <summary>For a section that does not inherit (AD link): no inherit check box, always own values.</summary>
+    procedure HideInherit;
     property IsOwn: Boolean read GetIsOwn;
     property Sheet: TTabSheet read FSheet;
     /// <summary>Na een wijziging door de gebruiker (niet tijdens laden).</summary>
@@ -583,6 +585,12 @@ begin
   finally
     FLoading := False;
   end;
+end;
+
+procedure TRdcSectionPage.HideInherit;
+begin
+  FInheritBox.Checked := False;
+  FInheritBox.Visible := False;
 end;
 
 function TRdcSectionPage.GetIsOwn: Boolean;

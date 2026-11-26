@@ -173,6 +173,10 @@ opnieuw met de nieuwe afmeting.</p>
   <tr><td>Route</td><td>Direct, via RD Gateway of via Tailscale; bereikbaarheid (ping)</td></tr>
   <tr><td>Weergave</td><td>Weergavemodus, schaal, vaste grootte, kleurdiepte</td></tr>
   <tr><td>Lokale bronnen</td><td>Klembord, stations, printers, geluid, smartcards, Windows-toetsen</td></tr>
+  <tr><td>Active Directory</td><td>Alleen bij een groep, erft niet over: koppeling aan een AD-OU (bijv. <code>OU=Computers,DC=contoso,DC=com</code>).
+    <em>Server &gt; Verversen vanuit Active Directory</em> vult de groep met de computers daarin (sub-OU's als subgroepen, of plat), met je
+    eigen Windows-account. Ze worden gewone servers; verdwenen computers gaan bij verversen weg (niet met een open sessie), zelf
+    toegevoegde servers blijven. De eerste keer per domeincontroller + OU vraagt de app om bevestiging.</td></tr>
   <tr><td>Gebruikerservaring</td><td>Verbindingssnelheid en weergave-opties zoals in mstsc (achtergrond, vloeiende lettertypen, animaties,
     visuele stijlen), bitmapcache, automatisch opnieuw verbinden, en <em>Sessie actief houden</em>: zolang je niet in de sessie werkt,
     krijgt die af en toe een kleine muisbeweging, zodat de server niet vergrendelt of de schermbeveiliging start.</td></tr>

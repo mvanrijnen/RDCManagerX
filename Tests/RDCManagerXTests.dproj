@@ -93,6 +93,8 @@
         <DCCReference Include="RdcmX.Tests.Ping.pas"/>
         <DCCReference Include="RdcmX.Tests.Redirections.pas"/>
         <DCCReference Include="RdcmX.Tests.Experience.pas"/>
+        <DCCReference Include="..\Source\RdcmX.AdSync.pas"/>
+        <DCCReference Include="RdcmX.Tests.AdSync.pas"/>
         <DCCReference Include="RdcmX.Tests.Lang.pas"/>
         <RcCompile Include="TsBridgeTest.rc">
             <Form>TsBridgeTest.res</Form>

@@ -84,6 +84,8 @@
         </DelphiCompile>
         <DCCReference Include="Source\RdcmX.DllSearch.pas"/>
         <DCCReference Include="Source\Imports\MSTSCLib_TLB.pas"/>
+        <DCCReference Include="Source\RdcmX.AdLdap.pas"/>
+        <DCCReference Include="Source\RdcmX.AdSync.pas"/>
         <DCCReference Include="Source\RdcmX.AppSettings.pas"/>
         <DCCReference Include="Source\RdcmX.Credentials.pas"/>
         <DCCReference Include="Source\RdcmX.Crypto.pas"/>

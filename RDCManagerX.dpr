@@ -5,6 +5,8 @@ uses
   RdcmX.DllSearch in 'Source\RdcmX.DllSearch.pas',
   Vcl.Forms,
   MSTSCLib_TLB in 'Source\Imports\MSTSCLib_TLB.pas',
+  RdcmX.AdLdap in 'Source\RdcmX.AdLdap.pas',
+  RdcmX.AdSync in 'Source\RdcmX.AdSync.pas',
   RdcmX.AppSettings in 'Source\RdcmX.AppSettings.pas',
   RdcmX.Credentials in 'Source\RdcmX.Credentials.pas',
   RdcmX.Crypto in 'Source\RdcmX.Crypto.pas',

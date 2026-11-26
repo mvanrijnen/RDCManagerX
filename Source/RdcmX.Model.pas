@@ -357,6 +357,45 @@ type
     function NetworkConnectionType: Cardinal;
   end;
 
+  /// <summary>RDCManX extra: the group is linked to an Active Directory OU; "Refresh from Active Directory" fills it
+  /// with the computers (and sub-OUs as subgroups) below it. Does NOT inherit: read it from the group's own
+  /// Settings.Ad (Inherit = False means configured), never through Effective. Never in the .rdg.</summary>
+  TRdcxAdSettings = class(TRdcSettingsGroup)
+  private
+    function GetOuDn: string;
+    procedure SetOuDn(const aValue: string);
+  public
+    class function XmlName: string; override;
+    class function ElementOrder: TArray<string>; override;
+    class function ElementDefaults: TArray<string>; override;
+    class function InRdg: Boolean; override;
+    /// <summary>Distinguished name of the OU, e.g. OU=Computers,DC=contoso,DC=com.</summary>
+    property OuDn: string read GetOuDn write SetOuDn;
+    /// <summary>Domain controller or domain; empty = the domain of this PC.</summary>
+    function Server: string;
+    /// <summary>Sub-OUs as subgroups (default); off = all computers directly in the group.</summary>
+    function SubOus: Boolean;
+    function SkipDisabled: Boolean;
+    /// <summary>Wildcard on the computer name (e.g. SRV*); empty = all.</summary>
+    function NameFilter: string;
+    function RefreshOnOpen: Boolean;
+    /// <summary>Configured: an own section with an OU.</summary>
+    function IsLinked: Boolean;
+  end;
+
+  /// <summary>RDCManX extra on a node created by an AD refresh: its distinguished name (does not inherit).</summary>
+  TRdcxAdItemSettings = class(TRdcSettingsGroup)
+  private
+    function GetDn: string;
+    procedure SetDn(const aValue: string);
+  public
+    class function XmlName: string; override;
+    class function ElementOrder: TArray<string>; override;
+    class function ElementDefaults: TArray<string>; override;
+    class function InRdg: Boolean; override;
+    property Dn: string read GetDn write SetDn;
+  end;
+
   TRdcNodeSettings = class
   private
     FGroups: TObjectList<TRdcSettingsGroup>;
@@ -372,6 +411,8 @@ type
     function GetRoute: TRdcxRouteSettings;
     function GetSecurity: TRdcSecuritySettings;
     function GetExperience: TRdcxExperienceSettings;
+    function GetAd: TRdcxAdSettings;
+    function GetAdItem: TRdcxAdItemSettings;
   public
     constructor Create(aInherit: Boolean);
     destructor Destroy; override;
@@ -393,6 +434,10 @@ type
     property Route: TRdcxRouteSettings read GetRoute;
     property Security: TRdcSecuritySettings read GetSecurity;
     property Experience: TRdcxExperienceSettings read GetExperience;
+    /// <summary>AD link of a group; does not inherit (see TRdcxAdSettings).</summary>
+    property Ad: TRdcxAdSettings read GetAd;
+    /// <summary>DN of a node created by an AD refresh; does not inherit.</summary>
+    property AdItem: TRdcxAdItemSettings read GetAdItem;
   end;
 
   // --- Nodes -------------------------------------------------------------------------------------------------
@@ -1382,6 +1427,107 @@ begin
   SetInt('wolPort', aValue);
 end;
 
+{ TRdcxAdSettings }
+
+class function TRdcxAdSettings.XmlName: string;
+begin
+  Result := 'rdcmxAd';
+end;
+
+class function TRdcxAdSettings.ElementOrder: TArray<string>;
+begin
+  Result := ['ouDn', 'server', 'subOus', 'skipDisabled', 'nameFilter', 'refreshOnOpen'];
+end;
+
+class function TRdcxAdSettings.ElementDefaults: TArray<string>;
+begin
+  Result := ['', '', cRdcTrue, cRdcTrue, '', cRdcFalse];
+end;
+
+class function TRdcxAdSettings.InRdg: Boolean;
+begin
+  Result := False;
+end;
+
+function TRdcxAdSettings.GetOuDn: string;
+begin
+  Result := Trim(GetValue('ouDn'));
+end;
+
+procedure TRdcxAdSettings.SetOuDn(const aValue: string);
+begin
+  SetValue('ouDn', aValue);
+end;
+
+function TRdcxAdSettings.Server: string;
+begin
+  Result := Trim(GetValue('server'));
+end;
+
+function TRdcxAdSettings.SubOus: Boolean;
+begin
+  Result := GetBool('subOus');
+end;
+
+function TRdcxAdSettings.SkipDisabled: Boolean;
+begin
+  Result := GetBool('skipDisabled');
+end;
+
+function TRdcxAdSettings.NameFilter: string;
+begin
+  Result := Trim(GetValue('nameFilter'));
+end;
+
+function TRdcxAdSettings.RefreshOnOpen: Boolean;
+begin
+  Result := GetBool('refreshOnOpen');
+end;
+
+function TRdcxAdSettings.IsLinked: Boolean;
+begin
+  Result := not Inherit and (OuDn <> '');
+end;
+
+{ TRdcxAdItemSettings }
+
+class function TRdcxAdItemSettings.XmlName: string;
+begin
+  Result := 'rdcmxAdItem';
+end;
+
+class function TRdcxAdItemSettings.ElementOrder: TArray<string>;
+begin
+  Result := ['dn'];
+end;
+
+class function TRdcxAdItemSettings.ElementDefaults: TArray<string>;
+begin
+  Result := [''];
+end;
+
+class function TRdcxAdItemSettings.InRdg: Boolean;
+begin
+  Result := False;
+end;
+
+function TRdcxAdItemSettings.GetDn: string;
+begin
+  if Inherit then
+    Result := ''
+  else
+    Result := GetValue('dn');
+end;
+
+procedure TRdcxAdItemSettings.SetDn(const aValue: string);
+begin
+  Inherit := aValue = '';
+  if Inherit then
+    Clear
+  else
+    SetValue('dn', aValue);
+end;
+
 { TRdcxExperienceSettings }
 
 class function TRdcxExperienceSettings.XmlName: string;
@@ -1610,6 +1756,8 @@ begin
   FGroups.Add(TRdcxHostSettings.Create);
   FGroups.Add(TRdcxRouteSettings.Create);
   FGroups.Add(TRdcxExperienceSettings.Create);
+  FGroups.Add(TRdcxAdSettings.Create);
+  FGroups.Add(TRdcxAdItemSettings.Create);
   for lGroup in FGroups do
     lGroup.Inherit := aInherit;
 end;
@@ -1676,6 +1824,16 @@ end;
 function TRdcNodeSettings.GetHost: TRdcxHostSettings;
 begin
   Result := TRdcxHostSettings(Find(TRdcxHostSettings));
+end;
+
+function TRdcNodeSettings.GetAd: TRdcxAdSettings;
+begin
+  Result := TRdcxAdSettings(Find(TRdcxAdSettings));
+end;
+
+function TRdcNodeSettings.GetAdItem: TRdcxAdItemSettings;
+begin
+  Result := TRdcxAdItemSettings(Find(TRdcxAdItemSettings));
 end;
 
 function TRdcNodeSettings.GetExperience: TRdcxExperienceSettings;

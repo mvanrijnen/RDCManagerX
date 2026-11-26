@@ -28,7 +28,7 @@ uses
   Winapi.CommCtrl, Winapi.Messages, Winapi.MultiMon, Winapi.Windows,
   System.Actions, System.Classes, System.DateUtils, System.Generics.Collections, System.ImageList, System.Math, System.StrUtils, System.SysUtils, System.Types, System.UITypes,
   Vcl.ActnList, Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Graphics, Vcl.ImgList, Vcl.Menus, Vcl.StdCtrls, Vcl.WinXCtrls,
-  RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Lang, RdcmX.Model, RdcmX.Ping, RdcmX.Rdp.Session, RdcmX.Redirections, RdcmX.Sessions, RdcmX.Shortcuts, RdcmX.Storage, RdcmX.Tailscale, RdcmX.UI.SessionPanes, RdcmX.UI.SessionWindow, RdcmX.UI.Theme;
+  RdcmX.AdLdap, RdcmX.AdSync, RdcmX.AppSettings, RdcmX.Credentials, RdcmX.Lang, RdcmX.Model, RdcmX.Ping, RdcmX.Rdp.Session, RdcmX.Redirections, RdcmX.Sessions, RdcmX.Shortcuts, RdcmX.Storage, RdcmX.Tailscale, RdcmX.UI.SessionPanes, RdcmX.UI.SessionWindow, RdcmX.UI.Theme;
 
 type
   TRdcTreeShortcutKind = (tskFavoritesHeader, tskRecentHeader, tskFavorite, tskRecent);
@@ -125,6 +125,9 @@ type
     actTabFullScreen: TAction;
     actTabDock: TAction;
     actDisconnectGroup: TAction;
+    actAdRefresh: TAction;
+    miAdRefresh: TMenuItem;
+    pmiAdRefresh: TMenuItem;
     actOptions: TAction;
     actHelpManual: TAction;
     actGrid11: TAction;
@@ -228,6 +231,7 @@ type
     procedure pmtScaleItemClick(Sender: TObject);
     procedure pmTabsPopup(Sender: TObject);
     procedure actDisconnectGroupExecute(Sender: TObject);
+    procedure actAdRefreshExecute(Sender: TObject);
     procedure actOptionsExecute(Sender: TObject);
     procedure actHelpManualExecute(Sender: TObject);
     procedure actTabReconnectExecute(Sender: TObject);
@@ -277,6 +281,8 @@ type
     // Onthouden wachtwoorden (Windows Referentiebeheer): welk opgeslagen wachtwoord een verbinding gebruikte, zodat
     // een door de server geweigerd wachtwoord automatisch vergeten wordt.
     FStoredPasswordUsed: TDictionary<TRdcServer, string>;
+    FAdGuard: IRdcCallbackGuard;
+    FAdRefreshing: TDictionary<string, Boolean>;
     FSelectingFromTree: Boolean; // tab wordt geactiveerd vanuit de boom: geen focus naar de sessie, boom niet terugzetten
     FVault: TRdcPasswordVault;
     FTailnetManager: TRdcTailnetManager;
@@ -414,6 +420,13 @@ type
     function SelectedFile: TRdcFile;
     procedure ShowLoadWarnings(aFile: TRdcFile);
     procedure WarnAboutRedirections(aFile: TRdcFile);
+    function AdRootOf(aNode: TRdcNode): TRdcGroup;
+    function AdApprovalKey(aGroup: TRdcGroup): string;
+    function ConfirmAdQuery(aGroup: TRdcGroup): Boolean;
+    procedure RefreshSelectedAdGroup;
+    procedure RefreshAdGroup(aGroup: TRdcGroup; aInteractive: Boolean);
+    procedure AdQueryFinished(aFile: TRdcFile; const aPath, aKey: string; aOk: Boolean; const aEntries: TArray<TRdcAdEntry>; const aError: string; aInteractive: Boolean);
+    procedure RefreshAdGroupsOnOpen(aFile: TRdcFile);
     procedure AcceptRedirectionsOf(aFile: TRdcFile);
     procedure UpdateFileNodeText(aFile: TRdcFile);
     procedure UpdateRecentMenu;
@@ -727,6 +740,11 @@ begin
   DisconnectSelectedGroup;
 end;
 
+procedure TfrmMain.actAdRefreshExecute(Sender: TObject);
+begin
+  RefreshSelectedAdGroup;
+end;
+
 procedure TfrmMain.actHelpManualExecute(Sender: TObject);
 begin
   ShowManual;
@@ -900,6 +918,8 @@ begin
   FSessions.OnPlaceHost := PlaceNewHost;
   FSessionWindows := TDictionary<TRdcServer, TfrmSessionWindow>.Create;
   FStoredPasswordUsed := TDictionary<TRdcServer, string>.Create;
+  FAdRefreshing := TDictionary<string, Boolean>.Create;
+  FAdGuard := RdcNewCallbackGuard;
   FVault := TRdcPasswordVault.Create(TRdcWindowsBlobStore.Create);
   FTailnetManager := TRdcTailnetManager.Create;
   FPingStates := TDictionary<string, TRdcPingResult>.Create;
@@ -946,6 +966,9 @@ procedure TfrmMain.FinalizeForm;
 var
   lFile: TRdcFile;
 begin
+  // AD queries still running in the background must not deliver into a closing form.
+  if FAdGuard <> nil then
+    FAdGuard.Invalidate;
   if FAppSettings <> nil then
   begin
     FAppSettings.OpenFiles.Clear;
@@ -966,6 +989,7 @@ begin
   FreeAndNil(FPingChecked);
   FreeAndNil(FSessionWindows);
   FreeAndNil(FStoredPasswordUsed);
+  FreeAndNil(FAdRefreshing);
   if FVaultTimer <> nil then
     FVaultTimer.Enabled := False;
   FreeAndNil(FVault); // vergrendelt en wist de sleutel
@@ -2592,6 +2616,160 @@ begin
   UpdateRecentMenu;
   ShowLoadWarnings(Result);
   WarnAboutRedirections(Result);
+  RefreshAdGroupsOnOpen(Result);
+end;
+
+{ Active Directory }
+
+function TfrmMain.AdRootOf(aNode: TRdcNode): TRdcGroup;
+begin
+  // The linked group itself, or the nearest linked group above (a sub-OU group refreshes its whole AD group).
+  Result := nil;
+  while aNode <> nil do
+  begin
+    if (aNode is TRdcGroup) and aNode.Settings.Ad.IsLinked then
+      Exit(TRdcGroup(aNode));
+    aNode := aNode.Parent;
+  end;
+end;
+
+function TfrmMain.AdApprovalKey(aGroup: TRdcGroup): string;
+begin
+  Result := LowerCase(aGroup.Settings.Ad.Server) + '|' + RdcAdNormalizeDn(aGroup.Settings.Ad.OuDn);
+end;
+
+function TfrmMain.ConfirmAdQuery(aGroup: TRdcGroup): Boolean;
+var
+  lServer: string;
+begin
+  // Once per domain controller + OU on this PC: a file from someone else could name an LDAP server of an attacker,
+  // to which Windows might authenticate with this account.
+  if FAppSettings.AdApprovals.IndexOf(AdApprovalKey(aGroup)) >= 0 then
+    Exit(True);
+  lServer := aGroup.Settings.Ad.Server;
+  if lServer = '' then
+    lServer := _('(domein van deze pc)');
+  Result := MessageDlg(Format(_('Computers ophalen uit Active Directory?'#13#10#13#10'OU: %s'#13#10'Domeincontroller: %s'#13#10#13#10'Dit gebruikt uw Windows-account. Kies alleen Ja als u deze gegevens vertrouwt; het antwoord wordt op deze pc onthouden.'), [aGroup.Settings.Ad.OuDn, lServer]), mtConfirmation, [mbYes, mbNo], 0) = mrYes;
+  if Result then
+    FAppSettings.AdApprovals.Add(AdApprovalKey(aGroup));
+end;
+
+procedure TfrmMain.RefreshSelectedAdGroup;
+var
+  lGroup: TRdcGroup;
+begin
+  lGroup := AdRootOf(SelectedNode);
+  if lGroup <> nil then
+    RefreshAdGroup(lGroup, True);
+end;
+
+procedure TfrmMain.RefreshAdGroup(aGroup: TRdcGroup; aInteractive: Boolean);
+var
+  lFile: TRdcFile;
+  lGuard: IRdcCallbackGuard;
+  lKey: string;
+  lOu: string;
+  lPath: string;
+  lServer: string;
+begin
+  lFile := aGroup.RdcFile;
+  if lFile = nil then
+    Exit;
+  if aInteractive and not ConfirmAdQuery(aGroup) then
+    Exit;
+  if not aInteractive and (FAppSettings.AdApprovals.IndexOf(AdApprovalKey(aGroup)) < 0) then
+    Exit;
+  // Found back by path after the query: the group may have been deleted or the file closed meanwhile.
+  if aGroup = lFile then
+    lPath := ''
+  else
+    lPath := aGroup.Path(True);
+  lKey := AdApprovalKey(aGroup);
+  if FAdRefreshing.ContainsKey(lKey) then
+    Exit;
+  FAdRefreshing.Add(lKey, True);
+  lServer := aGroup.Settings.Ad.Server;
+  lOu := aGroup.Settings.Ad.OuDn;
+  lGuard := FAdGuard;
+  sbStatus.Panels[0].Text := Format(_('%s: ophalen uit Active Directory...'), [aGroup.Caption]);
+  TThread.CreateAnonymousThread(
+    procedure
+    var
+      lEntries: TArray<TRdcAdEntry>;
+      lError: string;
+      lOk: Boolean;
+    begin
+      lOk := RdcAdQuery(lServer, lOu, lEntries, lError);
+      TThread.Queue(nil,
+        procedure
+        begin
+          if lGuard.IsValid then
+            AdQueryFinished(lFile, lPath, lKey, lOk, lEntries, lError, aInteractive);
+        end);
+    end).Start;
+end;
+
+procedure TfrmMain.AdQueryFinished(aFile: TRdcFile; const aPath, aKey: string; aOk: Boolean; const aEntries: TArray<TRdcAdEntry>; const aError: string; aInteractive: Boolean);
+var
+  lGroup: TRdcGroup;
+  lNode: TRdcNode;
+  lResult: TRdcAdSyncResult;
+begin
+  FAdRefreshing.Remove(aKey);
+  if not FFiles.Contains(aFile) then
+    Exit;
+  if aPath = '' then
+    lNode := aFile
+  else
+    lNode := aFile.FindByPath(aPath);
+  if not (lNode is TRdcGroup) or not lNode.Settings.Ad.IsLinked or (AdApprovalKey(TRdcGroup(lNode)) <> aKey) then
+    Exit; // deleted, moved or relinked meanwhile
+  lGroup := TRdcGroup(lNode);
+  if not aOk then
+  begin
+    sbStatus.Panels[0].Text := Format(_('%s: ophalen uit Active Directory mislukt.'), [lGroup.Caption]);
+    TRdcLog.Write(Format('%s: AD-query mislukt: %s', [lGroup.Caption, aError]));
+    if aInteractive then
+      MessageDlg(Format(_('Ophalen uit Active Directory mislukt:'#13#10#13#10'%s'), [aError]), mtError, [mbOK], 0);
+    Exit;
+  end;
+  lResult := RdcAdSync(lGroup, aEntries,
+    function(aServer: TRdcServer): Boolean
+    begin
+      Result := FPanes.Contains(aServer) or (FSessions.StateOf(aServer) <> rssDisconnected);
+    end,
+    procedure(aNode: TRdcNode)
+    begin
+      FShortcuts.NodeRemoved(aNode);
+      if aNode is TRdcServer then
+        FStoredPasswordUsed.Remove(TRdcServer(aNode));
+    end);
+  if lResult.Added + lResult.Updated + lResult.Removed > 0 then
+  begin
+    BuildTree;
+    MarkModified(lGroup);
+    StoreShortcuts;
+    UpdatePingTargets;
+  end;
+  sbStatus.Panels[0].Text := Format(_('%s: Active Directory ververst (%d nieuw, %d bijgewerkt, %d verwijderd, %d behouden).'), [lGroup.Caption, lResult.Added, lResult.Updated, lResult.Removed, lResult.Kept]);
+  TRdcLog.Write(Format('%s: AD ververst: %d nieuw, %d bijgewerkt, %d verwijderd, %d behouden', [lGroup.Caption, lResult.Added, lResult.Updated, lResult.Removed, lResult.Kept]));
+end;
+
+procedure TfrmMain.RefreshAdGroupsOnOpen(aFile: TRdcFile);
+
+  procedure Visit(aGroup: TRdcGroup);
+  var
+    lIndex: Integer;
+  begin
+    if aGroup.Settings.Ad.IsLinked and aGroup.Settings.Ad.RefreshOnOpen then
+      RefreshAdGroup(aGroup, False); // only already approved OUs (RefreshAdGroup checks)
+    for lIndex := 0 to aGroup.Count - 1 do
+      if aGroup[lIndex] is TRdcGroup then
+        Visit(TRdcGroup(aGroup[lIndex]));
+  end;
+
+begin
+  Visit(aFile);
 end;
 
 procedure TfrmMain.WarnAboutRedirections(aFile: TRdcFile);
@@ -3823,6 +4001,7 @@ begin
   actChangeMasterPassword.Visible := FAppSettings.RememberPasswords;
   actChangeMasterPassword.Enabled := FAppSettings.RememberPasswords and FVault.IsInitialized;
   actConnectGroup.Enabled := lNode is TRdcGroup;
+  actAdRefresh.Enabled := AdRootOf(lNode) <> nil;
   actDisconnectGroup.Enabled := lNode is TRdcGroup;
   if FShortcuts.IsFavorite(lServer) then
     actFavorite.Caption := _('Uit favorieten verwijderen')

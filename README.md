@@ -64,6 +64,17 @@ are not working in it, so the server does not lock or start its screen saver.
 
 <img src="Docs/images/settings-experience-en.png" width="480" alt="Properties, Experience tab">
 
+## Active Directory
+
+A group can be linked to an AD OU (**Properties > Active Directory**, for example
+`OU=Computers,DC=contoso,DC=com`). **Server > Refresh from Active Directory** then fills the group with the computers
+in that OU, with sub-OUs as subgroups (or flat), using your own Windows account (signed and sealed LDAP, read only).
+The computers become normal servers in the file, so the settings of the group apply to them, and their own settings
+and favorites survive a refresh. Computers that are gone from AD are removed (not while a session is open); servers
+you added yourself stay. Optionally the group refreshes when the file is opened. The link itself does not inherit.
+The first query of a domain controller + OU asks for confirmation once per PC, because a file from someone else could
+point at a foreign LDAP server.
+
 ## Logon
 
 The password is asked at every connect, unless it is remembered in the password vault (*Remember passwords* in

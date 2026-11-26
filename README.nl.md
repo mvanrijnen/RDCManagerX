@@ -61,6 +61,17 @@ muisbeweging naar de sessie zolang je er niet in werkt, zodat de server niet ver
 
 <img src="Docs/images/settings-experience-nl.png" width="480" alt="Eigenschappen, tabblad Gebruikerservaring">
 
+## Active Directory
+
+Een groep kun je koppelen aan een AD-OU (**Eigenschappen > Active Directory**, bijvoorbeeld
+`OU=Computers,DC=contoso,DC=com`). **Server > Verversen vanuit Active Directory** vult de groep dan met de computers in
+die OU, met sub-OU's als subgroepen (of plat), met je eigen Windows-account (ondertekende en versleutelde LDAP, alleen
+lezen). De computers worden gewone servers in het bestand: de instellingen van de groep gelden voor hen, en hun eigen
+instellingen en favorieten blijven bij verversen bewaard. Computers die uit AD verdwenen zijn worden verwijderd (niet
+zolang er een sessie open is); zelf toegevoegde servers blijven staan. Optioneel ververst de groep bij het openen van
+het bestand. De koppeling zelf erft niet over. De eerste keer dat een domeincontroller + OU bevraagd wordt, vraagt de
+app per pc om bevestiging, omdat een bestand van iemand anders naar een vreemde LDAP-server kan wijzen.
+
 ## Aanmelden
 
 Het wachtwoord wordt bij elke verbinding gevraagd, tenzij het onthouden is in de wachtwoordkluis (*Wachtwoorden

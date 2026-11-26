@@ -66,6 +66,7 @@ type
     FTailnetHostNameMatch: TStringList;
     FTailnetAllowShared: TStringList;
     FAcceptedRedirections: TStringList;
+    FAdApprovals: TStringList;
     FSnapshot: TDictionary<string, string>; // sleutel -> JSON zoals bij laden/laatste opslaan
     procedure MigrateSplitMode(const aSplitMode: string; aSplitRatio: Double);
     function BuildJson: TJSONObject;
@@ -117,6 +118,8 @@ type
     /// <summary>Fingerprints (RdcRedirectionFingerprint) of redirection warnings already shown or of files saved by
     /// the user; newest last.</summary>
     property AcceptedRedirections: TStringList read FAcceptedRedirections;
+    /// <summary>Domain controller + OU combinations the user allowed to be queried (RdcAdApprovalKey).</summary>
+    property AdApprovals: TStringList read FAdApprovals;
     /// <summary>Adds a fingerprint (keeps the newest cMaxAcceptedRedirections).</summary>
     procedure AcceptRedirections(const aFingerprint: string);
   end;
@@ -145,6 +148,8 @@ begin
   FTailnetAllowShared.CaseSensitive := False;
   FAcceptedRedirections := TStringList.Create;
   FAcceptedRedirections.CaseSensitive := False;
+  FAdApprovals := TStringList.Create;
+  FAdApprovals.CaseSensitive := False;
   FLayouts := TDictionary<string, TRdcWindowLayout>.Create;
   FSnapshot := TDictionary<string, string>.Create;
   FGridColumns := 1;
@@ -166,6 +171,7 @@ begin
   FTailnetHostNameMatch.Free;
   FTailnetAllowShared.Free;
   FAcceptedRedirections.Free;
+  FAdApprovals.Free;
   inherited Destroy;
 end;
 
@@ -271,6 +277,7 @@ begin
         ReadList(TJSONObject(lRoot), 'tailnetHostNameMatch', FTailnetHostNameMatch);
         ReadList(TJSONObject(lRoot), 'tailnetAllowShared', FTailnetAllowShared);
         ReadList(TJSONObject(lRoot), 'acceptedRedirections', FAcceptedRedirections);
+        ReadList(TJSONObject(lRoot), 'adApprovals', FAdApprovals);
         FLastLayoutKey := TJSONObject(lRoot).GetValue<string>('lastLayout', '');
         if TJSONObject(lRoot).GetValue('gridColumns') <> nil then
         begin
@@ -439,6 +446,7 @@ begin
     lRoot.AddPair('tailnetHostNameMatch', WriteList(FTailnetHostNameMatch));
     lRoot.AddPair('tailnetAllowShared', WriteList(FTailnetAllowShared));
     lRoot.AddPair('acceptedRedirections', WriteList(FAcceptedRedirections));
+    lRoot.AddPair('adApprovals', WriteList(FAdApprovals));
     lRoot.AddPair('lastLayout', FLastLayoutKey);
     lRoot.AddPair('gridColumns', TJSONNumber.Create(FGridColumns));
     lRoot.AddPair('gridRows', TJSONNumber.Create(FGridRows));
