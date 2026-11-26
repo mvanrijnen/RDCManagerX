@@ -157,18 +157,21 @@ func TestIsSharedPeer(t *testing.T) {
 	cases := []struct {
 		dns, suffix string
 		sharer      bool
+		sharee      bool
 		want        bool
 	}{
-		{"srv.tail1234.ts.net.", "tail1234.ts.net", false, false},
-		{"SRV.Tail1234.ts.net", "tail1234.ts.net.", false, false},
-		{"srv.other.ts.net.", "tail1234.ts.net", false, true},
-		{"srv.tail1234.ts.net.", "tail1234.ts.net", true, true},  // reported as shared by the control server
-		{"srv.whatever.", "", false, false},                      // no suffix known: only the sharer field counts
-		{"eviltail1234.ts.net.", "tail1234.ts.net", false, true}, // suffix must follow a dot
+		{"srv.tail1234.ts.net.", "tail1234.ts.net", false, false, false},
+		{"SRV.Tail1234.ts.net", "tail1234.ts.net.", false, false, false},
+		{"srv.other.ts.net.", "tail1234.ts.net", false, false, true},
+		{"srv.tail1234.ts.net.", "tail1234.ts.net", true, false, true},  // reported as shared by the control server
+		{"srv.whatever.", "", false, false, false},                      // no suffix known: only the flags count
+		{"srv.whatever.", "", false, true, true},                        // ShareeNode without a suffix
+		{"srv.whatever.", "", true, false, true},                        // shared, no suffix
+		{"eviltail1234.ts.net.", "tail1234.ts.net", false, false, true}, // suffix must follow a dot
 	}
 	for _, c := range cases {
-		if got := isSharedPeer(c.dns, c.suffix, c.sharer); got != c.want {
-			t.Errorf("isSharedPeer(%q, %q, %v) = %v", c.dns, c.suffix, c.sharer, got)
+		if got := isSharedPeer(c.dns, c.suffix, c.sharer, c.sharee); got != c.want {
+			t.Errorf("isSharedPeer(%q, %q, %v, %v) = %v", c.dns, c.suffix, c.sharer, c.sharee, got)
 		}
 	}
 }

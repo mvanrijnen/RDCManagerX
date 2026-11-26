@@ -161,9 +161,10 @@ type resolveOptions struct {
 }
 
 // isSharedPeer: a device from another tailnet. Shared-in devices keep the MagicDNS domain of their own tailnet, and
-// the control server reports who shared them. Without a known suffix only the sharer field counts.
-func isSharedPeer(dnsName, magicDNSSuffix string, altSharer bool) bool {
-	if altSharer {
+// the control server reports who shared them (AltSharerUserID) or that they are only there because they were shared
+// to us (ShareeNode). Those two flags count even when the MagicDNS suffix is unknown.
+func isSharedPeer(dnsName, magicDNSSuffix string, altSharer, shareeNode bool) bool {
+	if altSharer || shareeNode {
 		return true
 	}
 	suffix := strings.ToLower(strings.Trim(magicDNSSuffix, "."))

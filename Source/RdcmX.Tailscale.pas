@@ -112,8 +112,8 @@ type
     /// <summary>Staat aTarget (host:poort) in het tailnet en is het apparaat online? False met uitleg (bijv.
     /// "thuis-pc is offline in het tailnet (laatst gezien ...)").</summary>
     function CheckTarget(const aTarget: string; out aError: string): Boolean;
-    /// <summary>What the last successful CheckTarget resolved to: "magicdns-name (100.x.y.z)"; '' if unknown.</summary>
-    function ResolvedTargetText: string;
+    /// <summary>What the last successful CheckTarget of aTarget resolved to: "magicdns-name (100.x.y.z)"; '' if unknown.</summary>
+    function ResolvedTargetText(const aTarget: string): string;
     /// <summary>Sluit de node (breekt een lopende Up af). Mag vanuit elke thread.</summary>
     procedure Close;
     property Handle: Integer read FHandle;
@@ -464,7 +464,7 @@ type
   TTsNetAddForward = function(aHandle: Integer; aLocalAddr, aTarget: PAnsiChar): Integer; cdecl;
   TTsNetRemoveForward = function(aHandle, aLocalPort: Integer): Integer; cdecl;
   TTsNetCheckTarget = function(aHandle: Integer; aTarget: PAnsiChar): Integer; cdecl;
-  TTsNetResolvedTarget = function(aHandle: Integer; aBuf: PAnsiChar; aBufLen: Integer): Integer; cdecl;
+  TTsNetResolvedTarget = function(aHandle: Integer; aTarget: PAnsiChar; aBuf: PAnsiChar; aBufLen: Integer): Integer; cdecl;
   TTsNetClose = function(aHandle: Integer): Integer; cdecl;
   TTsLastError = function(aHandle: Integer; aBuf: PAnsiChar; aBufLen: Integer): Integer; cdecl;
 
@@ -975,21 +975,23 @@ begin
   end;
 end;
 
-function TRdcTailnet.ResolvedTargetText: string;
+function TRdcTailnet.ResolvedTargetText(const aTarget: string): string;
 var
   lHandle: Integer;
   lJson: TJSONValue;
   lIp: string;
   lName: string;
+  lTarget: UTF8String;
 begin
   Result := '';
   lHandle := FHandle;
   if lHandle <= 0 then
     Exit;
+  lTarget := UTF8String(aTarget);
   lJson := TJSONObject.ParseJSONValue(ReadText(
     function(aBuf: PAnsiChar; aBufLen: Integer): Integer
     begin
-      Result := GTsNetResolvedTarget(lHandle, aBuf, aBufLen);
+      Result := GTsNetResolvedTarget(lHandle, PAnsiChar(lTarget), aBuf, aBufLen);
     end));
   try
     if lJson is TJSONObject then
@@ -1272,7 +1274,7 @@ begin
   aResolved := '';
   Result := CheckTarget(aId, aTarget, aError);
   if Result and FEntries.TryGetValue(aId, lEntry) and (lEntry.Net <> nil) then
-    aResolved := lEntry.Net.ResolvedTargetText;
+    aResolved := lEntry.Net.ResolvedTargetText(aTarget);
 end;
 
 procedure TRdcTailnetManager.CloseAll;

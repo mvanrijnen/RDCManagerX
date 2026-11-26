@@ -33,7 +33,7 @@ type nodeConfig struct {
 	AllowShared   bool `json:"allowShared"`
 }
 
-// resolvedTarget is the JSON TsNetResolvedTarget returns: what the last successful checkTarget resolved to.
+// resolvedTarget is the JSON TsNetResolvedTarget returns: what the last successful checkTarget of a target resolved to.
 type resolvedTarget struct {
 	Name string `json:"name"` // MagicDNS name of the device that serves the target (itself or the subnet router)
 	IP   string `json:"ip"`   // address the forward dials
@@ -58,7 +58,7 @@ type node struct {
 	opts     resolveOptions
 	mu       sync.Mutex
 	lastErr  string
-	resolved resolvedTarget
+	resolved map[string]resolvedTarget // per target (host:port): several sessions can share one node
 	started  bool
 	closed   bool
 	forwards map[int]*Forwarder
@@ -248,7 +248,7 @@ func (n *node) peers(ctx context.Context) ([]tailnetPeer, error) {
 	var peers []tailnetPeer
 	for _, ps := range st.Peer {
 		p := tailnetPeer{DNSName: ps.DNSName, HostName: ps.HostName, IPs: ps.TailscaleIPs, Online: ps.Online, LastSeen: ps.LastSeen,
-			Shared: isSharedPeer(ps.DNSName, suffix, ps.AltSharerUserID != 0)}
+			Shared: isSharedPeer(ps.DNSName, suffix, ps.AltSharerUserID != 0, ps.ShareeNode)}
 		if ps.AllowedIPs != nil {
 			p.Routes = ps.AllowedIPs.AsSlice()
 		}
@@ -278,16 +278,19 @@ func (n *node) checkTarget(address string) error {
 		return err
 	}
 	n.mu.Lock()
-	n.resolved = resolvedTarget{Name: strings.TrimSuffix(peer.DNSName, "."), IP: ip.String()}
+	if n.resolved == nil {
+		n.resolved = map[string]resolvedTarget{}
+	}
+	n.resolved[address] = resolvedTarget{Name: strings.TrimSuffix(peer.DNSName, "."), IP: ip.String()}
 	n.mu.Unlock()
 	return nil
 }
 
-// lastResolved: the target of the last successful checkTarget (for the connection status in RDCManagerX).
-func (n *node) lastResolved() resolvedTarget {
+// lastResolved: what the last successful checkTarget of this target resolved to (for the connection status).
+func (n *node) lastResolved(address string) resolvedTarget {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	return n.resolved
+	return n.resolved[address]
 }
 
 func (n *node) removeForward(port int) error {

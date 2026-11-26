@@ -159,12 +159,15 @@ func TsNetCheckTarget(h C.int, target *C.char) C.int {
 }
 
 //export TsNetResolvedTarget
-func TsNetResolvedTarget(h C.int, buf *C.char, buflen C.int) C.int {
+func TsNetResolvedTarget(h C.int, target *C.char, buf *C.char, buflen C.int) C.int {
 	n := lookup(h)
 	if n == nil {
 		return codeInvalidHandle
 	}
-	data, _ := json.Marshal(n.lastResolved())
+	if target == nil {
+		return codeInvalidArgs
+	}
+	data, _ := json.Marshal(n.lastResolved(C.GoString(target)))
 	return writeBuf(buf, buflen, string(data))
 }
 
