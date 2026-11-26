@@ -11,7 +11,7 @@
 
 📖 **Manual (English / Dutch, HTML and PDF): [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/)**
 
-![RDCManagerX with the fictional Contoso demo file](Docs/images/screenshot-en.png)
+![RDCManagerX in daily use: two panes with live sessions next to an Active Directory group (names anonymised)](Docs/images/work-splitview.jpg)
 
 An RDP connection manager in the style of Microsoft Remote Desktop Connection Manager (RDCMan). It reads and writes
 RDCMan `.rdg` files and also has its own format, `.rdcx`.
@@ -40,10 +40,6 @@ Work with several sessions at the same time: the session area can be split into 
 tabs. Choose a layout in the **View** menu (*Beeld*):
 
 ![Four sessions in a 2x2 grid, dark theme (demo servers are not reachable, so each pane shows the disconnect reason)](Docs/images/splitview-en.png)
-
-In daily use: two panes with live sessions next to an Active Directory group (names anonymised):
-
-![Two panes with live sessions; the tree shows an AD-linked group with reachability colours (anonymised)](Docs/images/work-splitview.jpg)
 
 - quick choices: 1 pane, 2/3/4 side by side, 2 stacked, 2×2, 3×2 and 4×2;
 - **Custom…** (*Aangepast…*): any grid up to 6 columns × 3 rows;

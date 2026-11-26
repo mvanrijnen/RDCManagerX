@@ -11,7 +11,7 @@
 
 📖 **Handleiding (Nederlands / Engels, HTML en PDF): [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/nl/)**
 
-![RDCManagerX met het fictieve demobestand Contoso](Docs/images/screenshot-nl.png)
+![RDCManagerX in de praktijk: twee vakken met live sessies naast een Active Directory-groep (namen geanonimiseerd)](Docs/images/work-splitview.jpg)
 
 Een RDP-verbindingsbeheerder in de stijl van Microsoft Remote Desktop Connection Manager (RDCMan). Het programma
 leest en schrijft `.rdg`-bestanden van RDCMan en heeft een eigen formaat, `.rdcx`.
@@ -36,10 +36,6 @@ Werk met meerdere sessies tegelijk: het sessiegebied kan worden verdeeld in een 
 Kies een indeling in het menu **Beeld**:
 
 ![Vier sessies in een raster van 2x2, donker thema (de demoservers zijn niet bereikbaar, dus elk vak toont de reden)](Docs/images/splitview-nl.png)
-
-In de praktijk: twee vakken met live sessies naast een Active Directory-groep (namen geanonimiseerd):
-
-![Twee vakken met live sessies; de boom toont een AD-gekoppelde groep met bereikbaarheidskleuren (geanonimiseerd)](Docs/images/work-splitview.jpg)
 
 - snelle keuzes: 1 vak, 2/3/4 naast elkaar, 2 boven elkaar, 2×2, 3×2 en 4×2;
 - **Aangepast…**: elk raster tot 6 kolommen × 3 rijen;
