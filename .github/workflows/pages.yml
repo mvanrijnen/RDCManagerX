@@ -8,6 +8,7 @@ on:
     branches: [ "main" ]
     paths:
       - "Docs/**"
+      - "Tools/site-layout.py"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -34,13 +35,11 @@ jobs:
           mkdir -p site/en site/nl
           cp Docs/site/index.html site/index.html
           cp -r Docs/images site/images
-          cp Docs/RDCManagerX-Manual.html site/en/index.html
           cp Docs/RDCManagerX-Manual.pdf site/en/
-          cp Docs/RDCManagerX-Handleiding.html site/nl/index.html
           cp Docs/RDCManagerX-Handleiding.pdf site/nl/
-          # Language switch and PDF link at the top of each manual (only on the site, not in the app's copy).
-          sed -i 's|<div class="page">|<div class="page"><p style="text-align:right;margin:0 0 8px"><a href="../">Home</a> \&middot; <strong>English</strong> \&middot; <a href="../nl/">Nederlands</a> \&middot; <a href="RDCManagerX-Manual.pdf">PDF</a></p>|' site/en/index.html
-          sed -i 's|<div class="page">|<div class="page"><p style="text-align:right;margin:0 0 8px"><a href="../">Home</a> \&middot; <a href="../en/">English</a> \&middot; <strong>Nederlands</strong> \&middot; <a href="RDCManagerX-Handleiding.pdf">PDF</a></p>|' site/nl/index.html
+          # Manual pages laid out like a CHM viewer (contents tree left, language switch and PDF at the top).
+          python3 Tools/site-layout.py Docs/RDCManagerX-Manual.html site/en/index.html en RDCManagerX-Manual.pdf
+          python3 Tools/site-layout.py Docs/RDCManagerX-Handleiding.html site/nl/index.html nl RDCManagerX-Handleiding.pdf
           touch site/.nojekyll
 
       - name: Configure Pages
