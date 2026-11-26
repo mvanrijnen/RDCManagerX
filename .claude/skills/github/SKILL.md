@@ -40,6 +40,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\make-release-zip.ps1
 
 It prints the zip path (`Win64\Release\RDCManagerX-<version>-win64.zip`, exe + LICENSE), the version and the
 SHA-256 of zip and exe. The version (`yyyy.mm.dd.xxx`) comes from the exe; the tag is `v<version>`.
+It also writes `Win64\Release\version.json`: the asset the update check downloads first (its download count
+is the number of update checks, `.github/workflows/stats.yml` records it per day). Always upload it with the zip.
 
 ## 4. Privacy check of the binary
 
@@ -67,7 +69,7 @@ Publishing is outward-facing: show the user the version, tag and the notes, and 
 explicit go. Then:
 
 ```
-gh release create v<version> "Win64\Release\RDCManagerX-<version>-win64.zip" --target main --title "RDCManagerX <version>" --notes-file <notes file> --latest
+gh release create v<version> "Win64\Release\RDCManagerX-<version>-win64.zip" "Win64\Release\version.json" --target main --title "RDCManagerX <version>" --notes-file <notes file> --latest
 ```
 
 - Normal releases marked latest (user decision 2026-11-25, after the first release); `--prerelease` only when the

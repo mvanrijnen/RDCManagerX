@@ -167,4 +167,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File Tools\make-release-zip.ps1
 ```
 
 Dit pakt de Release-exe en `LICENSE` in `Win64\Release\RDCManagerX-<versie>-win64.zip` en toont de SHA-256 van de zip
-en de exe voor de release notes. Een release is altijd deze zip, nooit de losse exe; de tag is `v<versie>`.
+en de exe voor de release notes. Een release is altijd deze zip, nooit de losse exe; de tag is `v<versie>`. Het script
+schrijft ook `Win64\Release\version.json`; upload dat samen met de zip. De update check in de app downloadt dat
+bestand eerst, dus het aantal downloads ervan op GitHub is het aantal update checks.
+`.github/workflows/stats.yml` schrijft de tellers per dag naar `downloads.csv` op de branch `stats`.

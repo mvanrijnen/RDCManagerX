@@ -3,9 +3,14 @@
 {
   Update check: asks GitHub which release is the latest and compares its version with this exe.
 
-  - One fixed request: HTTPS GET https://api.github.com/repos/mvanrijnen/RDCManagerX/releases/latest. WinHTTP
-    validates the certificate; no redirects, no other hosts. User-Agent "RDCManagerX" (GitHub requires one; it carries
-    no user data). GitHub sees the IP address of this PC, nothing else.
+  - First HTTPS GET https://github.com/mvanrijnen/RDCManagerX/releases/latest/download/version.json, a small asset
+    of every release (Tools\make-release-zip.ps1). GitHub counts asset downloads, so the release page shows how many
+    update checks there were (a daily snapshot: .github/workflows/stats.yml). GitHub redirects that download to its
+    asset host; redirects are followed over https only and the final URL must be github.com or *.githubusercontent.com.
+    Without that asset (older releases) or on failure: the API, HTTPS GET
+    https://api.github.com/repos/mvanrijnen/RDCManagerX/releases/latest, without redirects.
+  - WinHTTP validates the certificates. User-Agent "RDCManagerX" (GitHub requires one; it carries no user data).
+    GitHub sees the IP address of this PC, nothing else.
   - Nothing is downloaded or run: the result is only a version number and the release page, which the user can open
     in the browser. The page URL from the answer is used only when it is the release page of this repository.
   - WinHTTP is imported here with "delayed" (System.Net.HttpClient imports winhttp.dll statically, which would let
@@ -38,6 +43,8 @@ function RdcParseLatestRelease(const aJson: string; out aRelease: TRdcLatestRele
 function RdcCompareVersions(const aLeft, aRight: string): Integer;
 /// <summary>Is aVersion of the form yyyy.mm.dd.xxx (four numeric parts)?</summary>
 function RdcIsVersion(const aVersion: string): Boolean;
+/// <summary>May the version.json download end up at aUrl (https, github.com or *.githubusercontent.com)?</summary>
+function RdcIsAllowedDownloadUrl(const aUrl: string): Boolean;
 
 implementation
 
@@ -60,9 +67,13 @@ const
   WINHTTP_QUERY_FLAG_NUMBER = $20000000;
   WINHTTP_OPTION_REDIRECT_POLICY = 88;
   WINHTTP_OPTION_REDIRECT_POLICY_NEVER = 0;
+  WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP = 1;
+  WINHTTP_OPTION_URL = 34;
   INTERNET_DEFAULT_HTTPS_PORT = 443;
   cApiHost = 'api.github.com';
   cApiPath = '/repos/mvanrijnen/RDCManagerX/releases/latest';
+  cDownloadHost = 'github.com';
+  cVersionAssetPath = '/mvanrijnen/RDCManagerX/releases/latest/download/version.json';
   cMaxAnswer = 1024 * 1024;
 
 function WinHttpOpen(aAgent: PWideChar; aAccessType: DWORD; aProxy, aProxyBypass: PWideChar; aFlags: DWORD): HINTERNET; stdcall; external cWinHttp name 'WinHttpOpen' delayed;
@@ -74,6 +85,7 @@ function WinHttpSendRequest(aRequest: HINTERNET; aHeaders: PWideChar; aHeadersLe
 function WinHttpReceiveResponse(aRequest: HINTERNET; aReserved: Pointer): BOOL; stdcall; external cWinHttp name 'WinHttpReceiveResponse' delayed;
 function WinHttpQueryHeaders(aRequest: HINTERNET; aInfoLevel: DWORD; aName: PWideChar; aBuffer: Pointer; var aBufferLength: DWORD; aIndex: PDWORD): BOOL; stdcall; external cWinHttp name 'WinHttpQueryHeaders' delayed;
 function WinHttpReadData(aRequest: HINTERNET; aBuffer: Pointer; aToRead: DWORD; var aRead: DWORD): BOOL; stdcall; external cWinHttp name 'WinHttpReadData' delayed;
+function WinHttpQueryOption(aHandle: HINTERNET; aOption: DWORD; aBuffer: Pointer; var aLength: DWORD): BOOL; stdcall; external cWinHttp name 'WinHttpQueryOption' delayed;
 function WinHttpCloseHandle(aHandle: HINTERNET): BOOL; stdcall; external cWinHttp name 'WinHttpCloseHandle' delayed;
 
 function IsDigits(const aText: string): Boolean;
@@ -152,7 +164,21 @@ begin
   Result := True;
 end;
 
-function RdcFetchLatestRelease(out aRelease: TRdcLatestRelease; out aError: string): Boolean;
+function RdcIsAllowedDownloadUrl(const aUrl: string): Boolean;
+var
+  lHost: string;
+  lRest: string;
+begin
+  // Where a release asset download may end up after GitHub's redirects: github.com itself or its asset hosts
+  // (objects.githubusercontent.com, release-assets.githubusercontent.com). https only.
+  if not aUrl.StartsWith('https://', True) then
+    Exit(False);
+  lRest := Copy(aUrl, Length('https://') + 1, MaxInt);
+  lHost := LowerCase(Copy(lRest, 1, Pos('/', lRest + '/') - 1));
+  Result := (lHost = 'github.com') or (lHost.EndsWith('.githubusercontent.com') and not lHost.Contains('@') and not lHost.Contains(':'));
+end;
+
+function HttpsGet(aSession: HINTERNET; const aHost, aPath: string; aFollowRedirects: Boolean; out aBody: string; out aError: string): Boolean;
 var
   lAnswer: TBytes;
   lChunk: array[0..8191] of Byte;
@@ -160,45 +186,30 @@ var
   lPolicy: DWORD;
   lRead: DWORD;
   lRequest: HINTERNET;
-  lSession: HINTERNET;
   lSize: DWORD;
   lStatus: DWORD;
+  lUrl: array[0..2047] of Char;
 begin
-  aRelease := Default(TRdcLatestRelease);
+  aBody := '';
   aError := '';
   Result := False;
-  lConnect := nil;
   lRequest := nil;
+  lConnect := WinHttpConnect(aSession, PChar(aHost), INTERNET_DEFAULT_HTTPS_PORT, 0);
   try
-    // Automatic proxy (Windows 8.1 and later), the same as the browser uses.
-    lSession := WinHttpOpen('RDCManagerX', WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, nil, nil, 0);
-    if lSession = nil then
-      lSession := WinHttpOpen('RDCManagerX', WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, nil, nil, 0);
-  except
-    on E: Exception do
-    begin
-      aError := E.Message; // winhttp.dll not loadable
-      Exit;
-    end;
-  end;
-  if lSession = nil then
-  begin
-    aError := SysErrorMessage(GetLastError);
-    Exit;
-  end;
-  try
-    WinHttpSetTimeouts(lSession, 10000, 10000, 10000, 15000);
-    lConnect := WinHttpConnect(lSession, cApiHost, INTERNET_DEFAULT_HTTPS_PORT, 0);
     if lConnect <> nil then
-      lRequest := WinHttpOpenRequest(lConnect, 'GET', cApiPath, nil, nil, nil, WINHTTP_FLAG_SECURE);
+      lRequest := WinHttpOpenRequest(lConnect, 'GET', PChar(aPath), nil, nil, nil, WINHTTP_FLAG_SECURE);
     if lRequest = nil then
     begin
       aError := SysErrorMessage(GetLastError);
       Exit;
     end;
-    lPolicy := WINHTTP_OPTION_REDIRECT_POLICY_NEVER;
+    // Redirects only for the release asset (github.com -> its asset host), and never from https to http.
+    if aFollowRedirects then
+      lPolicy := WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP
+    else
+      lPolicy := WINHTTP_OPTION_REDIRECT_POLICY_NEVER;
     WinHttpSetOption(lRequest, WINHTTP_OPTION_REDIRECT_POLICY, @lPolicy, SizeOf(lPolicy));
-    if not WinHttpSendRequest(lRequest, 'Accept: application/vnd.github+json', DWORD(-1), nil, 0, 0, 0) or not WinHttpReceiveResponse(lRequest, nil) then
+    if not WinHttpSendRequest(lRequest, 'Accept: application/vnd.github+json, application/octet-stream', DWORD(-1), nil, 0, 0, 0) or not WinHttpReceiveResponse(lRequest, nil) then
     begin
       aError := SysErrorMessage(GetLastError);
       Exit;
@@ -209,6 +220,16 @@ begin
     begin
       aError := Format('HTTP %d', [lStatus]);
       Exit;
+    end;
+    if aFollowRedirects then
+    begin
+      lSize := SizeOf(lUrl);
+      FillChar(lUrl, SizeOf(lUrl), 0);
+      if not WinHttpQueryOption(lRequest, WINHTTP_OPTION_URL, @lUrl[0], lSize) or not RdcIsAllowedDownloadUrl(lUrl) then
+      begin
+        aError := _('doorverwezen naar een onbekende server');
+        Exit;
+      end;
     end;
     lAnswer := nil;
     repeat
@@ -229,14 +250,55 @@ begin
       aError := _('antwoord te groot');
       Exit;
     end;
-    Result := RdcParseLatestRelease(TEncoding.UTF8.GetString(lAnswer), aRelease);
-    if not Result then
-      aError := _('geen versie in het antwoord');
+    aBody := TEncoding.UTF8.GetString(lAnswer);
+    Result := True;
   finally
     if lRequest <> nil then
       WinHttpCloseHandle(lRequest);
     if lConnect <> nil then
       WinHttpCloseHandle(lConnect);
+  end;
+end;
+
+function RdcFetchLatestRelease(out aRelease: TRdcLatestRelease; out aError: string): Boolean;
+var
+  lBody: string;
+  lError: string;
+  lSession: HINTERNET;
+begin
+  aRelease := Default(TRdcLatestRelease);
+  aError := '';
+  Result := False;
+  try
+    // Automatic proxy (Windows 8.1 and later), the same as the browser uses.
+    lSession := WinHttpOpen('RDCManagerX', WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, nil, nil, 0);
+    if lSession = nil then
+      lSession := WinHttpOpen('RDCManagerX', WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, nil, nil, 0);
+  except
+    on E: Exception do
+    begin
+      aError := E.Message; // winhttp.dll not loadable
+      Exit;
+    end;
+  end;
+  if lSession = nil then
+  begin
+    aError := SysErrorMessage(GetLastError);
+    Exit;
+  end;
+  try
+    WinHttpSetTimeouts(lSession, 10000, 10000, 10000, 15000);
+    // First the version.json asset of the latest release: GitHub counts its downloads, which is the only way to see
+    // how many update checks there are. A release without it (or a failure) falls back to the API.
+    if HttpsGet(lSession, cDownloadHost, cVersionAssetPath, True, lBody, lError) and RdcParseLatestRelease(lBody, aRelease) then
+      Exit(True);
+    if HttpsGet(lSession, cApiHost, cApiPath, False, lBody, aError) then
+    begin
+      Result := RdcParseLatestRelease(lBody, aRelease);
+      if not Result then
+        aError := _('geen versie in het antwoord');
+    end;
+  finally
     WinHttpCloseHandle(lSession);
   end;
 end;

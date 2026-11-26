@@ -1,0 +1,67 @@
+# Daily snapshot of the download counters of the releases, so update checks and downloads can be seen per day.
+# GitHub only keeps a running total per release asset: version.json is downloaded by every update check of the
+# app (RdcmX.UpdateCheck), the zip by people who download a release. This workflow appends one line per day to
+# downloads.csv on the branch "stats" (an orphan branch with only that file, so main stays clean):
+#   date, checks_total, checks_day, downloads_total, downloads_day
+# The totals are summed over all releases; deleting a release lowers them (the day delta is then clamped at 0).
+# Uses only the GitHub CLI on the runner and the workflow token, no third-party actions.
+name: Download stats
+
+on:
+  schedule:
+    - cron: '50 23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stats:
+    name: Download stats
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Append today's counters to downloads.csv (branch stats)
+        run: |
+          set -euo pipefail
+          today=$(date -u +%F)
+          releases=$(gh api "repos/$REPO/releases?per_page=100" --paginate --slurp | jq 'add')
+          checks=$(jq '[.[].assets[] | select(.name == "version.json") | .download_count] | add // 0' <<< "$releases")
+          downloads=$(jq '[.[].assets[] | select(.name | endswith(".zip")) | .download_count] | add // 0' <<< "$releases")
+          echo "checks total: $checks, downloads total: $downloads"
+
+          # The branch holds only downloads.csv; create it (orphan commit) the first time.
+          if ! gh api "repos/$REPO/branches/stats" > /dev/null 2>&1; then
+            tree=$(gh api "repos/$REPO/git/trees" -f 'tree[][path]=downloads.csv' -f 'tree[][mode]=100644' \
+              -f 'tree[][type]=blob' -f 'tree[][content]=date,checks_total,checks_day,downloads_total,downloads_day' --jq .sha)
+            commit=$(gh api "repos/$REPO/git/commits" -f message='Download stats' -f "tree=$tree" --jq .sha)
+            gh api "repos/$REPO/git/refs" -f ref=refs/heads/stats -f "sha=$commit" > /dev/null
+          fi
+
+          sha=$(gh api "repos/$REPO/contents/downloads.csv?ref=stats" --jq .sha)
+          gh api "repos/$REPO/contents/downloads.csv?ref=stats" --jq .content | base64 -d > downloads.csv
+          printf '\n' >> downloads.csv
+          sed -i '/^$/d' downloads.csv
+          # A second run on the same day replaces that day's line.
+          if [ "$(tail -n 1 downloads.csv | cut -d, -f1)" = "$today" ]; then
+            sed -i '$d' downloads.csv
+          fi
+          last=$(tail -n 1 downloads.csv)
+          if [ "$(cut -d, -f1 <<< "$last")" = "date" ]; then
+            prev_checks=$checks
+            prev_downloads=$downloads
+          else
+            prev_checks=$(cut -d, -f2 <<< "$last")
+            prev_downloads=$(cut -d, -f4 <<< "$last")
+          fi
+          day_checks=$(( checks > prev_checks ? checks - prev_checks : 0 ))
+          day_downloads=$(( downloads > prev_downloads ? downloads - prev_downloads : 0 ))
+          echo "$today,$checks,$day_checks,$downloads,$day_downloads" >> downloads.csv
+          tail -n 5 downloads.csv
+
+          gh api -X PUT "repos/$REPO/contents/downloads.csv" -f message="Download stats $today" -f branch=stats \
+            -f "sha=$sha" -f "content=$(base64 -w0 downloads.csv)" > /dev/null

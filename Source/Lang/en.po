@@ -1622,7 +1622,10 @@ msgid ""
 "Versie %s van RDCManagerX is beschikbaar (u hebt %s).\r\n"
 "\r\n"
 "De downloadpagina openen? Er wordt niets automatisch gedownload of geïnstalleerd."
-msgstr "Version %s of RDCManagerX is available (you have %s).\r\n\r\nOpen the download page? Nothing is downloaded or installed automatically."
+msgstr ""
+"Version %s of RDCManagerX is available (you have %s).\r\n"
+"\r\n"
+"Open the download page? Nothing is downloaded or installed automatically."
 
 #: Source/RdcmX.UI.Main.pas
 msgid "De handleiding kon niet worden geopend: %s"
@@ -2876,6 +2879,10 @@ msgstr "Connected."
 #: Source/RdcmX.UI.Tailnets.pas
 msgid "Niet gelukt: %s"
 msgstr "Failed: %s"
+
+#: Source/RdcmX.UpdateCheck.pas
+msgid "doorverwezen naar een onbekende server"
+msgstr "redirected to an unknown server"
 
 #: Source/RdcmX.UpdateCheck.pas
 msgid "antwoord te groot"

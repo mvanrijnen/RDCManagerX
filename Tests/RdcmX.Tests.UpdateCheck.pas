@@ -23,6 +23,8 @@ type
     procedure InvalidTagsAreRefused;
     [Test]
     procedure VersionsCompareNumerically;
+    [Test]
+    procedure DownloadMayOnlyEndAtGitHub;
   end;
 
 implementation
@@ -71,6 +73,20 @@ begin
   Assert.IsTrue(RdcIsVersion('2026.11.26.067'));
   Assert.IsFalse(RdcIsVersion('2026.11.26'));
   Assert.IsFalse(RdcIsVersion('versie 2026.11.26.067'));
+end;
+
+procedure TUpdateCheckTests.DownloadMayOnlyEndAtGitHub;
+begin
+  // Where GitHub's redirects for the version.json asset may end.
+  Assert.IsTrue(RdcIsAllowedDownloadUrl('https://github.com/mvanrijnen/RDCManagerX/releases/download/v2026.11.26.074/version.json'));
+  Assert.IsTrue(RdcIsAllowedDownloadUrl('https://release-assets.githubusercontent.com/github-production-release-asset/1/2?sp=r'));
+  Assert.IsTrue(RdcIsAllowedDownloadUrl('https://objects.githubusercontent.com/x'));
+  Assert.IsFalse(RdcIsAllowedDownloadUrl('http://objects.githubusercontent.com/x'), 'http');
+  Assert.IsFalse(RdcIsAllowedDownloadUrl('https://githubusercontent.com.evil.tld/x'));
+  Assert.IsFalse(RdcIsAllowedDownloadUrl('https://evilgithubusercontent.com/x'));
+  Assert.IsFalse(RdcIsAllowedDownloadUrl('https://evil.tld/github.com'));
+  Assert.IsFalse(RdcIsAllowedDownloadUrl('https://user@evil.tld/'));
+  Assert.IsFalse(RdcIsAllowedDownloadUrl(''));
 end;
 
 initialization
