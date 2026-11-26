@@ -272,6 +272,10 @@ Liever een vast adres dan een tag? Dan kan het ook met `"hosts": { "thuis-pc": "
 ### Op de doel-pc
 
 - **Tailscale moet draaien**, gewoon geïnstalleerd, en Extern bureaublad moet aan staan.
+- **Zet "Run unattended" aan** in het Tailscale-menu op de doel-pc. Anders verbindt Tailscale pas als er iemand
+  lokaal is aangemeld, en is de pc na een herstart onbereikbaar tot je daar inlogt. Uitzetten kan nog steeds:
+  *Disconnect* in het Tailscale-menu (of `tailscale down`) haalt de pc uit het tailnet tot je weer *Connect* kiest;
+  *Exit* sluit alleen het pictogram en houdt de verbinding; de service *Tailscale* stoppen zet hem helemaal uit.
 - **De Windows Firewall moet RDP toestaan vanaf de Tailscale-adapter, en alleen daar.** De standaardregel
   *Extern bureaublad* geldt vaak alleen voor het profiel *Privé/Domein*. Sta TCP 3389 toe vanaf `100.64.0.0/10` op
   de adapter `Tailscale` (PowerShell als beheerder):

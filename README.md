@@ -269,6 +269,11 @@ Prefer a fixed address over a tag? Then use `"hosts": { "home-pc": "100.x.y.z" }
 ### On the target PC
 
 - **Tailscale must be running**, installed normally, and Remote Desktop must be enabled.
+- **Turn on "Run unattended"** in the Tailscale menu on the target PC. Otherwise Tailscale only connects once someone
+  has logged on locally, so after a restart the PC cannot be reached until you log on there. You can still switch it
+  off: *Disconnect* in the Tailscale menu (or `tailscale down`) takes the PC off the tailnet until you choose
+  *Connect* again; *Exit* only closes the tray icon and keeps the connection; stopping the *Tailscale* service stops
+  it completely.
 - **Windows Firewall must allow RDP from the Tailscale adapter, and only there.** The built-in *Remote Desktop*
   rule often only applies to the *Private/Domain* profile. Allow TCP 3389 from `100.64.0.0/10` on the adapter
   `Tailscale` (PowerShell as administrator):

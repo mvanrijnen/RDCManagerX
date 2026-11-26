@@ -212,7 +212,8 @@ message only comes back when those settings change; files you save yourself coun
     identity, for example with an untrusted certificate, the connection is refused and you type the password yourself. Via Tailscale
     you get a warning instead, because the certificate name never matches there. On Tailscale the password is asked once the network
     runs; the approval then belongs to the device (its MagicDNS name) in your tailnet, not to the name in the file.</li>
-  <li>The vault locks after a configurable number of minutes without use (Options). Manually: <em>File &gt; Lock password vault</em>.</li>
+  <li>The vault locks after a configurable number of minutes without use (Options, default 15; <strong>0 = never</strong>, then you unlock
+    once per RDCManagerX session). Manually: <em>File &gt; Lock password vault</em>.</li>
   <li>Change the master password: <em>File &gt; Change master password</em> or the button in Options.</li>
   <li>If the server rejects a remembered password, it is forgotten automatically. Manually: <em>Server &gt; Forget remembered password</em>.</li>
   <li><strong>Credential profiles</strong> (File &gt; Credential profiles): shared user names per file, as in RDCMan.</li>
@@ -302,6 +303,9 @@ password, the vault can only be emptied.</p>
 <h3>Tailscale</h3>
 <ul>
   <li>Tailscale must be running on the target PC, and the firewall must allow RDP (TCP 3389) from <code>100.64.0.0/10</code> on the adapter <code>Tailscale</code>.</li>
+  <li>Target PC only reachable after you logged on there? Turn on <em>Run unattended</em> in the Tailscale menu on the target PC; then
+    Tailscale also connects without a logon (after a restart). You can still switch it off: <em>Disconnect</em> (or <code>tailscale down</code>)
+    takes the PC off the tailnet until <em>Connect</em>; <em>Exit</em> only closes the tray icon; stopping the <em>Tailscale</em> service stops it completely.</li>
   <li>Connecting fails since you set up the ACL? Check that the target PC has the tag <code>tag:rdpserver</code> and the auth key the tag <code>tag:rdpclient</code>.</li>
   <li>In <em>Address in the tailnet</em> enter the MagicDNS name or the 100.x address, not the account's e-mail address.</li>
   <li><em>Test connection</em> in File &gt; Tailscale networks shows whether the network starts.</li>

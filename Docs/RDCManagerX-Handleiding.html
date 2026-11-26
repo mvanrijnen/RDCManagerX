@@ -212,7 +212,8 @@ betrokken servers. De melding komt pas terug als die instellingen veranderen; be
     bewijzen, bijvoorbeeld met een niet-vertrouwd certificaat, dan wordt er niet verbonden en typ je het wachtwoord zelf. Via Tailscale
     krijg je dan een waarschuwing, omdat de certificaatnaam daar nooit klopt. Bij Tailscale komt de wachtwoordvraag pas als het netwerk
     draait; de goedkeuring hoort dan bij het apparaat (de MagicDNS-naam) in jouw tailnet, niet bij de naam in het bestand.</li>
-  <li>De kluis vergrendelt na een instelbaar aantal minuten zonder gebruik (Opties). Handmatig: <em>Bestand &gt; Wachtwoordkluis vergrendelen</em>.</li>
+  <li>De kluis vergrendelt na een instelbaar aantal minuten zonder gebruik (Opties, standaard 15; <strong>0 = nooit</strong>, dan ontgrendel je
+    één keer per sessie van RDCManagerX). Handmatig: <em>Bestand &gt; Wachtwoordkluis vergrendelen</em>.</li>
   <li>Hoofdwachtwoord wijzigen: <em>Bestand &gt; Hoofdwachtwoord wijzigen</em> of de knop in Opties.</li>
   <li>Wordt een onthouden wachtwoord door de server geweigerd, dan wordt het automatisch vergeten. Handmatig: <em>Server &gt; Onthouden wachtwoord vergeten</em>.</li>
   <li><strong>Credential-profielen</strong> (Bestand &gt; Credential-profielen): gedeelde gebruikersnamen per bestand, zoals in RDCMan.</li>
@@ -302,6 +303,9 @@ geheugen, dan kan alleen de kluis worden geleegd.</p>
 <h3>Tailscale</h3>
 <ul>
   <li>Op de doel-pc moet Tailscale draaien, en de firewall moet RDP (TCP 3389) toestaan vanaf <code>100.64.0.0/10</code> op de adapter <code>Tailscale</code>.</li>
+  <li>Doel-pc pas bereikbaar nadat je er lokaal hebt ingelogd? Zet in het Tailscale-menu op de doel-pc <em>Run unattended</em> aan; dan
+    verbindt Tailscale ook zonder aanmelding (na een herstart). Uitzetten kan nog: <em>Disconnect</em> (of <code>tailscale down</code>) haalt
+    de pc uit het tailnet tot <em>Connect</em>; <em>Exit</em> sluit alleen het pictogram; de service <em>Tailscale</em> stoppen zet hem helemaal uit.</li>
   <li>Lukt verbinden niet sinds de ACL? Controleer of de doel-pc de tag <code>tag:rdpserver</code> heeft en de auth key de tag <code>tag:rdpclient</code>.</li>
   <li>Vul bij <em>Adres in het tailnet</em> de MagicDNS-naam of het 100.x-adres in, niet het e-mailadres van het account.</li>
   <li><em>Test verbinding</em> in Bestand &gt; Tailscale-netwerken laat zien of het netwerk opstart.</li>
