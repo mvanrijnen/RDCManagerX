@@ -205,7 +205,7 @@ message only comes back when those settings change; files you save yourself coun
   <li>Separately, <em>Remember user name and domain</em> stores the name with the server in the file (when connecting a group: with
     the group), as on the Logon tab; the password is not included.</li>
   <li>A remembered password belongs to the <strong>hosts</strong> you used it for. When a server (for example from someone else's file)
-    points the same account at another host, or at a gateway that receives the same credentials, RDCManagerX first asks whether the
+    points the same account at another host, or routes the connection through another gateway, RDCManagerX first asks whether the
     password may be used there (default <em>No</em>; then you type it yourself). For a group there is one question for all new hosts. A
     password from the vault always requires server authentication (direct and via a gateway): when the server cannot prove its
     identity, for example with an untrusted certificate, the connection is refused and you type the password yourself. Via Tailscale

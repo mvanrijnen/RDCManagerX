@@ -23,7 +23,7 @@
   - 'RDCManagerX:account:<domein\gebruiker>' / 'RDCManagerX:server:<host>:<gebruiker>': versie(1) + versleuteld
     wachtwoord. Per account; lokale accounts per server (zie TargetFor).
     Account passwords are bound to approved hosts: the encrypted payload holds the password plus the list of host keys
-    (DirectHostKey/TailnetHostKey/GatewayHostKey) it may be sent to, so the list is confidential and bound to the
+    (DirectHostKey/TailnetHostKey/ViaGatewayHostKey) it may be sent to, so the list is confidential and bound to the
     target name (AAD). A file pointing the same account at another host does not get the password without asking
     (LoadApproved). Payload: #0 #2, then length-prefixed UTF-8 password, count, length-prefixed host keys. Items from
     before this (plain UTF-8 password) have an empty list: their first use per host asks too.
@@ -144,11 +144,12 @@ type
     class function GatewayTarget(const aGatewayId, aGatewayAddress: string): string; static;
     class function GatewayTargetPrefix(const aGatewayId: string): string; static;
     /// <summary>Approval keys for the hosts an account password goes to: the RDP server on route Direct or Gateway,
-    /// the device in a tailnet (bound to the control URL: another tailnet with the same names is another key), and a
-    /// gateway that receives the session credentials (credSharing).</summary>
+    /// the device in a tailnet (bound to the control URL: another tailnet with the same names is another key), and
+    /// a server reached through an RD Gateway: the gateway sees the connection whatever credSharing says, so the
+    /// combination gateway + server is a host of its own.</summary>
     class function DirectHostKey(const aHost: string): string; static;
     class function TailnetHostKey(const aControlUrl, aHost: string): string; static;
-    class function GatewayHostKey(const aGatewayAddress: string): string; static;
+    class function ViaGatewayHostKey(const aGatewayAddress, aHost: string): string; static;
     /// <summary>AuthenticationLevel to use (0 = connect without warning, 1 = do not connect when server
     /// authentication fails, 2 = warn). With a password from the vault: route Direct or Gateway always 1, whatever the
     /// file says; route Tailscale at least 2 (the connection goes to 127.0.0.2, so the certificate name never
@@ -554,9 +555,9 @@ begin
   Result := 'ts:' + BindingHash(NormalizeControlUrl(aControlUrl)) + ':' + LowerCase(Trim(aHost));
 end;
 
-class function TRdcPasswordVault.GatewayHostKey(const aGatewayAddress: string): string;
+class function TRdcPasswordVault.ViaGatewayHostKey(const aGatewayAddress, aHost: string): string;
 begin
-  Result := 'gw:' + LowerCase(Trim(aGatewayAddress));
+  Result := 'via:' + LowerCase(Trim(aGatewayAddress)) + '|' + LowerCase(Trim(aHost));
 end;
 
 class function TRdcPasswordVault.AuthenticationLevelFor(aLevel: Cardinal; aFromVault: Boolean; aRoute: TRdcRouteKind): Cardinal;

@@ -92,6 +92,8 @@ type
     [Test]
     procedure RecoveryWaitsForRunningChange;
     [Test]
+    procedure SameHostViaUnknownGatewayAsks;
+    [Test]
     procedure ResetRemovesEverything;
     [Test]
     procedure WeakMasterPasswordIsRefused;
@@ -531,7 +533,7 @@ begin
   // Server approved, gateway with credSharing not: only the gateway is asked.
   FVault.Initialize(cMaster);
   FVault.SaveAccount(cTargetA, 'corp\beheer', 'S3cret!', [HostA]);
-  lGateway := TRdcHostRef.Create(TRdcPasswordVault.GatewayHostKey('gw.aanvaller.tld:443'), 'gw');
+  lGateway := TRdcHostRef.Create(TRdcPasswordVault.ViaGatewayHostKey('gw.aanvaller.tld:443', 'srv01.corp.local'), 'gw');
   Assert.AreEqual(rlrDeclined, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostA, lGateway],
     function(const aMissing: TArray<TRdcHostRef>): Boolean
     begin
@@ -551,7 +553,9 @@ begin
   Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('srv'), TRdcPasswordVault.TailnetHostKey('', 'srv'));
   Assert.AreNotEqual(TRdcPasswordVault.TailnetHostKey('', 'srv'), TRdcPasswordVault.TailnetHostKey('https://headscale.aanvaller.tld', 'srv'));
   Assert.AreEqual(TRdcPasswordVault.TailnetHostKey('https://HS.example.com/', 'Srv'), TRdcPasswordVault.TailnetHostKey('https://hs.example.com', 'srv'));
-  Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('gw.corp.local'), TRdcPasswordVault.GatewayHostKey('gw.corp.local'));
+  Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('srv01'), TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01'));
+  Assert.AreNotEqual(TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01'), TRdcPasswordVault.ViaGatewayHostKey('gw.evil.tld', 'srv01'));
+  Assert.AreNotEqual(TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01'), TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv02'));
 end;
 
 procedure TVaultTests.ApprovalsSurviveMasterPasswordChange;
@@ -663,6 +667,39 @@ begin
     lRelease.Free;
     TRdcPasswordVault.ChangeMutexName := 'Local\RDCManagerX.VaultChange';
   end;
+end;
+
+procedure TVaultTests.SameHostViaUnknownGatewayAsks;
+var
+  lAsked: TArray<string>;
+  lAsk: TRdcApproveHostsFunc;
+  lPassword: string;
+  lServer: TRdcHostRef;
+  lViaCorp: TRdcHostRef;
+  lViaEvil: TRdcHostRef;
+begin
+  // srv01 approved directly. A foreign file puts gw.evil.tld in front of it (credSharing off): the combination
+  // counts as a new host and is asked; via the already approved gateway it is not.
+  lServer := TRdcHostRef.Create(TRdcPasswordVault.DirectHostKey('srv01.corp.local'), 'srv01');
+  lViaCorp := TRdcHostRef.Create(TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01.corp.local'), 'srv01 via gw.corp.local');
+  lViaEvil := TRdcHostRef.Create(TRdcPasswordVault.ViaGatewayHostKey('gw.evil.tld', 'srv01.corp.local'), 'srv01 via gw.evil.tld');
+  FVault.Initialize(cMaster);
+  FVault.SaveAccount(cTargetA, 'corp\beheer', 'S3cret!', [lServer, lViaCorp]);
+  lAsk := function(const aMissing: TArray<TRdcHostRef>): Boolean
+    var
+      lHost: TRdcHostRef;
+    begin
+      for lHost in aMissing do
+        lAsked := lAsked + [lHost.Key];
+      Result := False;
+    end;
+  lAsked := [];
+  Assert.AreEqual(rlrDeclined, FVault.LoadApproved(cTargetA, 'corp\beheer', [lServer, lViaEvil], lAsk, lPassword));
+  Assert.AreEqual(Integer(1), Integer(Length(lAsked)));
+  Assert.AreEqual(lViaEvil.Key, lAsked[0]);
+  lAsked := [];
+  Assert.AreEqual(rlrLoaded, FVault.LoadApproved(cTargetA, 'corp\beheer', [lServer, lViaCorp], lAsk, lPassword));
+  Assert.AreEqual(Integer(0), Integer(Length(lAsked)));
 end;
 
 procedure TVaultTests.ResetRemovesEverything;

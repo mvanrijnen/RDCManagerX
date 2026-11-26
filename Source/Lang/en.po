@@ -1132,8 +1132,8 @@ msgstr ""
 "%s"
 
 #: Source/RdcmX.Sessions.pas
-msgid "gateway %s (krijgt dezelfde aanmeldgegevens)"
-msgstr "gateway %s (receives the same credentials)"
+msgid "%s via gateway %s"
+msgstr "%s via gateway %s"
 
 #: Source/RdcmX.Sessions.pas
 msgid "%s (via Tailscale-netwerk \"%s\")"

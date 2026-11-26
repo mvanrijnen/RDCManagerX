@@ -556,7 +556,8 @@ var
 
   procedure AddGateway(const aAddress: string);
   begin
-    Result.Hosts := Result.Hosts + [TRdcHostRef.Create(TRdcPasswordVault.GatewayHostKey(aAddress), Format(_('gateway %s (krijgt dezelfde aanmeldgegevens)'), [aAddress]))];
+    // Every gateway in the path counts, also without credSharing: the connection to the server runs through it.
+    Result.Hosts := Result.Hosts + [TRdcHostRef.Create(TRdcPasswordVault.ViaGatewayHostKey(aAddress, aServer.Name), Format(_('%s via gateway %s'), [aServer.Name, aAddress]))];
   end;
 
 begin
@@ -590,15 +591,15 @@ begin
         lGatewayDef := nil;
         if aServer.RdcFile <> nil then
           lGatewayDef := aServer.RdcFile.FindGateway(lRoute.GatewayId);
-        if (lGatewayDef <> nil) and (lGatewayDef.CredsMode = gcmSession) and (Trim(lGatewayDef.HostName) <> '') then
+        if (lGatewayDef <> nil) and (Trim(lGatewayDef.HostName) <> '') then
           AddGateway(lGatewayDef.Address);
       end;
   else
     Result.HostText := aServer.Name;
     Result.Hosts := [TRdcHostRef.Create(TRdcPasswordVault.DirectHostKey(aServer.Name), aServer.Name)];
-    // gatewaySettings from the .rdg (as in BuildSettings): with credSharing the gateway gets the same credentials.
+    // gatewaySettings from the .rdg (as in BuildSettings): an enabled gateway is in the path.
     lGateway := aServer.EffectiveGateway;
-    if lGateway.Enabled and (Trim(lGateway.HostName) <> '') and lGateway.CredSharing then
+    if lGateway.Enabled and (Trim(lGateway.HostName) <> '') then
       AddGateway(Trim(lGateway.HostName));
   end;
 end;
