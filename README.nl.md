@@ -413,51 +413,16 @@ Pak de release uit in een eigen map, bijvoorbeeld `%LOCALAPPDATA%\Programs\RDCMa
 
 ## Bouwen
 
-### RDCManagerX
+Met Delphi 12 (Win64):
 
 ```
 call "C:\Program Files (x86)\Embarcadero\Studio\23.0\bin\rsvars.bat"
 msbuild RDCManagerX.dproj /t:Build /p:Config=Release /p:Platform=Win64
-msbuild Tests\RDCManagerXTests.dproj /t:Build /p:Config=Debug /p:Platform=Win64
-Tests\Win64\Debug\RDCManagerXTests.exe --exitbehavior:Continue
 ```
 
-De DLL zit als resource in de exe (`Source\TsBridge.rc` → `Bridge\bin\Win64\tsbridge.dll.gz`); alleen de exe gaat
-naar de share.
-
-### tsbridge.dll
-
-Nodig:
-
-- **Go** 1.26 of nieuwer. Werkt zonder installatie: pak de zip uit naar `%LOCALAPPDATA%\Programs\go`.
-- **mingw-w64 (gcc)**, bijvoorbeeld via `winget install BrechtSanders.WinLibs.POSIX.UCRT`.
-
-```
-Tools\build-tsbridge.cmd test
-```
-
-Dat draait eerst de Go-tests (forwarder met een lokale echo-server, versleutelde state, filteren van secrets) en
-bouwt daarna `Bridge\bin\Win64\tsbridge.dll` (`-buildmode=c-shared`, `GOARCH=amd64`, `CGO_ENABLED=1`).
-
-De DLL moet dezelfde bitness hebben als de app. RDCManagerX is alleen 64-bit.
-
-Het script legt de controlesom van de DLL vast in `Source\RdcmX.TsBridgeHash.inc` en maakt `tsbridge.dll.gz` voor de resource. **Bouw daarna RDCManagerX opnieuw**: de exe neemt de DLL en de controlesom mee.
-
-**C-API** (cdecl, UTF-8 invoer, int32-returncodes; tekst gaat naar een buffer van de aanroeper):
-
-```c
-int TsNetCreate(const char* configJson);          // handle > 0, of foutcode < 0
-int TsNetUp(int h, int timeoutMs);                // blokkeert; TsNetClose vanuit een andere thread breekt af
-int TsNetGetStatus(int h, char* buf, int buflen); // JSON: state, ips, dnsName, authUrl, lastError
-int TsNetAddForward(int h, const char* localAddr, const char* target); // lokale poort
-int TsNetRemoveForward(int h, int localPort);
-int TsNetClose(int h);
-int TsLastError(int h, char* buf, int buflen);    // h = 0: laatste fout van TsNetCreate
-int TsBridgeVersion(char* buf, int buflen);
-```
-
-De DLL wordt nooit ontladen, omdat de Go-runtime dat niet ondersteunt. Ontbreekt hij, dan werkt de app gewoon en is
-alleen de Tailscale-route niet beschikbaar.
+Een verse clone bouwt met alleen Delphi: de Tailscale-bridge-DLL, de Engelse teksten en de handleiding staan in git
+en zitten in de exe. **[BUILDING.nl.md](BUILDING.nl.md)** legt de tests uit, de Tailscale-bridge (`tsbridge.dll`, Go,
+reproduceerbare build en hashcontrole), de vertaling, de handleiding en het releasepakket.
 
 ---
 
@@ -465,7 +430,7 @@ alleen de Tailscale-route niet beschikbaar.
 
 RDCManagerX is geschreven in [Delphi](https://www.embarcadero.com/products/delphi) 12 Athens van Embarcadero (Object
 Pascal, VCL): één native Win64-exe, zonder runtime en zonder installatie. Alleen de optionele Tailscale-bridge is een
-kleine Go-bibliotheek, ingebed in de exe. Zie [Bouwen](#bouwen) om het zelf te bouwen.
+kleine Go-bibliotheek, ingebed in de exe. Zie [BUILDING.nl.md](BUILDING.nl.md) om het zelf te bouwen.
 
 ---
 
