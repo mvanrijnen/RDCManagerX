@@ -2,6 +2,14 @@
 
 [English](README.md) | **Nederlands**
 
+<p>
+  <a href="https://www.embarcadero.com/products/delphi"><img alt="Made with Delphi" src="https://img.shields.io/badge/Made_with-Delphi-EE1F35?style=for-the-badge&logo=delphi&logoColor=white"></a>
+  <img alt="Windows 10 | 11 x64" src="https://img.shields.io/badge/Windows-10_%7C_11_x64-0078D4?style=for-the-badge&logo=windows&logoColor=white">
+  <a href="https://github.com/mvanrijnen/RDCManagerX/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/mvanrijnen/RDCManagerX?label=release&style=for-the-badge"></a>
+  <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge"></a>
+  <a href="https://mvanrijnen.github.io/RDCManagerX/nl/"><img alt="Manual EN | NL" src="https://img.shields.io/badge/manual-EN_%7C_NL-2f7fd8?style=for-the-badge"></a>
+</p>
+
 📖 **Handleiding (Nederlands / Engels, HTML en PDF): [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/nl/)**
 
 ![RDCManagerX met het fictieve demobestand Contoso](Docs/images/screenshot-nl.png)
@@ -451,6 +459,14 @@ int TsBridgeVersion(char* buf, int buflen);
 
 De DLL wordt nooit ontladen, omdat de Go-runtime dat niet ondersteunt. Ontbreekt hij, dan werkt de app gewoon en is
 alleen de Tailscale-route niet beschikbaar.
+
+---
+
+## Gemaakt met Delphi
+
+RDCManagerX is geschreven in [Delphi](https://www.embarcadero.com/products/delphi) 12 Athens van Embarcadero (Object
+Pascal, VCL): één native Win64-exe, zonder runtime en zonder installatie. Alleen de optionele Tailscale-bridge is een
+kleine Go-bibliotheek, ingebed in de exe. Zie [Bouwen](#bouwen) om het zelf te bouwen.
 
 ---
 
