@@ -296,10 +296,10 @@ func validateControlURL(raw string) error {
 		return nil
 	case "http":
 		host := u.Hostname()
-		if ip, err := netip.ParseAddr(host); (err == nil && ip.IsLoopback()) || strings.EqualFold(host, "localhost") {
+		if ip, err := netip.ParseAddr(host); (err == nil && ip.IsLoopback()) || strings.EqualFold(host, "localhost") { // DevSkim: ignore DS162092 (deliberate: plain http only to localhost)
 			return nil
 		}
-		return errors.New("een control URL moet https gebruiken (http alleen naar localhost): anders kan de auth key onderweg worden onderschept")
+		return errors.New("een control URL moet https gebruiken (http alleen naar localhost): anders kan de auth key onderweg worden onderschept") // DevSkim: ignore DS162092 (error text)
 	default:
 		return fmt.Errorf("control URL moet met https:// beginnen")
 	}

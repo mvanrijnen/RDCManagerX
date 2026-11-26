@@ -28,7 +28,7 @@ var dpapiEntropy = []byte("RDCManagerX tsbridge state v1")
 
 type dpapiStore struct {
 	path  string
-	aead  cipher.AEAD
+	aead  cipher.AEAD // DevSkim: ignore DS187371 (AES-256-GCM, see newDpapiStore)
 	mu    sync.Mutex
 	cache map[ipn.StateKey][]byte
 }

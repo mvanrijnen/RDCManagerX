@@ -31,8 +31,9 @@ jobs:
       - name: Run DevSkim scanner
         uses: microsoft/DevSkim-Action@4b5047945a44163b94642a1cecc0d93a3f428cc6 # v1.0.16
         with:
-          # Generated type library import and binary/third-party content are not ours to fix.
-          ignore-globs: "**/Source/Imports/**,**/Docs/**,**/Styles/**,**/Bridge/bin/**"
+          # Generated type library import and binary/third-party content are not ours to fix. Go tests use
+          # localhost and plain http on purpose (local echo servers, checks that http is refused).
+          ignore-globs: "**/Source/Imports/**,**/Docs/**,**/Styles/**,**/Bridge/bin/**,**/*_test.go"
 
       - name: Upload DevSkim results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5

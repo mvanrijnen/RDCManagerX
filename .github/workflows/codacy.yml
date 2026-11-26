@@ -45,15 +45,22 @@ jobs:
       # Codacy writes one SARIF run per tool into a single file, but code scanning accepts only one run per
       # category. Split it into one file per run, each with its own category (automationDetails.id). A tool can
       # appear more than once (e.g. opengrep for several languages): later runs get -2, -3, ...
+      # Pure style and documentation linters are uploaded with an empty result list: they are not security
+      # findings and buried the real ones (over a thousand Markdown line-length and naming notes). Keeping their
+      # category with no results closes the alerts they raised before.
       - name: Split SARIF per tool
         run: |
           python3 - <<'PY'
           import json, os, re
+          STYLE_ONLY = {'markdownlint', 'remark-lint', 'agentlinter', 'deadcode', 'revive', 'pylint',
+                        'pylintpython3', 'prospector'}
           data = json.load(open('results.sarif', encoding='utf-8'))
           os.makedirs('sarif', exist_ok=True)
           seen = {}
           for index, run in enumerate(data.get('runs', [])):
               tool = run.get('tool', {}).get('driver', {}).get('name') or f'tool{index}'
+              if tool.split(' ')[0].lower() in STYLE_ONLY:
+                  run['results'] = []
               slug = re.sub(r'[^A-Za-z0-9_-]+', '-', tool).strip('-').lower() or f'tool{index}'
               seen[slug] = seen.get(slug, 0) + 1
               category = slug if seen[slug] == 1 else f'{slug}-{seen[slug]}'
