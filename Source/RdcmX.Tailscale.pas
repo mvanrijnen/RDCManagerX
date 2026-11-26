@@ -62,6 +62,15 @@ type
     procedure Wipe;
   end;
 
+  /// <summary>What a target in the tailnet resolved to, plus the MagicDNS suffix of the tailnet (from this node's own
+  /// name after login): together a stable identity for the vault's host approval.</summary>
+  TRdcResolvedTarget = record
+    Name: string;          // MagicDNS FQDN of the device (or the subnet router), without trailing dot
+    Ip: string;
+    TailnetSuffix: string; // e.g. tail1234.ts.net
+    function Text: string;
+  end;
+
   TRdcTailnetStatus = record
     State: string; // NoState, Starting, NeedsLogin, NeedsMachineAuth, Running, Stopped, Closed
     IPs: TArray<string>;
@@ -112,8 +121,9 @@ type
     /// <summary>Staat aTarget (host:poort) in het tailnet en is het apparaat online? False met uitleg (bijv.
     /// "thuis-pc is offline in het tailnet (laatst gezien ...)").</summary>
     function CheckTarget(const aTarget: string; out aError: string): Boolean;
-    /// <summary>What the last successful CheckTarget of aTarget resolved to: "magicdns-name (100.x.y.z)"; '' if unknown.</summary>
-    function ResolvedTargetText(const aTarget: string): string;
+    /// <summary>What the last successful CheckTarget of aTarget resolved to (Name/Ip; TailnetSuffix is filled by the
+    /// manager).</summary>
+    function ResolvedTarget(const aTarget: string): TRdcResolvedTarget;
     /// <summary>Sluit de node (breekt een lopende Up af). Mag vanuit elke thread.</summary>
     procedure Close;
     property Handle: Integer read FHandle;
@@ -171,8 +181,8 @@ type
     procedure RemoveForward(const aId: string; aLocalPort: Integer);
     /// <summary>Zie TRdcTailnet.CheckTarget; False ook als het netwerk niet draait.</summary>
     function CheckTarget(const aId, aTarget: string; out aError: string): Boolean; overload;
-    /// <summary>Also returns what the target resolved to ("magicdns-name (100.x.y.z)") for the connection status.</summary>
-    function CheckTarget(const aId, aTarget: string; out aError, aResolved: string): Boolean; overload;
+    /// <summary>Also returns what the target resolved to (device, address, tailnet suffix).</summary>
+    function CheckTarget(const aId, aTarget: string; out aError: string; out aResolved: TRdcResolvedTarget): Boolean; overload;
     /// <summary>Alles sluiten (afsluiten van de app); blokkeert kort.</summary>
     procedure CloseAll;
     property UpTimeoutMs: Integer read FUpTimeoutMs write FUpTimeoutMs;
@@ -975,15 +985,21 @@ begin
   end;
 end;
 
-function TRdcTailnet.ResolvedTargetText(const aTarget: string): string;
+function TRdcResolvedTarget.Text: string;
+begin
+  if (Name <> '') and (Ip <> '') then
+    Result := Format('%s (%s)', [Name, Ip])
+  else
+    Result := Ip;
+end;
+
+function TRdcTailnet.ResolvedTarget(const aTarget: string): TRdcResolvedTarget;
 var
   lHandle: Integer;
   lJson: TJSONValue;
-  lIp: string;
-  lName: string;
   lTarget: UTF8String;
 begin
-  Result := '';
+  Result := Default(TRdcResolvedTarget);
   lHandle := FHandle;
   if lHandle <= 0 then
     Exit;
@@ -996,12 +1012,8 @@ begin
   try
     if lJson is TJSONObject then
     begin
-      lName := TJSONObject(lJson).GetValue<string>('name', '');
-      lIp := TJSONObject(lJson).GetValue<string>('ip', '');
-      if (lName <> '') and (lIp <> '') then
-        Result := Format('%s (%s)', [lName, lIp])
-      else
-        Result := lIp;
+      Result.Name := TJSONObject(lJson).GetValue<string>('name', '');
+      Result.Ip := TJSONObject(lJson).GetValue<string>('ip', '');
     end;
   finally
     lJson.Free;
@@ -1267,14 +1279,23 @@ begin
   Result := lEntry.Net.CheckTarget(aTarget, aError);
 end;
 
-function TRdcTailnetManager.CheckTarget(const aId, aTarget: string; out aError, aResolved: string): Boolean;
+function TRdcTailnetManager.CheckTarget(const aId, aTarget: string; out aError: string; out aResolved: TRdcResolvedTarget): Boolean;
 var
   lEntry: TEntry;
+  lSelf: string;
+  lStatus: TRdcTailnetStatus;
 begin
-  aResolved := '';
+  aResolved := Default(TRdcResolvedTarget);
   Result := CheckTarget(aId, aTarget, aError);
   if Result and FEntries.TryGetValue(aId, lEntry) and (lEntry.Net <> nil) then
-    aResolved := lEntry.Net.ResolvedTargetText(aTarget);
+  begin
+    aResolved := lEntry.Net.ResolvedTarget(aTarget);
+    // The tailnet's MagicDNS suffix: this node's own name without its first label.
+    lStatus := lEntry.Net.Status;
+    lSelf := LowerCase(lStatus.DnsName).TrimRight(['.']);
+    if Pos('.', lSelf) > 0 then
+      aResolved.TailnetSuffix := Copy(lSelf, Pos('.', lSelf) + 1, MaxInt);
+  end;
 end;
 
 procedure TRdcTailnetManager.CloseAll;

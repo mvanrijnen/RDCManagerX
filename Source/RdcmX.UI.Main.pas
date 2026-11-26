@@ -3922,6 +3922,9 @@ begin
   if lRememberUser then
     RememberUserName(lGroup, FBatchUserName, FBatchDomain);
   FBatchActive := True;
+  // The typed group password is only kept during this loop: Tailscale servers must take it now, not when their
+  // tunnel is ready.
+  FSessions.DeferTailnetCredentials := False;
   try
     // Verdelen over de vakken, te beginnen bij het actieve vak; open sessies alleen tonen.
     lPane := FPanes.ActivePane;
@@ -3936,6 +3939,7 @@ begin
     end;
   finally
     FBatchActive := False;
+    FSessions.DeferTailnetCredentials := True;
     FBatchRemember := False;
     WipeString(FBatchPassword);
   end;

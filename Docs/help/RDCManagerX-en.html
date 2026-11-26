@@ -195,7 +195,8 @@ message only comes back when those settings change; files you save yourself coun
     password may be used there (default <em>No</em>; then you type it yourself). For a group there is one list with a check box per new host (unchecked by default; hosts from Active Directory marked). A
     password from the vault always requires server authentication (direct and via a gateway): when the server cannot prove its
     identity, for example with an untrusted certificate, the connection is refused and you type the password yourself. Via Tailscale
-    you get a warning instead, because the certificate name never matches there.</li>
+    you get a warning instead, because the certificate name never matches there. On Tailscale the password is asked once the network
+    runs; the approval then belongs to the device (its MagicDNS name) in your tailnet, not to the name in the file.</li>
   <li>The vault locks after a configurable number of minutes without use (Options). Manually: <em>File &gt; Lock password vault</em>.</li>
   <li>Change the master password: <em>File &gt; Change master password</em> or the button in Options.</li>
   <li>If the server rejects a remembered password, it is forgotten automatically. Manually: <em>Server &gt; Forget remembered password</em>.</li>

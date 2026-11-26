@@ -1134,6 +1134,14 @@ msgid "%s via Tailscale: %s"
 msgstr "%s via Tailscale: %s"
 
 #: Source/RdcmX.Sessions.pas
+msgid "%s (via Tailscale-netwerk \"%s\")"
+msgstr "%s (via Tailscale network \"%s\")"
+
+#: Source/RdcmX.Sessions.pas
+msgid "Verbinden geannuleerd."
+msgstr "Connecting cancelled."
+
+#: Source/RdcmX.Sessions.pas
 msgid "Het Tailscale-netwerk \"%s\" kon niet worden gestart: %s"
 msgstr "The Tailscale network \"%s\" could not be started: %s"
 
@@ -1150,10 +1158,6 @@ msgstr ""
 #: Source/RdcmX.Sessions.pas
 msgid "%s via gateway %s"
 msgstr "%s via gateway %s"
-
-#: Source/RdcmX.Sessions.pas
-msgid "%s (via Tailscale-netwerk \"%s\")"
-msgstr "%s (via Tailscale network \"%s\")"
 
 #: Source/RdcmX.Storage.Json.pas
 msgid "Onbekende instellingsgroep \"%s\" bij \"%s\" genegeerd."

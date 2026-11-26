@@ -58,6 +58,8 @@ type
     Port: Integer;
     Guard: IRdcCallbackGuard;
     AuthUrlOpened: string;
+    /// <summary>Credentials are asked once the target is resolved (vault key = tailnet suffix + device FQDN).</summary>
+    AskCredentials: Boolean;
   end;
 
   TRdcSessionManager = class
@@ -75,14 +77,16 @@ type
     FOnActivated: TRdcSessionEvent;
     FOnCredentialRequest: TRdcCredentialRequest;
     FOnTailnetOptions: TRdcTailnetOptionsEvent;
+    FDeferTailnetCredentials: Boolean;
     FOnPlaceHost: TRdcPlaceHostEvent;
     FOnDisplayChanged: TRdcSessionEvent;
     FOnStateChanged: TRdcSessionEvent;
     function BuildSettings(aServer: TRdcServer; out aSettings: TRdpConnectionSettings; out aError: string): Boolean;
     function ApplyGatewayRoute(aServer: TRdcServer; var aSettings: TRdpConnectionSettings; out aError: string): Boolean;
-    procedure ConnectViaTailnet(aServer: TRdcServer; aSession: TRdpSession);
+    procedure ConnectViaTailnet(aServer: TRdcServer; aSession: TRdpSession; aAskCredentials: Boolean);
+    procedure FinishTailnetConnect(aSession: TRdpSession; aTunnel: TRdcTunnel; const aResolved: TRdcResolvedTarget);
     procedure TunnelReady(aSession: TRdpSession; aSuccess: Boolean; const aError: string);
-    function TailnetDisplayName(aSession: TRdpSession; const aResolved: string): string;
+    function TailnetDisplayName(aSession: TRdpSession; const aResolved: TRdcResolvedTarget): string;
     procedure KeepAliveTimerFired(aSender: TObject);
     procedure PulseIdleSessions;
     procedure ReleaseTunnel(aSession: TRdpSession);
@@ -140,6 +144,9 @@ type
     property OnPlaceHost: TRdcPlaceHostEvent read FOnPlaceHost write FOnPlaceHost;
     property OnCredentialRequest: TRdcCredentialRequest read FOnCredentialRequest write FOnCredentialRequest;
     property OnTailnetOptions: TRdcTailnetOptionsEvent read FOnTailnetOptions write FOnTailnetOptions;
+    /// <summary>Route Tailscale: ask the credentials after the tunnel is ready (default True). Off during a group
+    /// connect with one typed password, which has to be handed over at once.</summary>
+    property DeferTailnetCredentials: Boolean read FDeferTailnetCredentials write FDeferTailnetCredentials;
     property OnDisplayChanged: TRdcSessionEvent read FOnDisplayChanged write FOnDisplayChanged;
     property OnStateChanged: TRdcSessionEvent read FOnStateChanged write FOnStateChanged;
     /// <summary>Voor de route via Tailscale (van het hoofdvenster; moet langer leven dan deze manager).</summary>
@@ -177,6 +184,7 @@ begin
   FKeepAliveTimer.Interval := 2 * 60 * 1000;
   FKeepAliveTimer.OnTimer := KeepAliveTimerFired;
   FMsgWnd := System.Classes.AllocateHWnd(MsgWndProc);
+  FDeferTailnetCredentials := True;
 end;
 
 destructor TRdcSessionManager.Destroy;
@@ -346,14 +354,14 @@ begin
   Result := True;
 end;
 
-procedure TRdcSessionManager.ConnectViaTailnet(aServer: TRdcServer; aSession: TRdpSession);
+procedure TRdcSessionManager.ConnectViaTailnet(aServer: TRdcServer; aSession: TRdpSession; aAskCredentials: Boolean);
 var
   lConfig: TRdcTailnetConfig;
   lDef: TRdcTailnetDef;
   lError: string;
   lGuard: IRdcCallbackGuard;
   lHost: string;
-  lResolved: string;
+  lResolved: TRdcResolvedTarget;
   lRoute: TRdcxRouteSettings;
   lTarget: string;
   lTunnel: TRdcTunnel;
@@ -393,9 +401,9 @@ begin
         aSession.PrepareFailed(lError);
         Exit;
       end;
-      aSession.SetEndpoint(lTunnel.LocalAddress, lTunnel.Port, TailnetDisplayName(aSession, lResolved));
-      TRdcLog.Write(Format('%s: via Tailscale "%s", bestaande forward %s:%d -> %s = %s', [aServer.Caption, lDef.Name, lTunnel.LocalAddress, lTunnel.Port, lTarget, lResolved]));
-      aSession.Connect;
+      TRdcLog.Write(Format('%s: via Tailscale "%s", bestaande forward %s:%d -> %s = %s', [aServer.Caption, lDef.Name, lTunnel.LocalAddress, lTunnel.Port, lTarget, lResolved.Text]));
+      lTunnel.AskCredentials := aAskCredentials;
+      FinishTailnetConnect(aSession, lTunnel, lResolved);
       Exit;
     end;
     ReleaseTunnel(aSession);
@@ -415,6 +423,7 @@ begin
   lTunnel.LocalAddress := RdcTailnetLocalAddress(lDef);
   lTunnel.Target := lTarget;
   lTunnel.Guard := RdcNewCallbackGuard;
+  lTunnel.AskCredentials := aAskCredentials;
   FTunnels.Add(aSession, lTunnel);
   lGuard := lTunnel.Guard;
   aSession.BeginPrepare(Format(_('Verbinden met Tailscale-netwerk "%s"...'), [lDef.Name]));
@@ -454,20 +463,62 @@ begin
         lSession.KeepAlivePulse;
 end;
 
-function TRdcSessionManager.TailnetDisplayName(aSession: TRdpSession; const aResolved: string): string;
+function TRdcSessionManager.TailnetDisplayName(aSession: TRdpSession; const aResolved: TRdcResolvedTarget): string;
 begin
   // The status shows which device the tailnet picked: "Verbinden met srv01 via Tailscale: srv01.tail1234.ts.net
   // (100.64.0.10)...".
-  if aResolved = '' then
+  if aResolved.Text = '' then
     Result := ''
   else
-    Result := Format(_('%s via Tailscale: %s'), [aSession.Settings.DisplayName, aResolved]);
+    Result := Format(_('%s via Tailscale: %s'), [aSession.Settings.DisplayName, aResolved.Text]);
+end;
+
+procedure TRdcSessionManager.FinishTailnetConnect(aSession: TRdpSession; aTunnel: TRdcTunnel; const aResolved: TRdcResolvedTarget);
+var
+  lContext: TRdcCredentialContext;
+  lDevice: string;
+  lDomain: string;
+  lFromVault: Boolean;
+  lLevel: Cardinal;
+  lPassword: string;
+  lServer: TRdcServer;
+  lUserName: string;
+begin
+  lServer := TRdcServer(aSession.Data);
+  if aTunnel.AskCredentials and Assigned(FOnCredentialRequest) and (lServer <> nil) then
+  begin
+    // Now the device is known: the vault approval is bound to the tailnet (MagicDNS suffix) and the device's MagicDNS
+    // name, not to the host string from the file (second security review).
+    aTunnel.AskCredentials := False;
+    lDevice := aResolved.Name;
+    if lDevice = '' then
+      lDevice := aResolved.Ip;
+    lContext.HostText := aResolved.Text;
+    lContext.Hosts := [TRdcHostRef.Create(TRdcPasswordVault.TailnetHostKey(aResolved.TailnetSuffix, lDevice),
+      Format(_('%s (via Tailscale-netwerk "%s")'), [aResolved.Text, aTunnel.TailnetName]))];
+    lUserName := aSession.Settings.UserName;
+    lDomain := aSession.Settings.Domain;
+    lPassword := '';
+    lFromVault := False;
+    if not FOnCredentialRequest(lServer, lContext, lUserName, lDomain, lPassword, lFromVault) then
+    begin
+      aSession.PrepareFailed(_('Verbinden geannuleerd.'));
+      Exit;
+    end;
+    lLevel := TRdcPasswordVault.AuthenticationLevelFor(aSession.Settings.AuthenticationLevel, lFromVault, rkTailscale);
+    aSession.SetCredentials(lUserName, lDomain, lPassword, lLevel);
+    WipeString(lPassword);
+  end;
+  // De control verbindt met de lokale forward; tab en boom houden de echte servernaam, the status adds what the
+  // tailnet resolved.
+  aSession.SetEndpoint(aTunnel.LocalAddress, aTunnel.Port, TailnetDisplayName(aSession, aResolved));
+  aSession.Connect;
 end;
 
 procedure TRdcSessionManager.TunnelReady(aSession: TRdpSession; aSuccess: Boolean; const aError: string);
 var
   lError: string;
-  lResolved: string;
+  lResolved: TRdcResolvedTarget;
   lTunnel: TRdcTunnel;
 begin
   if not FTunnels.TryGetValue(aSession, lTunnel) then
@@ -496,11 +547,8 @@ begin
       Exit;
     end;
   end;
-  TRdcLog.Write(Format('Tailscale-forward %s:%d -> %s = %s', [lTunnel.LocalAddress, lTunnel.Port, lTunnel.Target, lResolved]));
-  // De control verbindt met de lokale forward; tab en boom houden de echte servernaam, the status adds what the
-  // tailnet resolved.
-  aSession.SetEndpoint(lTunnel.LocalAddress, lTunnel.Port, TailnetDisplayName(aSession, lResolved));
-  aSession.Connect;
+  TRdcLog.Write(Format('Tailscale-forward %s:%d -> %s = %s', [lTunnel.LocalAddress, lTunnel.Port, lTunnel.Target, lResolved.Text]));
+  FinishTailnetConnect(aSession, lTunnel, lResolved);
 end;
 
 procedure TRdcSessionManager.ReleaseTunnel(aSession: TRdpSession);
@@ -546,7 +594,6 @@ end;
 
 function TRdcSessionManager.CredentialContextFor(aServer: TRdcServer): TRdcCredentialContext;
 var
-  lControlUrl: string;
   lDef: TRdcTailnetDef;
   lGateway: TRdcGatewaySettings;
   lGatewayDef: TRdcGatewayDef;
@@ -566,23 +613,19 @@ begin
   case lRoute.Kind of
     rkTailscale:
       begin
-        // Same target as ConnectViaTailnet; bound to the control URL, so another tailnet with the same device names
-        // is another host.
+        // Same target as ConnectViaTailnet (for the prompt text only).
         lHost := Trim(lRoute.TailnetHost);
         if lHost = '' then
           lHost := aServer.Name;
         lDef := nil;
         if aServer.RdcFile <> nil then
           lDef := aServer.RdcFile.FindTailnet(lRoute.TailnetId);
-        lControlUrl := '';
         lNetworkName := lRoute.TailnetId;
         if lDef <> nil then
-        begin
-          lControlUrl := lDef.ControlUrl;
           lNetworkName := lDef.Name;
-        end;
-        Result.HostText := lHost;
-        Result.Hosts := [TRdcHostRef.Create(TRdcPasswordVault.TailnetHostKey(lControlUrl, lHost), Format(_('%s (via Tailscale-netwerk "%s")'), [lHost, lNetworkName]))];
+        // The device (and so the vault key) is only known once the network runs and resolved the target:
+        // FinishTailnetConnect asks then. Nothing to approve in advance (group connect).
+        Result.HostText := Format(_('%s (via Tailscale-netwerk "%s")'), [lHost, lNetworkName]);
       end;
     rkGateway:
       begin
@@ -607,6 +650,7 @@ end;
 function TRdcSessionManager.Connect(aServer: TRdcServer): Boolean;
 var
   lDomain: string;
+  lAskLater: Boolean;
   lError: string;
   lFromVault: Boolean;
   lLevel: Cardinal;
@@ -630,7 +674,8 @@ begin
   lDomain := lSettings.Domain;
   lPassword := '';
   lFromVault := False;
-  if (lRouteError = '') and Assigned(FOnCredentialRequest) and not FOnCredentialRequest(aServer, CredentialContextFor(aServer), lUserName, lDomain, lPassword, lFromVault) then
+  lAskLater := (lRouteError = '') and (aServer.EffectiveRoute.Kind = rkTailscale) and FDeferTailnetCredentials;
+  if (lRouteError = '') and not lAskLater and Assigned(FOnCredentialRequest) and not FOnCredentialRequest(aServer, CredentialContextFor(aServer), lUserName, lDomain, lPassword, lFromVault) then
   begin
     WipeString(lSettings.GatewayPassword);
     Exit;
@@ -671,7 +716,7 @@ begin
     lSession.PrepareFailed(lRouteError);
   end
   else if aServer.EffectiveRoute.Kind = rkTailscale then
-    ConnectViaTailnet(aServer, lSession)
+    ConnectViaTailnet(aServer, lSession, lAskLater)
   else
   begin
     // Geen (andere) Tailscale-route meer: een oude forward van deze sessie opruimen.

@@ -144,11 +144,12 @@ type
     class function GatewayTarget(const aGatewayId, aGatewayAddress: string): string; static;
     class function GatewayTargetPrefix(const aGatewayId: string): string; static;
     /// <summary>Approval keys for the hosts an account password goes to: the RDP server on route Direct or Gateway,
-    /// the device in a tailnet (bound to the control URL: another tailnet with the same names is another key), and
+    /// the device in a tailnet (its MagicDNS FQDN as resolved by the bridge, bound to the tailnet's MagicDNS suffix:
+    /// another tailnet with the same names is another key, also on the same control server), and
     /// a server reached through an RD Gateway: the gateway sees the connection whatever credSharing says, so the
     /// combination gateway + server is a host of its own.</summary>
     class function DirectHostKey(const aHost: string): string; static;
-    class function TailnetHostKey(const aControlUrl, aHost: string): string; static;
+    class function TailnetHostKey(const aTailnetSuffix, aDeviceFqdn: string): string; static;
     class function ViaGatewayHostKey(const aGatewayAddress, aHost: string): string; static;
     /// <summary>AuthenticationLevel to use (0 = connect without warning, 1 = do not connect when server
     /// authentication fails, 2 = warn). With a password from the vault: route Direct or Gateway always 1, whatever the
@@ -550,9 +551,10 @@ begin
   Result := 'host:' + LowerCase(Trim(aHost));
 end;
 
-class function TRdcPasswordVault.TailnetHostKey(const aControlUrl, aHost: string): string;
+class function TRdcPasswordVault.TailnetHostKey(const aTailnetSuffix, aDeviceFqdn: string): string;
 begin
-  Result := 'ts:' + BindingHash(NormalizeControlUrl(aControlUrl)) + ':' + LowerCase(Trim(aHost));
+  // 'ts2:' so approvals of the old key (control URL + host string from the file) are asked once again.
+  Result := 'ts2:' + LowerCase(Trim(aTailnetSuffix).Trim(['.'])) + ':' + LowerCase(Trim(aDeviceFqdn).Trim(['.']));
 end;
 
 class function TRdcPasswordVault.ViaGatewayHostKey(const aGatewayAddress, aHost: string): string;

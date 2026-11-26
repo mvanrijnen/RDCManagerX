@@ -550,9 +550,12 @@ end;
 procedure TVaultTests.HostKeysAreBoundToRouteAndTailnet;
 begin
   // The same name directly, in another tailnet (control URL) or as a gateway: all different approvals.
-  Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('srv'), TRdcPasswordVault.TailnetHostKey('', 'srv'));
-  Assert.AreNotEqual(TRdcPasswordVault.TailnetHostKey('', 'srv'), TRdcPasswordVault.TailnetHostKey('https://headscale.aanvaller.tld', 'srv'));
-  Assert.AreEqual(TRdcPasswordVault.TailnetHostKey('https://HS.example.com/', 'Srv'), TRdcPasswordVault.TailnetHostKey('https://hs.example.com', 'srv'));
+  // Tailnet: bound to the tailnet's MagicDNS suffix and the device's MagicDNS name (two tailnets on the same control
+  // server with the same device name are different hosts).
+  Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('srv.tail1234.ts.net'), TRdcPasswordVault.TailnetHostKey('tail1234.ts.net', 'srv.tail1234.ts.net'));
+  Assert.AreNotEqual(TRdcPasswordVault.TailnetHostKey('tail1234.ts.net', 'srv.tail1234.ts.net'), TRdcPasswordVault.TailnetHostKey('tail9999.ts.net', 'srv.tail9999.ts.net'));
+  Assert.AreEqual(TRdcPasswordVault.TailnetHostKey('Tail1234.ts.net.', 'SRV.tail1234.ts.net.'), TRdcPasswordVault.TailnetHostKey('tail1234.ts.net', 'srv.tail1234.ts.net'));
+  Assert.IsTrue(TRdcPasswordVault.TailnetHostKey('tail1234.ts.net', 'srv.tail1234.ts.net').StartsWith('ts2:'), 'old ts: approvals do not match');
   Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('srv01'), TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01'));
   Assert.AreNotEqual(TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01'), TRdcPasswordVault.ViaGatewayHostKey('gw.evil.tld', 'srv01'));
   Assert.AreNotEqual(TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01'), TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv02'));
