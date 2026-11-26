@@ -43,20 +43,24 @@ jobs:
           max-allowed-issues: 2147483647
 
       # Codacy writes one SARIF run per tool into a single file, but code scanning accepts only one run per
-      # category. Split it into one file per tool, each with its own category (automationDetails.id).
+      # category. Split it into one file per run, each with its own category (automationDetails.id). A tool can
+      # appear more than once (e.g. opengrep for several languages): later runs get -2, -3, ...
       - name: Split SARIF per tool
         run: |
           python3 - <<'PY'
           import json, os, re
           data = json.load(open('results.sarif', encoding='utf-8'))
           os.makedirs('sarif', exist_ok=True)
+          seen = {}
           for index, run in enumerate(data.get('runs', [])):
               tool = run.get('tool', {}).get('driver', {}).get('name') or f'tool{index}'
               slug = re.sub(r'[^A-Za-z0-9_-]+', '-', tool).strip('-').lower() or f'tool{index}'
-              run['automationDetails'] = {'id': f'codacy-{slug}/'}
+              seen[slug] = seen.get(slug, 0) + 1
+              category = slug if seen[slug] == 1 else f'{slug}-{seen[slug]}'
+              run['automationDetails'] = {'id': f'codacy-{category}/'}
               part = dict(data, runs=[run])
-              json.dump(part, open(f'sarif/{index:02d}-{slug}.sarif', 'w', encoding='utf-8'))
-              print(f'{tool}: {len(run.get("results", []))} results')
+              json.dump(part, open(f'sarif/{index:02d}-{category}.sarif', 'w', encoding='utf-8'))
+              print(f'{category}: {len(run.get("results", []))} results')
           PY
 
       - name: Upload SARIF results
