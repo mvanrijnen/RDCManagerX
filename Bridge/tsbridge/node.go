@@ -278,13 +278,18 @@ func (n *node) checkTarget(address string) error {
 		return err
 	}
 	n.mu.Lock()
-	if n.resolved == nil {
+	// Bounded: entries go with their forward (removeForward); checks without a forward (connection test) could
+	// otherwise pile up.
+	if n.resolved == nil || len(n.resolved) >= maxResolved {
 		n.resolved = map[string]resolvedTarget{}
 	}
 	n.resolved[address] = resolvedTarget{Name: strings.TrimSuffix(peer.DNSName, "."), IP: ip.String()}
 	n.mu.Unlock()
 	return nil
 }
+
+// maxResolved bounds the resolved map of a node.
+const maxResolved = 64
 
 // lastResolved: what the last successful checkTarget of this target resolved to (for the connection status).
 func (n *node) lastResolved(address string) resolvedTarget {
@@ -297,6 +302,19 @@ func (n *node) removeForward(port int) error {
 	n.mu.Lock()
 	f, ok := n.forwards[port]
 	delete(n.forwards, port)
+	if ok {
+		// The resolved target goes with the last forward to it.
+		inUse := false
+		for _, other := range n.forwards {
+			if other.Target == f.Target {
+				inUse = true
+				break
+			}
+		}
+		if !inUse {
+			delete(n.resolved, f.Target)
+		}
+	}
 	n.mu.Unlock()
 	if !ok {
 		return errNotFound
