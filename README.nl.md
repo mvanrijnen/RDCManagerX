@@ -30,6 +30,10 @@ Kies een indeling in het menu **Beeld**:
 
 ![Vier sessies in een raster van 2x2, donker thema (de demoservers zijn niet bereikbaar, dus elk vak toont de reden)](Docs/images/splitview-nl.png)
 
+In de praktijk: twee vakken met live sessies naast een Active Directory-groep (namen geanonimiseerd):
+
+![Twee vakken met live sessies; de boom toont een AD-gekoppelde groep met bereikbaarheidskleuren (geanonimiseerd)](Docs/images/work-splitview.jpg)
+
 - snelle keuzes: 1 vak, 2/3/4 naast elkaar, 2 boven elkaar, 2×2, 3×2 en 4×2;
 - **Aangepast…**: elk raster tot 6 kolommen × 3 rijen;
 - **Gelijk verdelen** zet de splitters terug.
@@ -109,6 +113,8 @@ auth key of het wachtwoord één keer opnieuw in, of je logt in via de browser.
 ---
 
 ## Bereikbaarheid en status
+
+![Acht open sessies als tabs; in de boom groen = bereikbaar, rood = niet bereikbaar (geanonimiseerd)](Docs/images/work-tabs.png)
 
 RDCManagerX kan op de achtergrond controleren of servers bereikbaar zijn. Dit staat standaard **uit**. Je zet het aan
 op een bestand, groep of server: **Eigenschappen > Route > Bereikbaarheid tonen in de boom**. Zet daarvoor eerst het

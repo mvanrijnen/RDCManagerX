@@ -34,6 +34,10 @@ tabs. Choose a layout in the **View** menu (*Beeld*):
 
 ![Four sessions in a 2x2 grid, dark theme (demo servers are not reachable, so each pane shows the disconnect reason)](Docs/images/splitview-en.png)
 
+In daily use: two panes with live sessions next to an Active Directory group (names anonymised):
+
+![Two panes with live sessions; the tree shows an AD-linked group with reachability colours (anonymised)](Docs/images/work-splitview.jpg)
+
 - quick choices: 1 pane, 2/3/4 side by side, 2 stacked, 2×2, 3×2 and 4×2;
 - **Custom…** (*Aangepast…*): any grid up to 6 columns × 3 rows;
 - **Distribute evenly** (*Gelijk verdelen*) resets the splitters.
@@ -112,6 +116,8 @@ key or password once more, or you log in through the browser.
 ---
 
 ## Reachability and status
+
+![Eight open sessions as tabs; in the tree green = reachable, red = not reachable (anonymised)](Docs/images/work-tabs.png)
 
 RDCManagerX can check in the background whether servers are reachable. This is **off** by default. You turn it on
 for a file, group or server: **Properties > Route > Show reachability in the tree** (*Bereikbaarheid tonen in de

@@ -28,3 +28,6 @@ Bridge/bin/**/*.h
 
 # Python bytecode (Tools)
 __pycache__/
+
+# Local screenshots with real names (never committed; anonymised copies go to Docs/images)
+Screenshots/
