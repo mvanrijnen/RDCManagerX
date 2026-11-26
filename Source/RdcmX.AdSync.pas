@@ -11,6 +11,9 @@
   - Servers keep their own settings, favorites and the inherited settings of the AD group, because they are normal
     servers in the file (also in the .rdg, so RDCMan can open it).
   - A subgroup that has its own AD link is a separate AD group and is skipped.
+  - Only OUs that contain (directly or deeper) at least one computer that passes the filters become groups (user
+    request): empty OUs, or OUs with only disabled/filtered computers, are not shown; an OU group that becomes empty
+    is removed at the next refresh like any other node that is gone.
   No VCL dependency (tested in the console test project).
 }
 
@@ -171,6 +174,13 @@ begin
   end;
 end;
 
+function IncludedComputer(const aEntry: TRdcAdEntry; aConfig: TRdcxAdSettings): Boolean;
+begin
+  Result := (aEntry.Kind = aekComputer) and not (aConfig.SkipDisabled and aEntry.Disabled)
+    and ((aConfig.NameFilter = '') or MatchesMask(aEntry.Name, aConfig.NameFilter))
+    and ((Trim(aEntry.DnsHostName) <> '') or (aEntry.Name <> ''));
+end;
+
 function RdcAdSync(aGroup: TRdcGroup; const aEntries: TArray<TRdcAdEntry>; const aIsBusy: TFunc<TRdcServer, Boolean>; const aBeforeRemove: TProc<TRdcNode>): TRdcAdSyncResult;
 var
   lBase: string;
@@ -185,6 +195,8 @@ var
   lOuGroups: TDictionary<string, TRdcGroup>;
   lOus: TList<TRdcAdEntry>;
   lParent: TRdcGroup;
+  lParentDn: string;
+  lFilled: TDictionary<string, Boolean>;
   lSeen: TDictionary<TRdcNode, Boolean>;
   lServer: TRdcServer;
 
@@ -220,14 +232,27 @@ begin
   lSeen := TDictionary<TRdcNode, Boolean>.Create;
   lOus := TList<TRdcAdEntry>.Create;
   lGroups := TList<TRdcGroup>.Create;
+  lFilled := TDictionary<string, Boolean>.Create;
   try
     CollectSynced(aGroup, lExisting);
+
+    // OUs that hold an included computer, directly or deeper: only those become groups.
+    for lEntry in aEntries do
+      if IncludedComputer(lEntry, lConfig) then
+      begin
+        lParentDn := RdcAdParentDn(lEntry.Dn);
+        while (lParentDn <> '') and (RdcAdNormalizeDn(lParentDn) <> lBase) do
+        begin
+          lFilled.AddOrSetValue(RdcAdNormalizeDn(lParentDn), True);
+          lParentDn := RdcAdParentDn(lParentDn);
+        end;
+      end;
 
     // OUs first, parents before children.
     if lConfig.SubOus then
     begin
       for lEntry in aEntries do
-        if (lEntry.Kind = aekOu) and (RdcAdNormalizeDn(lEntry.Dn) <> lBase) then
+        if (lEntry.Kind = aekOu) and (RdcAdNormalizeDn(lEntry.Dn) <> lBase) and lFilled.ContainsKey(RdcAdNormalizeDn(lEntry.Dn)) then
           lOus.Add(lEntry);
       lOus.Sort(TComparer<TRdcAdEntry>.Construct(
         function(const aLeft, aRight: TRdcAdEntry): Integer
@@ -261,17 +286,11 @@ begin
 
     for lEntry in aEntries do
     begin
-      if lEntry.Kind <> aekComputer then
-        Continue;
-      if lConfig.SkipDisabled and lEntry.Disabled then
-        Continue;
-      if (lConfig.NameFilter <> '') and not MatchesMask(lEntry.Name, lConfig.NameFilter) then
+      if not IncludedComputer(lEntry, lConfig) then
         Continue;
       lHost := Trim(lEntry.DnsHostName);
       if lHost = '' then
         lHost := lEntry.Name;
-      if lHost = '' then
-        Continue;
       lParent := ParentGroupFor(lEntry.Dn);
       if lExisting.TryGetValue(RdcAdNormalizeDn(lEntry.Dn), lNode) and (lNode is TRdcServer) then
       begin
@@ -330,6 +349,7 @@ begin
       else
         Inc(Result.Kept);
   finally
+    lFilled.Free;
     lGroups.Free;
     lOus.Free;
     lSeen.Free;

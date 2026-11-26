@@ -39,6 +39,8 @@ type
     [Test]
     procedure OwnSettingsSurviveARefresh;
     [Test]
+    procedure EmptyOusAreNotShown;
+    [Test]
     procedure AdSettingDoesNotInherit;
   end;
 
@@ -186,6 +188,33 @@ begin
   Sync(Entries);
   Assert.AreSame(lServer, FindServer('Datacenter\DC01'), 'same object, not recreated');
   Assert.AreEqual(3390, lServer.EffectiveConnection.Port);
+end;
+
+procedure TAdSyncTests.EmptyOusAreNotShown;
+var
+  lEntries: TArray<TRdcAdEntry>;
+  lResult: TRdcAdSyncResult;
+begin
+  // An empty OU, an OU with only a disabled computer, and an OU whose only computer sits two levels deeper.
+  lEntries := Entries + [
+    TRdcAdEntry.Ou('OU=Empty,' + cBase, 'Empty'),
+    TRdcAdEntry.Ou('OU=Old,' + cBase, 'Old'),
+    TRdcAdEntry.Computer('CN=OLD01,OU=Old,' + cBase, 'OLD01', 'old01.contoso.com', True),
+    TRdcAdEntry.Ou('OU=Branch,' + cBase, 'Branch'),
+    TRdcAdEntry.Ou('OU=Floor1,OU=Branch,' + cBase, 'Floor1'),
+    TRdcAdEntry.Ou('OU=Room1,OU=Floor1,OU=Branch,' + cBase, 'Room1'),
+    TRdcAdEntry.Computer('CN=PC01,OU=Room1,OU=Floor1,OU=Branch,' + cBase, 'PC01', 'pc01.contoso.com')];
+  Sync(lEntries);
+  Assert.IsNull(FFile.FindByPath('Contoso\AD servers\Empty'), 'empty OU');
+  Assert.IsNull(FFile.FindByPath('Contoso\AD servers\Old'), 'OU with only a disabled computer');
+  Assert.IsNotNull(FindServer('Branch\Floor1\Room1\PC01'), 'OUs above a computer are kept');
+  // The computer in Room1 is gone: Room1, Floor1 and Branch become empty and are removed.
+  lResult := Sync(Entries + [
+    TRdcAdEntry.Ou('OU=Branch,' + cBase, 'Branch'),
+    TRdcAdEntry.Ou('OU=Floor1,OU=Branch,' + cBase, 'Floor1'),
+    TRdcAdEntry.Ou('OU=Room1,OU=Floor1,OU=Branch,' + cBase, 'Room1')]);
+  Assert.AreEqual(4, lResult.Removed, 'PC01 and the three OU groups');
+  Assert.IsNull(FFile.FindByPath('Contoso\AD servers\Branch'));
 end;
 
 procedure TAdSyncTests.AdSettingDoesNotInherit;

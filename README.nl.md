@@ -65,7 +65,7 @@ muisbeweging naar de sessie zolang je er niet in werkt, zodat de server niet ver
 
 Een groep kun je koppelen aan een AD-OU (**Eigenschappen > Active Directory**, bijvoorbeeld
 `OU=Computers,DC=contoso,DC=com`). **Server > Verversen vanuit Active Directory** vult de groep dan met de computers in
-die OU, met sub-OU's als subgroepen (of plat), met je eigen Windows-account (ondertekende en versleutelde LDAP, alleen
+die OU, met sub-OU's als subgroepen (alleen OU's met computers erin; of plat), met je eigen Windows-account (ondertekende en versleutelde LDAP, alleen
 lezen). De computers worden gewone servers in het bestand: de instellingen van de groep gelden voor hen, en hun eigen
 instellingen en favorieten blijven bij verversen bewaard. Computers die uit AD verdwenen zijn worden verwijderd (niet
 zolang er een sessie open is); zelf toegevoegde servers blijven staan. Optioneel ververst de groep bij het openen van

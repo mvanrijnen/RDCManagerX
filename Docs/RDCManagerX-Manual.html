@@ -177,7 +177,7 @@ with the new size.</p>
   <tr><td>Display</td><td>Display mode, scale, fixed size, colour depth</td></tr>
   <tr><td>Local resources</td><td>Clipboard, drives, printers, sound, smart cards, Windows key combinations</td></tr>
   <tr><td>Active Directory</td><td>Groups only, does not inherit: link to an AD OU (e.g. <code>OU=Computers,DC=contoso,DC=com</code>).
-    <em>Server &gt; Refresh from Active Directory</em> fills the group with the computers in it (sub-OUs as subgroups, or flat), using
+    <em>Server &gt; Refresh from Active Directory</em> fills the group with the computers in it (sub-OUs as subgroups, only when they contain computers; or flat), using
     your own Windows account. They become normal servers; computers that are gone are removed on refresh (not with an open session),
     servers you added yourself stay. The first time per domain controller + OU the app asks for confirmation.</td></tr>
   <tr><td>Experience</td><td>Connection speed and display options as in mstsc (background, font smoothing, animations, visual
