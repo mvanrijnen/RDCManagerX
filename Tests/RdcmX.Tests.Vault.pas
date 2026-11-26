@@ -764,8 +764,24 @@ begin
 end;
 
 procedure TVaultTests.WeakMasterPasswordIsRefused;
+var
+  lReason: string;
 begin
   Assert.IsFalse(TRdcPasswordVault.IsStrongEnough('kort'));
+  Assert.IsFalse(TRdcPasswordVault.IsStrongEnough('Vijftien-tekens'), '15 characters');
+  Assert.IsTrue(TRdcPasswordVault.IsStrongEnough(cMaster));
+  Assert.IsTrue(TRdcPasswordVault.IsStrongEnough('paard batterij nietje correct'), 'a sentence');
+  Assert.IsTrue(TRdcPasswordVault.IsStrongEnough('Mijn kat heet Bobbie 2019!'));
+  // Obvious patterns, all 16 characters or more.
+  Assert.IsFalse(TRdcPasswordVault.CheckMasterPassword('aaaaaaaaaaaaaaaa', lReason), 'one character');
+  Assert.AreNotEqual('', lReason);
+  Assert.IsFalse(TRdcPasswordVault.IsStrongEnough('Welkom01Welkom01'), 'repeated block');
+  Assert.IsFalse(TRdcPasswordVault.IsStrongEnough('1234567890123456'), 'digit run');
+  Assert.IsFalse(TRdcPasswordVault.IsStrongEnough('qwertyuiopasdfgh'), 'keyboard row');
+  Assert.IsFalse(TRdcPasswordVault.IsStrongEnough('ZYXWVUTSRQPONMLK'), 'alphabet backwards');
+  Assert.IsFalse(TRdcPasswordVault.IsStrongEnough('Wachtwoord2026!!!'), 'common word with digits');
+  Assert.IsFalse(TRdcPasswordVault.IsStrongEnough('P@ssword12345678'), 'common word with substitutions');
+  Assert.IsFalse(TRdcPasswordVault.IsStrongEnough('Hoofdwachtwoord#1'));
   Assert.IsFalse(FVault.Initialize('kort'));
   Assert.IsFalse(FVault.IsInitialized);
 end;

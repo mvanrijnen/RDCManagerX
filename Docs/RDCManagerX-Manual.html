@@ -200,7 +200,7 @@ message only comes back when those settings change; files you save yourself coun
 <p>RDCManagerX asks for the password at every connection, unless it is remembered. Remembering is only possible when
 <strong>File &gt; Options &gt; Allow remembering passwords</strong> is on; it is off by default.</p>
 <ul>
-  <li>When you turn it on you set a <strong>master password</strong> (at least 10 characters). Remembered passwords are encrypted with it
+  <li>When you turn it on you set a <strong>master password</strong> (at least 16 characters, no obvious pattern such as repetitions, keyboard runs or "Password2026!"; a sentence of a few words is strong and easy to remember). Remembered passwords are encrypted with it
     (AES-256, key derived with PBKDF2) and additionally protected by Windows.</li>
   <li>The <em>Remember password</em> checkbox in the logon prompt is never ticked by itself.</li>
   <li>Separately, <em>Remember user name and domain</em> stores the name with the server in the file (when connecting a group: with

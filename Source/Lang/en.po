@@ -490,8 +490,8 @@ msgid "Huidig hoofdwachtwoord"
 msgstr "Current master password"
 
 #: Source/RdcmX.UI.MasterPassword.dfm
-msgid "Hoofdwachtwoord van de kluis, minimaal 10 tekens. Het wordt nergens opgeslagen en is niet te herstellen: onthoud het goed."
-msgstr "Master password of the vault, at least 10 characters. It is not stored anywhere and cannot be recovered: remember it well."
+msgid "Hoofdwachtwoord van de kluis, minimaal 16 tekens. Het wordt nergens opgeslagen en is niet te herstellen: onthoud het goed."
+msgstr "Master password of the vault, at least 16 characters. It is not stored anywhere and cannot be recovered: remember it well."
 
 #: Source/RdcmX.UI.MasterPassword.dfm
 msgid "Hetzelfde hoofdwachtwoord nogmaals, ter controle."
@@ -868,6 +868,22 @@ msgstr "digits only (read as an IP address)"
 #: Source/RdcmX.AdSync.pas
 msgid "DNS-naam buiten het domein van de OU en de toegestane suffixen"
 msgstr "DNS name outside the domain of the OU and the allowed suffixes"
+
+#: Source/RdcmX.Credentials.pas
+msgid "Het hoofdwachtwoord moet minimaal %d tekens lang zijn."
+msgstr "The master password must be at least %d characters long."
+
+#: Source/RdcmX.Credentials.pas
+msgid "Het hoofdwachtwoord herhaalt steeds dezelfde tekens. Kies iets minder voorspelbaars, bijvoorbeeld een zin van een paar woorden."
+msgstr "The master password keeps repeating the same characters. Choose something less predictable, for example a sentence of a few words."
+
+#: Source/RdcmX.Credentials.pas
+msgid "Het hoofdwachtwoord is een reeks van het toetsenbord of het alfabet. Kies iets minder voorspelbaars, bijvoorbeeld een zin van een paar woorden."
+msgstr "The master password is a run from the keyboard or the alphabet. Choose something less predictable, for example a sentence of a few words."
+
+#: Source/RdcmX.Credentials.pas
+msgid "Het hoofdwachtwoord is een veelgebruikt woord met cijfers of tekens erbij. Kies iets minder voorspelbaars, bijvoorbeeld een zin van een paar woorden."
+msgstr "The master password is a common word with digits or symbols added. Choose something less predictable, for example a sentence of a few words."
 
 #: Source/RdcmX.Crypto.pas
 msgid "%s mislukt (status $%.8x)"
@@ -1963,8 +1979,8 @@ msgid "Instellen"
 msgstr "Set"
 
 #: Source/RdcmX.UI.MasterPassword.pas
-msgid "Minimaal %d tekens. Het hoofdwachtwoord wordt nergens opgeslagen en is niet te herstellen: vergeten = alle onthouden wachtwoorden kwijt."
-msgstr "At least %d characters. The master password is not stored anywhere and cannot be recovered: forgotten = all remembered passwords lost."
+msgid "Minimaal %d tekens; een zin van een paar woorden is sterk en makkelijk te onthouden. Het hoofdwachtwoord wordt nergens opgeslagen en is niet te herstellen: vergeten = alle onthouden wachtwoorden kwijt."
+msgstr "At least %d characters; a sentence of a few words is strong and easy to remember. The master password is not stored anywhere and cannot be recovered: forgotten = all remembered passwords lost."
 
 #: Source/RdcmX.UI.MasterPassword.pas
 msgid "Hoofdwachtwoord wijzigen"
@@ -1975,16 +1991,12 @@ msgid "Wijzigen"
 msgstr "Change"
 
 #: Source/RdcmX.UI.MasterPassword.pas
-msgid "Minimaal %d tekens. Alle onthouden wachtwoorden worden opnieuw versleuteld."
-msgstr "At least %d characters. All remembered passwords are re-encrypted."
+msgid "Minimaal %d tekens; een zin van een paar woorden is sterk en makkelijk te onthouden. Alle onthouden wachtwoorden worden opnieuw versleuteld."
+msgstr "At least %d characters; a sentence of a few words is strong and easy to remember. All remembered passwords are encrypted again."
 
 #: Source/RdcmX.UI.MasterPassword.pas
 msgid "Vul het huidige hoofdwachtwoord in."
 msgstr "Enter the current master password."
-
-#: Source/RdcmX.UI.MasterPassword.pas
-msgid "Het hoofdwachtwoord moet minimaal %d tekens lang zijn."
-msgstr "The master password must be at least %d characters long."
 
 #: Source/RdcmX.UI.MasterPassword.pas
 msgid "De twee nieuwe hoofdwachtwoorden zijn niet gelijk."

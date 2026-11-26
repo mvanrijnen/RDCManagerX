@@ -41,7 +41,7 @@ uses
 
 const
   cRdcVaultTarget = 'RDCManagerX:vault';
-  cRdcMinMasterPasswordLength = 10;
+  cRdcMinMasterPasswordLength = 16;
 
 type
   /// <summary>A host a remembered account password would be sent to. Key goes into the approval list,
@@ -163,6 +163,11 @@ type
     class function NormalizeControlUrl(const aControlUrl: string): string; static;
     /// <summary>Heeft het hoofdwachtwoord voldoende lengte?</summary>
     class function IsStrongEnough(const aMasterPassword: string): Boolean; static;
+    /// <summary>Is aMasterPassword usable as master password? At least cRdcMinMasterPasswordLength characters, and
+    /// not an obvious pattern: few different characters, a repeated block, a keyboard or alphabet run, or a common
+    /// word with only digits and punctuation around it. No composition rules (they make passwords predictable, not
+    /// stronger). aReason: why not (UI text).</summary>
+    class function CheckMasterPassword(const aMasterPassword: string; out aReason: string): Boolean; static;
     function IsInitialized: Boolean;
     function IsUnlocked: Boolean;
     /// <summary>Nieuwe kluis met dit hoofdwachtwoord; bestaande items (ook van een oude kluis) worden gewist. Ontgrendelt.</summary>
@@ -216,7 +221,7 @@ implementation
 
 uses
   System.Hash,
-  RdcmX.Crypto;
+  RdcmX.Crypto, RdcmX.Lang;
 
 const
   CRED_TYPE_GENERIC = 1;
@@ -619,8 +624,115 @@ begin
 end;
 
 class function TRdcPasswordVault.IsStrongEnough(const aMasterPassword: string): Boolean;
+var
+  lReason: string;
 begin
-  Result := Length(aMasterPassword) >= cRdcMinMasterPasswordLength;
+  Result := CheckMasterPassword(aMasterPassword, lReason);
+end;
+
+function DistinctChars(const aText: string): Integer;
+var
+  lChar: Char;
+  lSeen: string;
+begin
+  lSeen := '';
+  for lChar in aText do
+    if Pos(lChar, lSeen) = 0 then
+      lSeen := lSeen + lChar;
+  Result := Length(lSeen);
+end;
+
+function IsRepeatedBlock(const aText: string): Boolean;
+var
+  lBlock: Integer;
+  lIndex: Integer;
+  lSame: Boolean;
+begin
+  // "Welkom01Welkom01", "abcabcabcabc": the text is one shorter block over and over.
+  for lBlock := 1 to Length(aText) div 2 do
+    if Length(aText) mod lBlock = 0 then
+    begin
+      lSame := True;
+      for lIndex := lBlock + 1 to Length(aText) do
+        if aText[lIndex] <> aText[lIndex - lBlock] then
+        begin
+          lSame := False;
+          Break;
+        end;
+      if lSame then
+        Exit(True);
+    end;
+  Result := False;
+end;
+
+function IsMostlyRun(const aText: string): Boolean;
+const
+  cRuns: array[0..3] of string = ('abcdefghijklmnopqrstuvwxyz', '01234567890', 'qwertyuiopasdfghjklzxcvbnm', 'azertyuiopqsdfghjklmwxcvbn');
+var
+  lAlnum: string;
+  lChar: Char;
+  lIndex: Integer;
+  lNext: Integer;
+  lRun: string;
+  lSteps: Integer;
+begin
+  // "1234567890123456", "qwertyuiopasdfgh", "zyxwvuts...": most neighbouring characters are next to each other in
+  // the alphabet, the digits or a keyboard row (both directions).
+  lAlnum := '';
+  for lChar in LowerCase(aText) do
+    if CharInSet(lChar, ['a'..'z', '0'..'9']) then
+      lAlnum := lAlnum + lChar;
+  if Length(lAlnum) < 2 then
+    Exit(False);
+  lSteps := 0;
+  for lIndex := 1 to Length(lAlnum) - 1 do
+    for lRun in cRuns do
+    begin
+      lNext := Pos(lAlnum[lIndex], lRun);
+      if (lNext > 0) and (((lNext < Length(lRun)) and (lRun[lNext + 1] = lAlnum[lIndex + 1])) or ((lNext > 1) and (lRun[lNext - 1] = lAlnum[lIndex + 1]))) then
+      begin
+        Inc(lSteps);
+        Break;
+      end;
+    end;
+  Result := lSteps * 10 >= (Length(lAlnum) - 1) * 7;
+end;
+
+function IsCommonWordWithPadding(const aText: string): Boolean;
+const
+  cWords: array[0..13] of string = ('wachtwoord', 'hoofdwachtwoord', 'password', 'masterpassword', 'welkom', 'welcome',
+    'geheim', 'secret', 'rdcmanagerx', 'rdcmanager', 'administrator', 'admin', 'letmein', 'qwerty');
+var
+  lChar: Char;
+  lLetters: string;
+  lWord: string;
+begin
+  // "Wachtwoord2026!!!", "P@ssword12345678" after removing digits and punctuation (and the usual @/$/0 for a/s/o).
+  lLetters := '';
+  for lChar in LowerCase(aText) do
+    case lChar of
+      'a'..'z': lLetters := lLetters + lChar;
+      '@': lLetters := lLetters + 'a';
+      '$': lLetters := lLetters + 's';
+    end;
+  for lWord in cWords do
+    if lLetters = lWord then
+      Exit(True);
+  Result := False;
+end;
+
+class function TRdcPasswordVault.CheckMasterPassword(const aMasterPassword: string; out aReason: string): Boolean;
+begin
+  aReason := '';
+  if Length(aMasterPassword) < cRdcMinMasterPasswordLength then
+    aReason := Format(_('Het hoofdwachtwoord moet minimaal %d tekens lang zijn.'), [cRdcMinMasterPasswordLength])
+  else if (DistinctChars(aMasterPassword) < 6) or IsRepeatedBlock(aMasterPassword) then
+    aReason := _('Het hoofdwachtwoord herhaalt steeds dezelfde tekens. Kies iets minder voorspelbaars, bijvoorbeeld een zin van een paar woorden.')
+  else if IsMostlyRun(aMasterPassword) then
+    aReason := _('Het hoofdwachtwoord is een reeks van het toetsenbord of het alfabet. Kies iets minder voorspelbaars, bijvoorbeeld een zin van een paar woorden.')
+  else if IsCommonWordWithPadding(aMasterPassword) then
+    aReason := _('Het hoofdwachtwoord is een veelgebruikt woord met cijfers of tekens erbij. Kies iets minder voorspelbaars, bijvoorbeeld een zin van een paar woorden.');
+  Result := aReason = '';
 end;
 
 function TRdcPasswordVault.IsInitialized: Boolean;

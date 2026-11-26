@@ -4,7 +4,8 @@
   Dialoog voor het hoofdwachtwoord van de wachtwoordkluis (RdcmX.Credentials):
   - Ontgrendelen: één veld; "Vergeten..." laat de aanroeper de kluis leegmaken (het hoofdwachtwoord is niet te
     herstellen, dat is de bedoeling).
-  - Instellen: nieuw hoofdwachtwoord twee keer, minimaal cRdcMinMasterPasswordLength tekens.
+  - Instellen: nieuw hoofdwachtwoord twee keer, minimaal cRdcMinMasterPasswordLength tekens en geen voor de hand
+    liggend patroon (TRdcPasswordVault.CheckMasterPassword).
   - Wijzigen: huidig hoofdwachtwoord plus het nieuwe twee keer.
   De velden worden na gebruik overschreven; de dialoog bewaart niets.
 }
@@ -121,14 +122,14 @@ begin
         Caption := _('Hoofdwachtwoord instellen');
         lblNew.Caption := _('Nieuw hoofdwachtwoord');
         btnOk.Caption := _('Instellen');
-        lblHint.Caption := Format(_('Minimaal %d tekens. Het hoofdwachtwoord wordt nergens opgeslagen en is niet te herstellen: vergeten = alle onthouden wachtwoorden kwijt.'), [cRdcMinMasterPasswordLength]);
+        lblHint.Caption := Format(_('Minimaal %d tekens; een zin van een paar woorden is sterk en makkelijk te onthouden. Het hoofdwachtwoord wordt nergens opgeslagen en is niet te herstellen: vergeten = alle onthouden wachtwoorden kwijt.'), [cRdcMinMasterPasswordLength]);
       end;
     mpmChange:
       begin
         Caption := _('Hoofdwachtwoord wijzigen');
         lblNew.Caption := _('Nieuw hoofdwachtwoord');
         btnOk.Caption := _('Wijzigen');
-        lblHint.Caption := Format(_('Minimaal %d tekens. Alle onthouden wachtwoorden worden opnieuw versleuteld.'), [cRdcMinMasterPasswordLength]);
+        lblHint.Caption := Format(_('Minimaal %d tekens; een zin van een paar woorden is sterk en makkelijk te onthouden. Alle onthouden wachtwoorden worden opnieuw versleuteld.'), [cRdcMinMasterPasswordLength]);
       end;
   end;
 end;
@@ -142,6 +143,8 @@ begin
 end;
 
 function TfrmMasterPassword.ValidateInput: Boolean;
+var
+  lReason: string;
 begin
   Result := False;
   if FMode = mpmUnlock then
@@ -152,10 +155,10 @@ begin
     MessageDlg(_('Vul het huidige hoofdwachtwoord in.'), mtWarning, [mbOK], 0);
     Exit;
   end;
-  if not TRdcPasswordVault.IsStrongEnough(edtNew.Text) then
+  if not TRdcPasswordVault.CheckMasterPassword(edtNew.Text, lReason) then
   begin
     edtNew.SetFocus;
-    MessageDlg(Format(_('Het hoofdwachtwoord moet minimaal %d tekens lang zijn.'), [cRdcMinMasterPasswordLength]), mtWarning, [mbOK], 0);
+    MessageDlg(lReason, mtWarning, [mbOK], 0);
     Exit;
   end;
   if edtNew.Text <> edtConfirm.Text then

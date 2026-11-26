@@ -41,7 +41,7 @@ object frmMasterPassword: TfrmMasterPassword
   end
   object lblNew: TLabel
     Hint =
-      'Hoofdwachtwoord van de kluis, minimaal 10 tekens. Het wordt nergens o' +
+      'Hoofdwachtwoord van de kluis, minimaal 16 tekens. Het wordt nergens o' +
       'pgeslagen en is niet te herstellen: onthoud het goed.'
     Left = 16
     Top = 94
@@ -83,7 +83,7 @@ object frmMasterPassword: TfrmMasterPassword
   end
   object edtNew: TEdit
     Hint =
-      'Hoofdwachtwoord van de kluis, minimaal 10 tekens. Het wordt nergens o' +
+      'Hoofdwachtwoord van de kluis, minimaal 16 tekens. Het wordt nergens o' +
       'pgeslagen en is niet te herstellen: onthoud het goed.'
     Left = 180
     Top = 90
