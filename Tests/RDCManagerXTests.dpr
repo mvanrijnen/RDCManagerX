@@ -32,6 +32,7 @@ uses
   RdcmX.Tests.Redirections in 'RdcmX.Tests.Redirections.pas',
   RdcmX.Tests.Experience in 'RdcmX.Tests.Experience.pas',
   RdcmX.AdSync in '..\Source\RdcmX.AdSync.pas',
+  RdcmX.AdLdap in '..\Source\RdcmX.AdLdap.pas',
   RdcmX.Tests.AdSync in 'RdcmX.Tests.AdSync.pas',
   RdcmX.Tests.Storage in 'RdcmX.Tests.Storage.pas',
   RdcmX.Tests.Tailscale in 'RdcmX.Tests.Tailscale.pas',

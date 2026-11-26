@@ -2660,16 +2660,38 @@ end;
 
 function TfrmMain.ConfirmAdQuery(aGroup: TRdcGroup): Boolean;
 var
+  lDefault: TMsgDlgBtn;
+  lPcDomain: string;
   lServer: string;
+  lTarget: TRdcAdTarget;
+  lWarning: string;
 begin
   // Once per domain controller + OU on this PC: a file from someone else could name an LDAP server of an attacker,
-  // to which Windows might authenticate with this account.
+  // to which Windows might authenticate with this account (NTLM). The server comes first and gets a warning when it
+  // is an IP address or outside this PC's domain.
   if FAppSettings.AdApprovals.IndexOf(AdApprovalKey(aGroup)) >= 0 then
     Exit(True);
-  lServer := aGroup.Settings.Ad.Server;
-  if lServer = '' then
-    lServer := _('(domein van deze pc)');
-  Result := MessageDlg(Format(_('Computers ophalen uit Active Directory?'#13#10#13#10'OU: %s'#13#10'Domeincontroller: %s'#13#10#13#10'Dit gebruikt uw Windows-account. Kies alleen Ja als u deze gegevens vertrouwt; het antwoord wordt op deze pc onthouden.'), [aGroup.Settings.Ad.OuDn, lServer]), mtConfirmation, [mbYes, mbNo], 0) = mrYes;
+  lPcDomain := RdcThisPcDomain;
+  lTarget := RdcAdTargetOf(aGroup.Settings.Ad.Server, aGroup.Settings.Ad.OuDn, lPcDomain);
+  if lTarget.ServerGiven then
+    lServer := lTarget.Target
+  else
+    lServer := Format(_('%s (een domeincontroller van dit domein, gevonden via DNS)'), [lTarget.Target]);
+  lWarning := '';
+  if lTarget.IsIpAddress then
+    lWarning := _('LET OP: de server is een IP-adres; Kerberos werkt dan niet en Windows meldt zich met NTLM aan bij dat adres.') + #13#10#13#10
+  else if lTarget.OutsidePcDomain then
+  begin
+    if lPcDomain = '' then
+      lWarning := _('LET OP: deze pc zit niet in een domein; controleer of u deze server kent.') + #13#10#13#10
+    else
+      lWarning := Format(_('LET OP: deze server hoort niet bij het domein van deze pc (%s). Windows meldt zich daar met uw account aan.'), [lPcDomain]) + #13#10#13#10;
+  end;
+  if lWarning <> '' then
+    lDefault := mbNo
+  else
+    lDefault := mbYes;
+  Result := MessageDlg(Format(_('Computers ophalen uit Active Directory?'#13#10#13#10'Server: %s'#13#10'OU: %s'#13#10#13#10'%sDit gebruikt uw Windows-account. Kies alleen Ja als u deze server vertrouwt; het antwoord wordt op deze pc onthouden.'), [lServer, aGroup.Settings.Ad.OuDn, lWarning]), mtConfirmation, [mbYes, mbNo], 0, lDefault) = mrYes;
   if Result then
     FAppSettings.AdApprovals.Add(AdApprovalKey(aGroup));
 end;

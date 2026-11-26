@@ -9,7 +9,7 @@ interface
 uses
   System.SysUtils,
   DUnitX.TestFramework,
-  RdcmX.AdSync, RdcmX.Model;
+  RdcmX.AdLdap, RdcmX.AdSync, RdcmX.Model;
 
 type
   [TestFixture]
@@ -42,6 +42,8 @@ type
     procedure EmptyOusAreNotShown;
     [Test]
     procedure InvalidNameFilterChangesNothing;
+    [Test]
+    procedure QueryTargetAndWarnings;
     [Test]
     procedure AdSettingDoesNotInherit;
   end;
@@ -233,6 +235,27 @@ begin
   Assert.IsTrue(lResult.InvalidFilter);
   Assert.AreEqual(0, lResult.Removed);
   Assert.IsNotNull(FindServer('Datacenter\DC01'));
+end;
+
+procedure TAdSyncTests.QueryTargetAndWarnings;
+var
+  lTarget: TRdcAdTarget;
+begin
+  Assert.AreEqual('contoso.com', RdcAdDomainOfDn('OU=Servers, DC=Contoso, DC=com'));
+  // Empty server: ADSI goes to the domain of the OU, which may be foreign.
+  lTarget := RdcAdTargetOf('', cBase, 'contoso.com');
+  Assert.AreEqual('contoso.com', lTarget.Target);
+  Assert.IsFalse(lTarget.OutsidePcDomain);
+  lTarget := RdcAdTargetOf('', 'OU=X,DC=evil,DC=tld', 'contoso.com');
+  Assert.AreEqual('evil.tld', lTarget.Target);
+  Assert.IsTrue(lTarget.OutsidePcDomain, 'empty server field does not mean "this PC''s domain"');
+  // A DC in the domain, a DC elsewhere, an IP address, no domain at all.
+  Assert.IsFalse(RdcAdTargetOf('dc01.contoso.com', cBase, 'contoso.com').OutsidePcDomain);
+  Assert.IsTrue(RdcAdTargetOf('dc01.evilcontoso.com', cBase, 'contoso.com').OutsidePcDomain, 'suffix must follow a dot');
+  lTarget := RdcAdTargetOf('10.0.0.5', cBase, 'contoso.com');
+  Assert.IsTrue(lTarget.IsIpAddress);
+  Assert.IsTrue(lTarget.OutsidePcDomain);
+  Assert.IsTrue(RdcAdTargetOf('dc01.contoso.com', cBase, '').OutsidePcDomain);
 end;
 
 procedure TAdSyncTests.AdSettingDoesNotInherit;

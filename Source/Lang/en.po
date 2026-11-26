@@ -1582,24 +1582,30 @@ msgstr ""
 "%s"
 
 #: Source/RdcmX.UI.Main.pas
-msgid "(domein van deze pc)"
-msgstr "(domain of this PC)"
+msgid "%s (een domeincontroller van dit domein, gevonden via DNS)"
+msgstr "%s (a domain controller of this domain, found through DNS)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "LET OP: de server is een IP-adres; Kerberos werkt dan niet en Windows meldt zich met NTLM aan bij dat adres."
+msgstr "CAUTION: the server is an IP address; Kerberos does not work then and Windows signs in to that address with NTLM."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "LET OP: deze pc zit niet in een domein; controleer of u deze server kent."
+msgstr "CAUTION: this PC is not in a domain; check that you know this server."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "LET OP: deze server hoort niet bij het domein van deze pc (%s). Windows meldt zich daar met uw account aan."
+msgstr "CAUTION: this server does not belong to the domain of this PC (%s). Windows signs in there with your account."
 
 #: Source/RdcmX.UI.Main.pas
 msgid ""
 "Computers ophalen uit Active Directory?\r\n"
 "\r\n"
+"Server: %s\r\n"
 "OU: %s\r\n"
-"Domeincontroller: %s\r\n"
 "\r\n"
-"Dit gebruikt uw Windows-account. Kies alleen Ja als u deze gegevens vertrouwt; het antwoord wordt op deze pc onthouden."
-msgstr ""
-"Get computers from Active Directory?\r\n"
-"\r\n"
-"OU: %s\r\n"
-"Domain controller: %s\r\n"
-"\r\n"
-"This uses your Windows account. Only choose Yes if you trust these details; the answer is remembered on this PC."
+"%sDit gebruikt uw Windows-account. Kies alleen Ja als u deze server vertrouwt; het antwoord wordt op deze pc onthouden."
+msgstr "Get computers from Active Directory?\r\n\r\nServer: %s\r\nOU: %s\r\n\r\n%sThis uses your Windows account. Only choose Yes if you trust this server; the answer is remembered on this PC."
 
 #: Source/RdcmX.UI.Main.pas
 msgid "%s: ophalen uit Active Directory..."

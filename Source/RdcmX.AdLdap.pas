@@ -20,13 +20,31 @@ uses
 
 /// <summary>False with aError on an invalid OU/server or a failed query (message from ADSI).</summary>
 function RdcAdQuery(const aServer, aOuDn: string; out aEntries: TArray<TRdcAdEntry>; out aError: string): Boolean;
+type
+  /// <summary>Where a query goes and what deserves a warning (ConfirmAdQuery).</summary>
+  TRdcAdTarget = record
+    /// <summary>The server Windows will authenticate to: the domain controller from the settings, or (empty) the
+    /// domain of the DC= parts of the OU, which ADSI locates through DNS - not necessarily the domain of this PC.</summary>
+    Target: string;
+    ServerGiven: Boolean;
+    IsIpAddress: Boolean;
+    /// <summary>Target is not this PC's domain or below it (or this PC is in no domain).</summary>
+    OutsidePcDomain: Boolean;
+  end;
+
+/// <summary>"OU=x,DC=contoso,DC=com" -> "contoso.com" (lower case; '' without DC= parts).</summary>
+function RdcAdDomainOfDn(const aDn: string): string;
+/// <summary>DNS domain of this PC ('' when not in a domain).</summary>
+function RdcThisPcDomain: string;
+function RdcAdTargetOf(const aServer, aOuDn, aPcDomain: string): TRdcAdTarget;
+
 /// <summary>OU and server usable in an ADsPath (no &lt; &gt; ; or line breaks; server without / or spaces).</summary>
 function RdcAdIsValidPath(const aServer, aOuDn: string; out aError: string): Boolean;
 
 implementation
 
 uses
-  Winapi.ActiveX,
+  Winapi.ActiveX, Winapi.Windows,
   System.Generics.Collections, System.SysUtils, System.Variants, System.Win.ComObj,
   RdcmX.Lang;
 
@@ -42,6 +60,60 @@ const
   cMaxEntries = 5000;
   /// <summary>Seconds; a hanging server must not block the refresh of this group forever.</summary>
   cTimeoutSeconds = 60;
+
+function RdcAdDomainOfDn(const aDn: string): string;
+var
+  lPart: string;
+begin
+  Result := '';
+  for lPart in RdcAdNormalizeDn(aDn).Split([',']) do
+    if lPart.StartsWith('dc=') then
+    begin
+      if Result <> '' then
+        Result := Result + '.';
+      Result := Result + Copy(lPart, 4, MaxInt);
+    end;
+end;
+
+function RdcThisPcDomain: string;
+var
+  lBuffer: array[0..255] of Char;
+  lSize: DWORD;
+begin
+  lSize := Length(lBuffer);
+  if GetComputerNameEx(ComputerNameDnsDomain, lBuffer, lSize) then
+    Result := LowerCase(string(lBuffer))
+  else
+    Result := '';
+end;
+
+function IsIpAddress(const aHost: string): Boolean;
+var
+  lChar: Char;
+begin
+  if aHost.Contains(':') then
+    Exit(True); // IPv6
+  Result := aHost <> '';
+  for lChar in aHost do
+    if not CharInSet(lChar, ['0'..'9', '.']) then
+      Exit(False);
+end;
+
+function RdcAdTargetOf(const aServer, aOuDn, aPcDomain: string): TRdcAdTarget;
+var
+  lPcDomain: string;
+begin
+  Result := Default(TRdcAdTarget);
+  Result.ServerGiven := Trim(aServer) <> '';
+  if Result.ServerGiven then
+    Result.Target := LowerCase(Trim(aServer))
+  else
+    Result.Target := RdcAdDomainOfDn(aOuDn);
+  Result.IsIpAddress := IsIpAddress(Result.Target);
+  lPcDomain := LowerCase(Trim(aPcDomain));
+  Result.OutsidePcDomain := (lPcDomain = '') or Result.IsIpAddress or
+    not (SameText(Result.Target, lPcDomain) or Result.Target.EndsWith('.' + lPcDomain));
+end;
 
 function RdcAdIsValidPath(const aServer, aOuDn: string; out aError: string): Boolean;
 var
