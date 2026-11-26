@@ -308,6 +308,22 @@ geheugen, dan kan alleen de kluis worden geleegd.</p>
 </ul>
 <h3>Dynamische resolutie werkt niet direct na het aanmelden</h3>
 <p>Sommige servers hebben na het aanmelden even nodig; RDCManagerX probeert het tot ongeveer 25 seconden lang opnieuw.</p>
+<h3>Zwart beeld na een tijd niets doen (sessie blijft verbonden)</h3>
+<p>Blijft het beeld zwart terwijl de sessie verbonden is, en werkt het meteen weer na opnieuw verbinden, dan ligt het meestal
+aan de <strong>doel-pc</strong> (vooral Windows 10/11 en laptops met twee GPU's): de schermbeveiliging of het uitschakelen van het
+scherm, samen met het <em>WDDM-beeldstuurprogramma voor Extern bureaublad</em>, laat het RDP-beeld zwart achter.</p>
+<ul>
+  <li>Controleren op de doel-pc: <a href="https://github.com/mvanrijnen/RDCManagerX/blob/main/Tools/rdp-check.ps1"><code>Toolsdp-check.ps1</code></a> (leest alleen).</li>
+  <li>Oplossen op de doel-pc, als administrator vanuit het account waarmee je via RDP aanmeldt:
+    <a href="https://github.com/mvanrijnen/RDCManagerX/blob/main/Tools/rdp-blackscreen-fix.ps1"><code>Toolsdp-blackscreen-fix.ps1</code></a>. Dit zet de schermbeveiliging uit, het
+    WDDM-stuurprogramma voor RDP uit en het scherm op netstroom nooit uit; eerst wordt een back-up gemaakt, <code>-Undo</code> zet alles
+    terug. Daarna de pc opnieuw opstarten.</li>
+  <li>Een script dat niet ondertekend is, start je zonder het beleid te wijzigen met
+    <code>powershell -NoProfile -ExecutionPolicy Bypass -File rdp-blackscreen-fix.ps1</code>.</li>
+  <li>Met de hand: <em>gpedit.msc &gt; Computerconfiguratie &gt; Beheersjablonen &gt; Windows-onderdelen &gt; Extern bureaublad-services
+    &gt; Host voor Extern bureaublad-sessies &gt; Omgeving voor externe sessies &gt; "WDDM-beeldstuurprogramma gebruiken voor Extern
+    bureaublad-verbindingen" = Uitgeschakeld</em>, en de schermbeveiliging uitzetten.</li>
+</ul>
 
 <footer>RDCManagerX, handleiding voor beheerders. De volledige technische documentatie (bouwen, Tailscale-bridge, ACL's)
 staat in <code>README.md</code> bij de broncode.</footer>

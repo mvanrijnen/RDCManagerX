@@ -308,6 +308,22 @@ password, the vault can only be emptied.</p>
 </ul>
 <h3>Dynamic resolution does not work right after logon</h3>
 <p>Some servers need a moment after logon; RDCManagerX keeps retrying for about 25 seconds.</p>
+<h3>Black screen after being idle (session stays connected)</h3>
+<p>When the screen stays black while the session is connected, and it works again right after reconnecting, the cause is
+usually the <strong>target PC</strong> (especially Windows 10/11 and laptops with two GPUs): the screen saver or turning off the
+display, together with the <em>WDDM graphics display driver for Remote Desktop</em>, leaves the RDP picture black.</p>
+<ul>
+  <li>Check on the target PC: <a href="https://github.com/mvanrijnen/RDCManagerX/blob/main/Tools/rdp-check.ps1"><code>Toolsdp-check.ps1</code></a> (read only).</li>
+  <li>Fix on the target PC, as administrator from the account you log on with over RDP:
+    <a href="https://github.com/mvanrijnen/RDCManagerX/blob/main/Tools/rdp-blackscreen-fix.ps1"><code>Toolsdp-blackscreen-fix.ps1</code></a>. It turns off the screen saver, the WDDM
+    driver for RDP and turning off the display on AC power; it saves a backup first, <code>-Undo</code> restores everything. Restart
+    the PC afterwards.</li>
+  <li>Run an unsigned script without changing the policy:
+    <code>powershell -NoProfile -ExecutionPolicy Bypass -File rdp-blackscreen-fix.ps1</code>.</li>
+  <li>By hand: <em>gpedit.msc &gt; Computer Configuration &gt; Administrative Templates &gt; Windows Components &gt; Remote Desktop
+    Services &gt; Remote Desktop Session Host &gt; Remote Session Environment &gt; "Use WDDM graphics display driver for Remote Desktop
+    Connections" = Disabled</em>, and turn off the screen saver.</li>
+</ul>
 
 <footer>RDCManagerX, administrator manual. The full technical documentation (building, Tailscale bridge, ACLs)
 is in <code>README.md</code> with the source code.</footer>

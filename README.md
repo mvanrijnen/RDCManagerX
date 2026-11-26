@@ -354,6 +354,12 @@ Start RDCManagerX with `/debuglog`. Two logs are then written to `%LOCALAPPDATA%
 
 Auth keys are always filtered out of the logs. No logs are ever sent to Tailscale (`TS_NO_LOGS_NO_SUPPORT`).
 
+**Black screen after being idle, session still connected** (reconnecting fixes it): usually the target PC - its screen
+saver or display power-off together with the WDDM display driver for RDP. On the target PC, check with
+[`Tools/rdp-check.ps1`](Tools/rdp-check.ps1) and fix with [`Tools/rdp-blackscreen-fix.ps1`](Tools/rdp-blackscreen-fix.ps1)
+(as administrator; backup first, `-Undo` restores; restart afterwards). Run it with
+`powershell -NoProfile -ExecutionPolicy Bypass -File rdp-blackscreen-fix.ps1`.
+
 ---
 
 ## RD Gateway

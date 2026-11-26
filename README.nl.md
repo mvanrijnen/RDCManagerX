@@ -364,6 +364,12 @@ Start RDCManagerX met `/debuglog`. Dan komen er twee logs in `%LOCALAPPDATA%\RDC
 Auth keys worden altijd uit de logs gefilterd. Er worden nooit logs naar Tailscale gestuurd
 (`TS_NO_LOGS_NO_SUPPORT`).
 
+**Zwart beeld na een tijd niets doen, sessie nog verbonden** (opnieuw verbinden helpt): meestal ligt het aan de
+doel-pc, aan de schermbeveiliging of het uitschakelen van het scherm samen met het WDDM-beeldstuurprogramma voor RDP.
+Controleer op de doel-pc met [`Tools/rdp-check.ps1`](Tools/rdp-check.ps1) en los het op met
+[`Tools/rdp-blackscreen-fix.ps1`](Tools/rdp-blackscreen-fix.ps1) (als administrator; eerst een back-up, `-Undo` zet terug;
+daarna opnieuw opstarten). Starten met `powershell -NoProfile -ExecutionPolicy Bypass -File rdp-blackscreen-fix.ps1`.
+
 ---
 
 ## RD Gateway
