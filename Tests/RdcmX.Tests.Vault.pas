@@ -84,6 +84,8 @@ type
     [Test]
     procedure NoHostsNeverReleases;
     [Test]
+    procedure StaleKeyCannotWrite;
+    [Test]
     procedure ApprovalsSurviveMasterPasswordChange;
     [Test]
     procedure AuthenticationLevelIsForcedForVaultPasswords;
@@ -650,6 +652,7 @@ end;
 
 procedure TVaultTests.RecoveryWaitsForRunningChange;
 var
+  lOldName: string;
   lHeld: TEvent;
   lRelease: TEvent;
   lThread: TThread;
@@ -657,6 +660,8 @@ var
 begin
   // Another instance holds the change mutex (phase 1: staged items, no staged vault item yet). A starting instance
   // must not clean up that staging area; once the mutex is free, leftovers are removed.
+  lOldName := TRdcPasswordVault.ChangeMutexName;
+  Assert.IsTrue(lOldName.StartsWith('Global\RDCManagerX.VaultChange.S-1-'), 'per user, across logon sessions');
   TRdcPasswordVault.ChangeMutexName := 'Local\RDCManagerX.VaultChange.Test.' + IntToStr(GetCurrentProcessId);
   FStore.Write('RDCManagerX:~staging:' + cTargetA, 'x', TBytes.Create(1, 2, 3));
   lHeld := TEvent.Create(nil, True, False, '');
@@ -688,8 +693,30 @@ begin
     lThread.Free;
     lHeld.Free;
     lRelease.Free;
-    TRdcPasswordVault.ChangeMutexName := 'Local\RDCManagerX.VaultChange';
+    TRdcPasswordVault.ChangeMutexName := lOldName;
   end;
+end;
+
+procedure TVaultTests.StaleKeyCannotWrite;
+var
+  lOther: TRdcPasswordVault;
+  lPassword: string;
+begin
+  // A second instance changed the master password: this one must not add items sealed with the old key.
+  FVault.Initialize(cMaster);
+  FVault.Save(cTargetA, 'corpeheer', 'S3cret!');
+  lOther := TRdcPasswordVault.Create(FStoreRef, cIterations);
+  try
+    Assert.IsTrue(lOther.ChangeMasterPassword(cMaster, 'Nieuw-Hoofdwachtwoord'));
+  finally
+    lOther.Free;
+  end;
+  Assert.IsFalse(FVault.Save(cTargetB, 'admin', 'Ander!'), 'old key: refused');
+  Assert.IsFalse(FVault.IsUnlocked, 'locked: unlock again with the new master password');
+  Assert.IsTrue(FVault.Unlock('Nieuw-Hoofdwachtwoord'));
+  Assert.IsTrue(FVault.Save(cTargetB, 'admin', 'Ander!'));
+  Assert.IsTrue(FVault.TryLoad(cTargetA, lPassword));
+  Assert.AreEqual('S3cret!', lPassword);
 end;
 
 procedure TVaultTests.SameHostViaUnknownGatewayAsks;

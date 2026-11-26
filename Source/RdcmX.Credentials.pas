@@ -106,6 +106,8 @@ type
     class var FChangeMutexName: string;
     class constructor CreateClass;
     function DeriveAndCheck(const aMasterPassword: string; out aKey: TBytes): Boolean;
+    function KeyMatchesStore(const aKey: TBytes): Boolean;
+    function WriteItem(const aKey: TBytes; const aTarget, aAccount: string; const aData: TBytes): Boolean;
     function BuildVaultItem(const aKey: TBytes; const aSalt: TBytes; aIterations: Cardinal): TBytes;
     function WriteVaultItem(const aKey: TBytes; const aSalt: TBytes; aIterations: Cardinal): Boolean;
     function SealPassword(const aKey: TBytes; const aTarget, aPassword: string): TBytes;
@@ -467,9 +469,47 @@ end;
 
 { TRdcPasswordVault }
 
-class constructor TRdcPasswordVault.CreateClass;
+function ConvertSidToStringSidW(aSid: PSID; out aStringSid: PWideChar): BOOL; stdcall; external advapi32 name 'ConvertSidToStringSidW';
+
+function CurrentUserSid: string;
+var
+  lBuffer: TBytes;
+  lSize: DWORD;
+  lText: PWideChar;
+  lToken: THandle;
 begin
-  FChangeMutexName := 'Local\RDCManagerX.VaultChange';
+  Result := '';
+  if not OpenProcessToken(GetCurrentProcess, TOKEN_QUERY, lToken) then
+    Exit;
+  try
+    lSize := 0;
+    GetTokenInformation(lToken, TokenUser, nil, 0, lSize);
+    if lSize = 0 then
+      Exit;
+    SetLength(lBuffer, lSize);
+    if not GetTokenInformation(lToken, TokenUser, @lBuffer[0], lSize, lSize) then
+      Exit;
+    if ConvertSidToStringSidW(PTokenUser(@lBuffer[0]).User.Sid, lText) then
+    begin
+      Result := lText;
+      LocalFree(HLOCAL(lText));
+    end;
+  finally
+    CloseHandle(lToken);
+  end;
+end;
+
+class constructor TRdcPasswordVault.CreateClass;
+var
+  lSid: string;
+begin
+  // Global and per user: the same user on the console and over RDP (two logon sessions) shares one Credential
+  // Manager, so a Local\ mutex would not keep them apart (third security review).
+  lSid := CurrentUserSid;
+  if lSid <> '' then
+    FChangeMutexName := 'Global\RDCManagerX.VaultChange.' + lSid
+  else
+    FChangeMutexName := 'Local\RDCManagerX.VaultChange';
 end;
 
 constructor TRdcPasswordVault.Create(const aStore: IRdcBlobStore; aIterations: Cardinal);
@@ -639,6 +679,17 @@ begin
   Result := FStore.Write(cRdcVaultTarget, 'RDCManagerX', BuildVaultItem(aKey, aSalt, aIterations));
 end;
 
+function TRdcPasswordVault.KeyMatchesStore(const aKey: TBytes): Boolean;
+var
+  lCheck: TBytes;
+  lData: TBytes;
+begin
+  // Cheap check (no PBKDF2): does the vault item in the store still belong to this key?
+  Result := FStore.Read(cRdcVaultTarget, lData) and (Length(lData) >= 1 + SizeOf(Cardinal) + cRdcSaltSize + cRdcNonceSize + cRdcTagSize) and (lData[0] = cFormatVersion)
+    and TRdcCrypto.TryDecrypt(aKey, Copy(lData, 1 + SizeOf(Cardinal) + cRdcSaltSize, MaxInt), Utf8(cRdcVaultTarget), lCheck)
+    and (TEncoding.UTF8.GetString(lCheck) = cVaultCheckText);
+end;
+
 function TRdcPasswordVault.DeriveAndCheck(const aMasterPassword: string; out aKey: TBytes): Boolean;
 var
   lCheck: TBytes;
@@ -753,6 +804,36 @@ begin
   Result := CreateMutex(nil, False, PChar(TRdcPasswordVault.ChangeMutexName));
 end;
 
+function TRdcPasswordVault.WriteItem(const aKey: TBytes; const aTarget, aAccount: string; const aData: TBytes): Boolean;
+const
+  cWaitMs = 10000;
+var
+  lMutex: THandle;
+  lWait: DWORD;
+begin
+  // Under the change mutex, and only while the store still uses our key: another instance (also in another logon
+  // session of this user) may have changed the master password, and an item sealed with the old key would be lost.
+  Result := False;
+  lMutex := OpenChangeMutex;
+  if lMutex = 0 then
+    Exit;
+  try
+    lWait := WaitForSingleObject(lMutex, cWaitMs);
+    if not (lWait in [WAIT_OBJECT_0, WAIT_ABANDONED]) then
+      Exit;
+    try
+      if KeyMatchesStore(aKey) then
+        Result := FStore.Write(aTarget, aAccount, aData)
+      else
+        Lock; // the master password was changed elsewhere: unlock again with the new one
+    finally
+      ReleaseMutex(lMutex);
+    end;
+  finally
+    CloseHandle(lMutex);
+  end;
+end;
+
 procedure TRdcPasswordVault.RecoverInterruptedChange;
 var
   lMutex: THandle;
@@ -858,7 +939,7 @@ begin
     Exit(False);
   lKey := UseKey;
   try
-    Result := FStore.Write(aTarget, aAccount, SealPassword(lKey, aTarget, aPassword));
+    Result := WriteItem(lKey, aTarget, aAccount, SealPassword(lKey, aTarget, aPassword));
   finally
     ReleaseKey(lKey);
   end;
@@ -893,7 +974,7 @@ begin
   lKey := UseKey;
   lPlain := EncodeAccountPayload(aPassword, aHostKeys);
   try
-    Result := FStore.Write(aTarget, aAccount, SealBytes(lKey, aTarget, lPlain));
+    Result := WriteItem(lKey, aTarget, aAccount, SealBytes(lKey, aTarget, lPlain));
   finally
     WipeBytes(lPlain);
     ReleaseKey(lKey);
