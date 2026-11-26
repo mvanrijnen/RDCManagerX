@@ -635,7 +635,7 @@ begin
     Exit;
   end;
   // A password from the vault never goes to a server that is not authenticated without a warning.
-  lLevel := TRdcPasswordVault.AuthenticationLevelFor(lSettings.AuthenticationLevel, lFromVault);
+  lLevel := TRdcPasswordVault.AuthenticationLevelFor(lSettings.AuthenticationLevel, lFromVault, aServer.EffectiveRoute.Kind);
   if lLevel <> lSettings.AuthenticationLevel then
   begin
     TRdcLog.Write(Format('%s: AuthenticationLevel %d -> %d (wachtwoord uit de kluis)', [aServer.Caption, lSettings.AuthenticationLevel, lLevel]));

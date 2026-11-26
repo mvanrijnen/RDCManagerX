@@ -36,7 +36,8 @@ interface
 
 uses
   Winapi.Windows,
-  System.SysUtils;
+  System.SysUtils,
+  RdcmX.Model;
 
 const
   cRdcVaultTarget = 'RDCManagerX:vault';
@@ -148,9 +149,11 @@ type
     class function DirectHostKey(const aHost: string): string; static;
     class function TailnetHostKey(const aControlUrl, aHost: string): string; static;
     class function GatewayHostKey(const aGatewayAddress: string): string; static;
-    /// <summary>AuthenticationLevel to use: with a password from the vault never 0 (connect without warning); a file
-    /// asking for 0 gets 2 (warn). 1 is not forced: the Tailscale route (127.0.0.2) never matches the certificate name.</summary>
-    class function AuthenticationLevelFor(aLevel: Cardinal; aFromVault: Boolean): Cardinal; static;
+    /// <summary>AuthenticationLevel to use (0 = connect without warning, 1 = do not connect when server
+    /// authentication fails, 2 = warn). With a password from the vault: route Direct or Gateway always 1, whatever the
+    /// file says; route Tailscale at least 2 (the connection goes to 127.0.0.2, so the certificate name never
+    /// matches; the target is already restricted to the tailnet device). A typed password keeps the file's level.</summary>
+    class function AuthenticationLevelFor(aLevel: Cardinal; aFromVault: Boolean; aRoute: TRdcRouteKind): Cardinal; static;
     /// <summary>Control URL zoals die voor de binding telt (kleine letters, zonder / aan het eind; leeg = Tailscale).</summary>
     class function NormalizeControlUrl(const aControlUrl: string): string; static;
     /// <summary>Heeft het hoofdwachtwoord voldoende lengte?</summary>
@@ -556,11 +559,18 @@ begin
   Result := 'gw:' + LowerCase(Trim(aGatewayAddress));
 end;
 
-class function TRdcPasswordVault.AuthenticationLevelFor(aLevel: Cardinal; aFromVault: Boolean): Cardinal;
+class function TRdcPasswordVault.AuthenticationLevelFor(aLevel: Cardinal; aFromVault: Boolean; aRoute: TRdcRouteKind): Cardinal;
 begin
   Result := aLevel;
-  if aFromVault and (Result = 0) then
-    Result := 2;
+  if not aFromVault then
+    Exit;
+  if aRoute = rkTailscale then
+  begin
+    if Result = 0 then
+      Result := 2;
+  end
+  else
+    Result := 1;
 end;
 
 class function TRdcPasswordVault.IsStrongEnough(const aMasterPassword: string): Boolean;

@@ -11,7 +11,7 @@ uses
   Winapi.Windows,
   System.Classes, System.Generics.Collections, System.SyncObjs, System.SysUtils,
   DUnitX.TestFramework,
-  RdcmX.Credentials, RdcmX.Crypto;
+  RdcmX.Credentials, RdcmX.Crypto, RdcmX.Model;
 
 type
   TMemoryBlobStore = class(TInterfacedObject, IRdcBlobStore)
@@ -575,10 +575,18 @@ end;
 procedure TVaultTests.AuthenticationLevelIsForcedForVaultPasswords;
 begin
   // 0 = connect without warning: never with a vault password; 1 (required) and 2 (warn) stay.
-  Assert.AreEqual(Cardinal(2), TRdcPasswordVault.AuthenticationLevelFor(0, True));
-  Assert.AreEqual(Cardinal(1), TRdcPasswordVault.AuthenticationLevelFor(1, True));
-  Assert.AreEqual(Cardinal(2), TRdcPasswordVault.AuthenticationLevelFor(2, True));
-  Assert.AreEqual(Cardinal(0), TRdcPasswordVault.AuthenticationLevelFor(0, False), 'typed password: as in the file');
+  // Direct and Gateway with a vault password: always 1 (required), whatever the file says.
+  Assert.AreEqual(Cardinal(1), TRdcPasswordVault.AuthenticationLevelFor(0, True, rkDirect));
+  Assert.AreEqual(Cardinal(1), TRdcPasswordVault.AuthenticationLevelFor(2, True, rkDirect));
+  Assert.AreEqual(Cardinal(1), TRdcPasswordVault.AuthenticationLevelFor(0, True, rkGateway));
+  Assert.AreEqual(Cardinal(1), TRdcPasswordVault.AuthenticationLevelFor(2, True, rkGateway));
+  // Tailscale (127.0.0.2, name never matches): at least 2.
+  Assert.AreEqual(Cardinal(2), TRdcPasswordVault.AuthenticationLevelFor(0, True, rkTailscale));
+  Assert.AreEqual(Cardinal(1), TRdcPasswordVault.AuthenticationLevelFor(1, True, rkTailscale));
+  Assert.AreEqual(Cardinal(2), TRdcPasswordVault.AuthenticationLevelFor(2, True, rkTailscale));
+  // Typed password: as in the file, for every route.
+  Assert.AreEqual(Cardinal(0), TRdcPasswordVault.AuthenticationLevelFor(0, False, rkDirect));
+  Assert.AreEqual(Cardinal(0), TRdcPasswordVault.AuthenticationLevelFor(0, False, rkTailscale));
 end;
 
 procedure TVaultTests.ReadErrorAbortsChange;

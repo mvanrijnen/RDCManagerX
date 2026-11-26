@@ -193,8 +193,9 @@ betrokken servers. De melding komt pas terug als die instellingen veranderen; be
   <li>Een onthouden wachtwoord hoort bij de <strong>hosts</strong> waarvoor je het gebruikt hebt. Wijst een server (bijvoorbeeld uit een
     bestand van iemand anders) hetzelfde account naar een andere host, of naar een gateway die dezelfde aanmeldgegevens krijgt, dan vraagt
     RDCManagerX eerst of het wachtwoord daar gebruikt mag worden (standaard <em>Nee</em>; dan typ je het zelf in). Bij een groep komt er
-    één vraag voor alle nieuwe hosts. Met een wachtwoord uit de kluis wordt nooit verbonden zonder serververificatie: staat de server op
-    "geen verificatie", dan krijg je een waarschuwing als de server zich niet kan bewijzen.</li>
+    één vraag voor alle nieuwe hosts. Met een wachtwoord uit de kluis is serververificatie altijd verplicht (direct en via een gateway): kan de server zich niet
+    bewijzen, bijvoorbeeld met een niet-vertrouwd certificaat, dan wordt er niet verbonden en typ je het wachtwoord zelf. Via Tailscale
+    krijg je dan een waarschuwing, omdat de certificaatnaam daar nooit klopt.</li>
   <li>De kluis vergrendelt na een instelbaar aantal minuten zonder gebruik (Opties). Handmatig: <em>Bestand &gt; Wachtwoordkluis vergrendelen</em>.</li>
   <li>Hoofdwachtwoord wijzigen: <em>Bestand &gt; Hoofdwachtwoord wijzigen</em> of de knop in Opties.</li>
   <li>Wordt een onthouden wachtwoord door de server geweigerd, dan wordt het automatisch vergeten. Handmatig: <em>Server &gt; Onthouden wachtwoord vergeten</em>.</li>
