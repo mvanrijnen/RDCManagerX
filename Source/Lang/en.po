@@ -1048,6 +1048,10 @@ msgid "Programma starten na aanmelden"
 msgstr "Start program after logon"
 
 #: Source/RdcmX.Redirections.pas
+msgid "Sessie actief houden (de server vergrendelt niet en start geen schermbeveiliging)"
+msgstr "Keep session active (the server does not lock or start its screen saver)"
+
+#: Source/RdcmX.Redirections.pas
 msgid "Windows-toetscombinaties altijd naar de server"
 msgstr "Always send Windows key combinations to the server"
 
@@ -1605,7 +1609,13 @@ msgid ""
 "OU: %s\r\n"
 "\r\n"
 "%sDit gebruikt uw Windows-account. Kies alleen Ja als u deze server vertrouwt; het antwoord wordt op deze pc onthouden."
-msgstr "Get computers from Active Directory?\r\n\r\nServer: %s\r\nOU: %s\r\n\r\n%sThis uses your Windows account. Only choose Yes if you trust this server; the answer is remembered on this PC."
+msgstr ""
+"Get computers from Active Directory?\r\n"
+"\r\n"
+"Server: %s\r\n"
+"OU: %s\r\n"
+"\r\n"
+"%sThis uses your Windows account. Only choose Yes if you trust this server; the answer is remembered on this PC."
 
 #: Source/RdcmX.UI.Main.pas
 msgid "%s: ophalen uit Active Directory..."

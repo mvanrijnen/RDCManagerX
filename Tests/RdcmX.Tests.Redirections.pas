@@ -23,6 +23,8 @@ type
     procedure StartProgramAndKeyboardHookAreFound;
     [Test]
     procedure FingerprintChangesOnlyWithRiskySettings;
+    [Test]
+    procedure KeepAliveIsReported;
   end;
 
 implementation
@@ -126,6 +128,28 @@ begin
     lServer2.Settings.LocalResources.Inherit := False;
     lServer2.Settings.LocalResources.Values['redirectPorts'] := 'True';
     Assert.AreNotEqual(lFingerprint, RdcRedirectionFingerprint(lFile, RdcRiskyRedirections(lFile)));
+  finally
+    lFile.Free;
+  end;
+end;
+
+procedure TRedirectionTests.KeepAliveIsReported;
+var
+  lFile: TRdcFile;
+  lFindings: TArray<TRdcRedirectionFinding>;
+  lGroup: TRdcGroup;
+  lServer1: TRdcServer;
+  lServer2: TRdcServer;
+begin
+  lFile := NewFile(lGroup, lServer1, lServer2);
+  try
+    // Keep session active on the group: both servers would never lock.
+    lGroup.Settings.Experience.Inherit := False;
+    lGroup.Settings.Experience.Values['keepAlive'] := 'True';
+    lFindings := RdcRiskyRedirections(lFile);
+    Assert.AreEqual(Integer(2), Integer(Length(lFindings)));
+    Assert.AreEqual(Ord(rrkKeepAlive), Ord(lFindings[0].Kind));
+    Assert.AreNotEqual('', RdcRedirectionFingerprint(lFile, lFindings));
   finally
     lFile.Free;
   end;

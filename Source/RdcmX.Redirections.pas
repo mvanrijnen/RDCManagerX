@@ -2,7 +2,8 @@
 
 {
   Warning for files that hand local resources to the server (security review 2026-11-25, point 10): drive or port
-  redirection, a start program, or the keyboard hook always on the remote side. A file from someone else
+  redirection, a start program, the keyboard hook always on the remote side, or "keep session active" (the
+  servers then never lock or start their screen saver while this PC is idle). A file from someone else
   can switch these on silently; RDCManagerX applies them at connect. Smart card redirection is left out: it is on by
   default in RDCMan and mstsc, so it would flag every ordinary file.
 
@@ -20,7 +21,7 @@ uses
   RdcmX.Model;
 
 type
-  TRdcRedirectionKind = (rrkDrives, rrkPorts, rrkStartProgram, rrkKeyboardHook);
+  TRdcRedirectionKind = (rrkDrives, rrkPorts, rrkStartProgram, rrkKeyboardHook, rrkKeepAlive);
 
   TRdcRedirectionFinding = record
     Server: TRdcServer;
@@ -77,6 +78,8 @@ begin
         Add(rrkStartProgram, Trim(lServer.EffectiveConnection.StartProgram));
       if lLocal.KeyboardHook = khRemote then
         Add(rrkKeyboardHook);
+      if lServer.EffectiveExperience.KeepAlive then
+        Add(rrkKeepAlive);
     end;
     Result := lFindings.ToArray;
   finally
@@ -145,6 +148,8 @@ begin
           lWhat := _('Lokale poorten (COM/LPT) delen met de server');
         rrkStartProgram:
           lWhat := _('Programma starten na aanmelden');
+        rrkKeepAlive:
+          lWhat := _('Sessie actief houden (de server vergrendelt niet en start geen schermbeveiliging)');
       else
         lWhat := _('Windows-toetscombinaties altijd naar de server');
       end;
