@@ -297,7 +297,7 @@ User docs: `README.md`. Manual test plan: `TESTPLAN.md`.
 - **In `.pas` patches written from Python, escape backslashes in Delphi strings (or use raw strings).** `\100` or `\b` otherwise silently becomes another character.
 - **Units: `initialization` comes after all method implementations.** Methods added after it produce misleading parse errors.
 - **The UI cannot be driven fully through UI Automation.** VCL TTreeView items and TPageControl tabs are not exposed. Use focus plus type-ahead, Alt+Enter and Ctrl+Tab, and take screenshots with PrintWindow.
-- **DLL planting:** `RdcmX.DllSearch` must stay the first unit in the dpr uses clause (its initialization restricts DLL loading by name to System32). Declare new imports of non-KnownDLLs `delayed` (with `{$WARN SYMBOL_PLATFORM OFF}`); `version.dll`, `winspool.drv` and `wtsapi32.dll` are static RTL/VCL imports that cannot be delayed.
+- **DLL planting:** `RdcmX.DllSearch` must stay the first unit in the dpr uses clause (its initialization restricts DLL loading by name to System32). Declare new imports of non-KnownDLLs `delayed` (with `{$WARN SYMBOL_PLATFORM OFF}`); `version.dll`, `winspool.drv` and `wtsapi32.dll` are static RTL/VCL imports that cannot be delayed; therefore the app warns at startup when it runs from the Downloads folder (`WarnIfStartedFromDownloads`), and README/manual say to use a folder of its own.
 - **Delphi `{ }` comments end at the first `}`.** Unit headers that contain JSON examples must use `(* *)`.
 
 ## Coding style (mandatory)

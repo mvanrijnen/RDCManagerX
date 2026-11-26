@@ -1422,6 +1422,10 @@ msgstr ""
 "Drag a tab here, or click here and double-click a server."
 
 #: Source/RdcmX.UI.Main.pas
+msgid "RDCManagerX draait vanuit de map Downloads. Zet de exe liever in een eigen map (bijv. %LOCALAPPDATA%\\Programs\\RDCManagerX): in Downloads kunnen andere gedownloade bestanden, zoals een kwaadaardige DLL, worden meegeladen."
+msgstr "RDCManagerX is running from the Downloads folder. Better put the exe in a folder of its own (e.g. %LOCALAPPDATA%\\Programs\\RDCManagerX): in Downloads, other downloaded files such as a malicious DLL can be loaded along with it."
+
+#: Source/RdcmX.UI.Main.pas
 msgid "Favoriete servers (Server > Aan favorieten toevoegen)"
 msgstr "Favorite servers (Server > Add to favorites)"
 

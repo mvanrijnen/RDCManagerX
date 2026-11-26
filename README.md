@@ -374,6 +374,10 @@ Then choose **Properties > Route > Via RDP gateway** for each server or group.
 
 ---
 
+## Installing
+
+Unzip the release into a folder of its own, for example `%LOCALAPPDATA%\Programs\RDCManagerX` or `C:\Program Files\RDCManagerX`, and start it from there, not from the Downloads folder: Windows looks for some DLLs next to the exe first, and Downloads may contain files you did not mean to run. The app warns when it is started from Downloads.
+
 ## Building
 
 ### RDCManagerX

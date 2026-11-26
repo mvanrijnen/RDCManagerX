@@ -384,6 +384,10 @@ Kies daarna per server of groep **Eigenschappen > Route > Via RDP-gateway**.
 
 ---
 
+## Installeren
+
+Pak de release uit in een eigen map, bijvoorbeeld `%LOCALAPPDATA%\Programs\RDCManagerX` of `C:\Program Files\RDCManagerX`, en start hem daar, niet vanuit de map Downloads: Windows zoekt sommige DLL's eerst naast de exe, en in Downloads kunnen bestanden staan die je niet bedoelde te starten. De app waarschuwt als hij vanuit Downloads gestart wordt.
+
 ## Bouwen
 
 ### RDCManagerX

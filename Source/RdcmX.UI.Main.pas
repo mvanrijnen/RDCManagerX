@@ -324,6 +324,7 @@ type
     procedure CollapseAllFiles;
     procedure ShowManual;
     procedure ShowOnlineManual;
+    procedure WarnIfStartedFromDownloads;
     procedure UpdatePingTargets;
     procedure PingResultsArrived(const aResults: TArray<TRdcPingResult>);
     function PingKeyOf(aServer: TRdcServer; out aKey: string): Boolean;
@@ -528,7 +529,7 @@ implementation
 {$R *.dfm}
 
 uses
-  Winapi.ShellAPI,
+  Winapi.ActiveX, Winapi.KnownFolders, Winapi.ShellAPI, Winapi.ShlObj,
   System.IOUtils,
   RdcmX.Log, RdcmX.UI.CredentialPrompt, RdcmX.UI.Gateways, RdcmX.UI.Icons, RdcmX.UI.MasterPassword, RdcmX.UI.Options, RdcmX.UI.Profiles, RdcmX.UI.Properties, RdcmX.UI.Tailnets, RdcmX.WakeOnLan;
 
@@ -1022,7 +1023,29 @@ begin
   begin
     FShown := True;
     RestoreTreeWidth;
+    TThread.ForceQueue(nil, WarnIfStartedFromDownloads);
   end;
+end;
+
+procedure TfrmMain.WarnIfStartedFromDownloads;
+var
+  lDownloads: string;
+  lExeFolder: string;
+  lPath: PWideChar;
+begin
+  // Static imports of the Delphi RTL/VCL (version.dll, winspool.drv, wtsapi32.dll) are still looked up in the
+  // exe's folder first; a Downloads folder may contain such a planted DLL (security review). Advise a folder of
+  // its own.
+  if Failed(SHGetKnownFolderPath(FOLDERID_Downloads, 0, 0, lPath)) then
+    Exit;
+  try
+    lDownloads := IncludeTrailingPathDelimiter(string(lPath));
+  finally
+    CoTaskMemFree(lPath);
+  end;
+  lExeFolder := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0)));
+  if lExeFolder.StartsWith(lDownloads, True) then
+    MessageDlg(_('RDCManagerX draait vanuit de map Downloads. Zet de exe liever in een eigen map (bijv. %LOCALAPPDATA%\Programs\RDCManagerX): in Downloads kunnen andere gedownloade bestanden, zoals een kwaadaardige DLL, worden meegeladen.'), mtWarning, [mbOK], 0);
 end;
 
 procedure TfrmMain.OpenStartupFiles;

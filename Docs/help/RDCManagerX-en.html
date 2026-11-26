@@ -85,6 +85,8 @@
 <h2 id="start">2. Getting started</h2>
 <p>Start <code>RDCManagerX.exe</code>. No installation is needed; your administrator puts the exe on a network share or distributes it through a launcher. At startup the files that were open
 when you last exited are reopened. Everything is collapsed then, except <em>Recent</em> and <em>Favorites</em>.</p>
+<div class="note warn">Start the exe from a folder of its own (e.g. <code>%LOCALAPPDATA%\Programs\RDCManagerX</code>), not from Downloads: Windows looks
+for some DLLs next to the exe first. The app warns when it is started from Downloads.</div>
 <table>
   <tr><th>What</th><th>Where</th></tr>
   <tr><td>App settings (window, recent files, options)</td><td><code>%APPDATA%\RDCManagerX\settings.json</code></td></tr>
