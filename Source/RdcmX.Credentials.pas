@@ -144,12 +144,13 @@ type
     class function GatewayTarget(const aGatewayId, aGatewayAddress: string): string; static;
     class function GatewayTargetPrefix(const aGatewayId: string): string; static;
     /// <summary>Approval keys for the hosts an account password goes to: the RDP server on route Direct or Gateway,
-    /// the device in a tailnet (its MagicDNS FQDN as resolved by the bridge, bound to the tailnet's MagicDNS suffix:
-    /// another tailnet with the same names is another key, also on the same control server), and
+    /// the device in a tailnet (its MagicDNS FQDN as resolved by the bridge, bound to the control server (hash of the
+    /// normalized control URL) and the tailnet's MagicDNS suffix: another tailnet with the same names is another key,
+    /// also on the same control server, and a Headscale server that claims the same suffix as well), and
     /// a server reached through an RD Gateway: the gateway sees the connection whatever credSharing says, so the
     /// combination gateway + server is a host of its own.</summary>
     class function DirectHostKey(const aHost: string): string; static;
-    class function TailnetHostKey(const aTailnetSuffix, aDeviceFqdn: string): string; static;
+    class function TailnetHostKey(const aControlUrl, aTailnetSuffix, aDeviceFqdn: string): string; static;
     class function ViaGatewayHostKey(const aGatewayAddress, aHost: string): string; static;
     /// <summary>AuthenticationLevel to use (0 = connect without warning, 1 = do not connect when server
     /// authentication fails, 2 = warn). With a password from the vault: route Direct or Gateway always 1, whatever the
@@ -551,10 +552,11 @@ begin
   Result := 'host:' + LowerCase(Trim(aHost));
 end;
 
-class function TRdcPasswordVault.TailnetHostKey(const aTailnetSuffix, aDeviceFqdn: string): string;
+class function TRdcPasswordVault.TailnetHostKey(const aControlUrl, aTailnetSuffix, aDeviceFqdn: string): string;
 begin
-  // 'ts2:' so approvals of the old key (control URL + host string from the file) are asked once again.
-  Result := 'ts2:' + LowerCase(Trim(aTailnetSuffix).Trim(['.'])) + ':' + LowerCase(Trim(aDeviceFqdn).Trim(['.']));
+  // 'ts3:' so approvals of older keys are asked once again. The control URL hash is in it because a foreign file can
+  // point to its own Headscale server, which can claim any MagicDNS suffix and device name (third security review).
+  Result := 'ts3:' + BindingHash(NormalizeControlUrl(aControlUrl)) + ':' + LowerCase(Trim(aTailnetSuffix).Trim(['.'])) + ':' + LowerCase(Trim(aDeviceFqdn).Trim(['.']));
 end;
 
 class function TRdcPasswordVault.ViaGatewayHostKey(const aGatewayAddress, aHost: string): string;
@@ -956,6 +958,12 @@ var
 begin
   if not OpenAccount(aTarget, aPassword, lKeys) then
     Exit(rlrNone);
+  // No host to bind to (e.g. a tailnet device without MagicDNS name): never released, the user types it.
+  if Length(aHosts) = 0 then
+  begin
+    WipeString(aPassword);
+    Exit(rlrDeclined);
+  end;
   lMissing := [];
   for lHost in aHosts do
     if not ContainsKey(lKeys, lHost.Key) then

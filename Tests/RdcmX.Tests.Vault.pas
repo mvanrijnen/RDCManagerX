@@ -82,6 +82,8 @@ type
     [Test]
     procedure HostKeysAreBoundToRouteAndTailnet;
     [Test]
+    procedure NoHostsNeverReleases;
+    [Test]
     procedure ApprovalsSurviveMasterPasswordChange;
     [Test]
     procedure AuthenticationLevelIsForcedForVaultPasswords;
@@ -547,15 +549,33 @@ begin
   Assert.AreEqual(rlrLoaded, FVault.LoadApproved(cTargetA, 'corp\beheer', [HostA, lGateway], nil, lPassword));
 end;
 
+procedure TVaultTests.NoHostsNeverReleases;
+var
+  lPassword: string;
+begin
+  // Nothing to bind to (tailnet device without MagicDNS name): the password stays in the vault, without a question.
+  FVault.Initialize(cMaster);
+  FVault.SaveAccount(cTargetA, 'corpeheer', 'S3cret!', [HostA]);
+  Assert.AreEqual(rlrDeclined, FVault.LoadApproved(cTargetA, 'corpeheer', [],
+    function(const aMissing: TArray<TRdcHostRef>): Boolean
+    begin
+      Result := True;
+    end, lPassword));
+  Assert.AreEqual('', lPassword);
+end;
+
 procedure TVaultTests.HostKeysAreBoundToRouteAndTailnet;
 begin
   // The same name directly, in another tailnet (control URL) or as a gateway: all different approvals.
   // Tailnet: bound to the tailnet's MagicDNS suffix and the device's MagicDNS name (two tailnets on the same control
   // server with the same device name are different hosts).
-  Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('srv.tail1234.ts.net'), TRdcPasswordVault.TailnetHostKey('tail1234.ts.net', 'srv.tail1234.ts.net'));
-  Assert.AreNotEqual(TRdcPasswordVault.TailnetHostKey('tail1234.ts.net', 'srv.tail1234.ts.net'), TRdcPasswordVault.TailnetHostKey('tail9999.ts.net', 'srv.tail9999.ts.net'));
-  Assert.AreEqual(TRdcPasswordVault.TailnetHostKey('Tail1234.ts.net.', 'SRV.tail1234.ts.net.'), TRdcPasswordVault.TailnetHostKey('tail1234.ts.net', 'srv.tail1234.ts.net'));
-  Assert.IsTrue(TRdcPasswordVault.TailnetHostKey('tail1234.ts.net', 'srv.tail1234.ts.net').StartsWith('ts2:'), 'old ts: approvals do not match');
+  Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('srv.tail1234.ts.net'), TRdcPasswordVault.TailnetHostKey('', 'tail1234.ts.net', 'srv.tail1234.ts.net'));
+  Assert.AreNotEqual(TRdcPasswordVault.TailnetHostKey('', 'tail1234.ts.net', 'srv.tail1234.ts.net'), TRdcPasswordVault.TailnetHostKey('', 'tail9999.ts.net', 'srv.tail9999.ts.net'));
+  Assert.AreEqual(TRdcPasswordVault.TailnetHostKey('', 'Tail1234.ts.net.', 'SRV.tail1234.ts.net.'), TRdcPasswordVault.TailnetHostKey('', 'tail1234.ts.net', 'srv.tail1234.ts.net'));
+  // A Headscale server from a foreign file that claims the same suffix and device name is another host.
+  Assert.AreNotEqual(TRdcPasswordVault.TailnetHostKey('', 'tail1234.ts.net', 'srv.tail1234.ts.net'), TRdcPasswordVault.TailnetHostKey('https://hs.evil.tld', 'tail1234.ts.net', 'srv.tail1234.ts.net'));
+  Assert.AreEqual(TRdcPasswordVault.TailnetHostKey('https://HS.corp.tld/', 'tail1234.ts.net', 'srv'), TRdcPasswordVault.TailnetHostKey('https://hs.corp.tld', 'tail1234.ts.net', 'srv'));
+  Assert.IsTrue(TRdcPasswordVault.TailnetHostKey('', 'tail1234.ts.net', 'srv.tail1234.ts.net').StartsWith('ts3:'), 'older approvals do not match');
   Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('srv01'), TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01'));
   Assert.AreNotEqual(TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01'), TRdcPasswordVault.ViaGatewayHostKey('gw.evil.tld', 'srv01'));
   Assert.AreNotEqual(TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv01'), TRdcPasswordVault.ViaGatewayHostKey('gw.corp.local', 'srv02'));

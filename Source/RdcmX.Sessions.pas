@@ -52,6 +52,8 @@ type
   public
     TailnetId: string;
     TailnetName: string;
+    /// <summary>Control URL of the tailnet (part of the vault approval key).</summary>
+    ControlUrl: string;
     LocalAddress: string;
     Target: string;
     /// <summary>0 zolang het netwerk nog start.</summary>
@@ -422,6 +424,7 @@ begin
   lTunnel := TRdcTunnel.Create;
   lTunnel.TailnetId := lDef.Id;
   lTunnel.TailnetName := lDef.Name;
+  lTunnel.ControlUrl := lDef.ControlUrl;
   lTunnel.LocalAddress := RdcTailnetLocalAddress(lDef);
   lTunnel.Target := lTarget;
   lTunnel.Guard := RdcNewCallbackGuard;
@@ -493,11 +496,14 @@ begin
     // name, not to the host string from the file (second security review).
     aTunnel.AskCredentials := False;
     lDevice := aResolved.Name;
-    if lDevice = '' then
-      lDevice := aResolved.Ip;
     lContext.HostText := aResolved.Text;
-    lContext.Hosts := [TRdcHostRef.Create(TRdcPasswordVault.TailnetHostKey(aResolved.TailnetSuffix, lDevice),
-      Format(_('%s (via Tailscale-netwerk "%s")'), [aResolved.Text, aTunnel.TailnetName]))];
+    // Without MagicDNS suffix or device name there is nothing stable to bind to (a 100.x address alone also exists in
+    // other tailnets): no vault host, so a remembered password is not released and the user types it.
+    if (aResolved.TailnetSuffix <> '') and (lDevice <> '') then
+      lContext.Hosts := [TRdcHostRef.Create(TRdcPasswordVault.TailnetHostKey(aTunnel.ControlUrl, aResolved.TailnetSuffix, lDevice),
+        Format(_('%s (via Tailscale-netwerk "%s")'), [aResolved.Text, aTunnel.TailnetName]))]
+    else
+      lContext.Hosts := [];
     lUserName := aSession.Settings.UserName;
     lDomain := aSession.Settings.Domain;
     lPassword := '';
