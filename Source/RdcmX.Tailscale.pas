@@ -598,6 +598,8 @@ end;
 
 const
   cTsBridgeResource = 'TSBRIDGE';
+  // LoadLibraryEx flag (Windows 8+, not in Winapi.Windows of Delphi 12): resolve the module's imports from System32 only.
+  LOAD_LIBRARY_SEARCH_SYSTEM32 = $00000800;
 
 function HasEmbeddedBridge: Boolean;
 begin
@@ -762,7 +764,10 @@ begin
         TRdcLog.Write(Format('tsbridge.dll geweigerd: SHA-256 %s, verwacht %s', [lHash, cTsBridgeSha256]));
         Exit;
       end;
-      lModule := LoadLibraryEx(PChar(lPath), 0, LOAD_WITH_ALTERED_SEARCH_PATH);
+      // The DLL itself by full path (hash-pinned above); its imports (kernel32 and the UCRT API sets) from System32
+      // only. LOAD_WITH_ALTERED_SEARCH_PATH would look in the DLL's own folder first, which the user can write to,
+      // so a planted dependency there would load outside the hash pin.
+      lModule := LoadLibraryEx(PChar(lPath), 0, LOAD_LIBRARY_SEARCH_SYSTEM32);
     finally
       CloseHandle(lFile);
     end;
