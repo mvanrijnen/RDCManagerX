@@ -98,6 +98,7 @@
         <DCCReference Include="Source\RdcmX.UI.Tailnets.pas">
             <Form>frmTailnets</Form>
         </DCCReference>
+        <DCCReference Include="Source\RdcmX.UI.HostApproval.pas"/>
         <DCCReference Include="Source\RdcmX.UI.Gateways.pas">
             <Form>frmGateways</Form>
         </DCCReference>

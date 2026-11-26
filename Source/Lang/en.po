@@ -69,7 +69,7 @@ msgstr "Connect"
 msgid "Niet verbinden."
 msgstr "Do not connect."
 
-#: Source/RdcmX.UI.CredentialPrompt.dfm Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.MasterPassword.dfm Source/RdcmX.UI.Options.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Tailnets.dfm Source/RdcmX.UI.Main.pas
+#: Source/RdcmX.UI.CredentialPrompt.dfm Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.MasterPassword.dfm Source/RdcmX.UI.Options.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Tailnets.dfm Source/RdcmX.UI.HostApproval.pas Source/RdcmX.UI.Main.pas
 msgid "Annuleren"
 msgstr "Cancel"
 
@@ -149,7 +149,7 @@ msgstr "RDP gateways of this file. Choose one per server or group in Properties 
 msgid "Een nieuwe gateway toevoegen."
 msgstr "Add a new gateway."
 
-#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Tailnets.dfm
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Tailnets.dfm Source/RdcmX.UI.Main.pas
 msgid "Nieuw"
 msgstr "New"
 
@@ -213,7 +213,7 @@ msgstr "Clear"
 msgid "Wijzigingen opslaan."
 msgstr "Save changes."
 
-#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.MasterPassword.dfm Source/RdcmX.UI.Options.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Tailnets.dfm
+#: Source/RdcmX.UI.Gateways.dfm Source/RdcmX.UI.MasterPassword.dfm Source/RdcmX.UI.Options.dfm Source/RdcmX.UI.Profiles.dfm Source/RdcmX.UI.Properties.dfm Source/RdcmX.UI.Tailnets.dfm Source/RdcmX.UI.HostApproval.pas
 msgid "OK"
 msgstr "OK"
 
@@ -849,6 +849,22 @@ msgstr "The domain controller \"%s\" contains an invalid character."
 msgid "Meer dan %d objecten in deze OU; kies een kleinere OU of gebruik het naamfilter."
 msgstr "More than %d objects in this OU; choose a smaller OU or use the name filter."
 
+#: Source/RdcmX.AdSync.pas
+msgid "ongeldige lengte"
+msgstr "invalid length"
+
+#: Source/RdcmX.AdSync.pas
+msgid "ongeldig teken \"%s\""
+msgstr "invalid character \"%s\""
+
+#: Source/RdcmX.AdSync.pas
+msgid "ongeldige naamopbouw"
+msgstr "invalid name structure"
+
+#: Source/RdcmX.AdSync.pas
+msgid "DNS-naam buiten het domein van de OU en de toegestane suffixen"
+msgstr "DNS name outside the domain of the OU and the allowed suffixes"
+
 #: Source/RdcmX.Crypto.pas
 msgid "%s mislukt (status $%.8x)"
 msgstr "%s failed (status $%.8x)"
@@ -1401,6 +1417,18 @@ msgstr "The password for gateway \"%s\" will be stored in the password vault."
 msgid "Het wachtwoord voor gateway \"%s\" kon niet in de wachtwoordkluis worden opgeslagen."
 msgstr "The password for gateway \"%s\" could not be stored in the password vault."
 
+#: Source/RdcmX.UI.HostApproval.pas
+msgid "Onthouden wachtwoord gebruiken"
+msgstr "Use remembered password"
+
+#: Source/RdcmX.UI.HostApproval.pas
+msgid "Op welke hosts mag het onthouden wachtwoord voor %s gebruikt worden? Vink alleen hosts aan die u vertrouwt; het antwoord wordt onthouden. Voor de andere typt u het wachtwoord zelf in."
+msgstr "On which hosts may the remembered password for %s be used? Only check hosts you trust; the answer is remembered. For the others you type the password yourself."
+
+#: Source/RdcmX.UI.HostApproval.pas
+msgid "%s  (nieuw uit Active Directory)"
+msgstr "%s  (new from Active Directory)"
+
 #: Source/RdcmX.UI.Main.pas
 msgid ""
 "Geen open sessies.\r\n"
@@ -1662,6 +1690,26 @@ msgstr "The name filter \"%s\" is not valid (use * and ?; [ ] only as a pair). N
 #: Source/RdcmX.UI.Main.pas
 msgid "%s: Active Directory ververst (%d nieuw, %d bijgewerkt, %d verwijderd, %d behouden)."
 msgstr "%s: refreshed from Active Directory (%d new, %d updated, %d removed, %d kept)."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "... en nog %d"
+msgstr "... and %d more"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Active Directory ververst voor \"%s\"."
+msgstr "Refreshed from Active Directory for \"%s\"."
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Hernoemd (vraagt opnieuw om goedkeuring voor een onthouden wachtwoord)"
+msgstr "Renamed (asks again for approval of a remembered password)"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Verwijderd"
+msgstr "Removed"
+
+#: Source/RdcmX.UI.Main.pas
+msgid "Overgeslagen (ongeldige hostnaam)"
+msgstr "Skipped (invalid host name)"
 
 #: Source/RdcmX.UI.Main.pas
 msgid "... en nog %d melding(en)."
@@ -2123,6 +2171,10 @@ msgid "Alleen computers waarvan de naam hierop past (* en ? als jokertekens); le
 msgstr "Only computers whose name matches this (* and ? as wildcards); empty = all."
 
 #: Source/RdcmX.UI.Properties.pas
+msgid "DNS-namen van computers moeten eindigen op het domein van de OU (de DC=-delen) of op een van deze suffixen, gescheiden door ; (bijv. corp.contoso.com). Andere namen worden overgeslagen en gemeld."
+msgstr "DNS names of computers must end with the domain of the OU (its DC= parts) or with one of these suffixes, separated by ; (e.g. corp.contoso.com). Other names are skipped and reported."
+
+#: Source/RdcmX.UI.Properties.pas
 msgid "Bij het openen van het bestand automatisch verversen (alleen als deze OU op deze pc al eens is goedgekeurd)."
 msgstr "Refresh automatically when the file is opened (only if this OU was approved on this PC before)."
 
@@ -2269,6 +2321,10 @@ msgstr "Skip disabled computer accounts"
 #: Source/RdcmX.UI.Properties.pas
 msgid "Alleen computernamen als (bijv. SRV*)"
 msgstr "Only computer names like (e.g. SRV*)"
+
+#: Source/RdcmX.UI.Properties.pas
+msgid "Toegestane DNS-suffixen (optioneel)"
+msgstr "Allowed DNS suffixes (optional)"
 
 #: Source/RdcmX.UI.Properties.pas
 msgid "Verversen bij het openen van het bestand"

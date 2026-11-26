@@ -285,6 +285,8 @@ type
     // een door de server geweigerd wachtwoord automatisch vergeten wordt.
     FStoredPasswordUsed: TDictionary<TRdcServer, string>;
     FAdGuard: IRdcCallbackGuard;
+    /// <summary>Hosts left unchecked in the group connect list: no second question, the normal prompt.</summary>
+    FBatchDeclinedKeys: TStringList;
     FAdRefreshing: TDictionary<string, Boolean>;
     FSelectingFromTree: Boolean; // tab wordt geactiveerd vanuit de boom: geen focus naar de sessie, boom niet terugzetten
     FVault: TRdcPasswordVault;
@@ -432,6 +434,7 @@ type
     procedure RefreshAdGroup(aGroup: TRdcGroup; aInteractive: Boolean);
     procedure AdQueryFinished(aFile: TRdcFile; const aPath, aKey: string; aOk: Boolean; const aEntries: TArray<TRdcAdEntry>; const aError: string; aInteractive: Boolean);
     procedure RefreshAdGroupsOnOpen(aFile: TRdcFile);
+    procedure ShowAdSyncSummary(aGroup: TRdcGroup; const aResult: TRdcAdSyncResult);
     procedure AcceptRedirectionsOf(aFile: TRdcFile);
     procedure UpdateFileNodeText(aFile: TRdcFile);
     procedure UpdateRecentMenu;
@@ -531,7 +534,7 @@ implementation
 uses
   Winapi.ActiveX, Winapi.KnownFolders, Winapi.ShellAPI, Winapi.ShlObj,
   System.IOUtils,
-  RdcmX.Log, RdcmX.UI.CredentialPrompt, RdcmX.UI.Gateways, RdcmX.UI.Icons, RdcmX.UI.MasterPassword, RdcmX.UI.Options, RdcmX.UI.Profiles, RdcmX.UI.Properties, RdcmX.UI.Tailnets, RdcmX.WakeOnLan;
+  RdcmX.Log, RdcmX.UI.CredentialPrompt, RdcmX.UI.Gateways, RdcmX.UI.HostApproval, RdcmX.UI.Icons, RdcmX.UI.MasterPassword, RdcmX.UI.Options, RdcmX.UI.Profiles, RdcmX.UI.Properties, RdcmX.UI.Tailnets, RdcmX.WakeOnLan;
 
 const
   cMinTreeWidth96 = 120;
@@ -929,6 +932,8 @@ begin
   FSessionWindows := TDictionary<TRdcServer, TfrmSessionWindow>.Create;
   FStoredPasswordUsed := TDictionary<TRdcServer, string>.Create;
   FAdRefreshing := TDictionary<string, Boolean>.Create;
+  FBatchDeclinedKeys := TStringList.Create;
+  FBatchDeclinedKeys.CaseSensitive := False;
   FAdGuard := RdcNewCallbackGuard;
   FVault := TRdcPasswordVault.Create(TRdcWindowsBlobStore.Create);
   FTailnetManager := TRdcTailnetManager.Create;
@@ -1000,6 +1005,7 @@ begin
   FreeAndNil(FSessionWindows);
   FreeAndNil(FStoredPasswordUsed);
   FreeAndNil(FAdRefreshing);
+  FreeAndNil(FBatchDeclinedKeys);
   if FVaultTimer <> nil then
     FVaultTimer.Enabled := False;
   FreeAndNil(FVault); // vergrendelt en wist de sleutel
@@ -2824,7 +2830,40 @@ begin
     UpdatePingTargets;
   end;
   sbStatus.Panels[0].Text := Format(_('%s: Active Directory ververst (%d nieuw, %d bijgewerkt, %d verwijderd, %d behouden).'), [lGroup.Caption, lResult.Added, lResult.Updated, lResult.Removed, lResult.Kept]);
+  if Length(lResult.SkippedNames) > 0 then
+    TRdcLog.Write(Format('%s: AD overgeslagen: %s', [lGroup.Caption, string.Join('; ', lResult.SkippedNames)]));
+  // Never silent: a manual refresh shows what changed (renamed servers need a new approval for the vault).
+  if aInteractive and (Length(lResult.AddedNames) + Length(lResult.RenamedNames) + Length(lResult.RemovedNames) + Length(lResult.SkippedNames) > 0) then
+    ShowAdSyncSummary(lGroup, lResult);
   TRdcLog.Write(Format('%s: AD ververst: %d nieuw, %d bijgewerkt, %d verwijderd, %d behouden', [lGroup.Caption, lResult.Added, lResult.Updated, lResult.Removed, lResult.Kept]));
+end;
+
+procedure TfrmMain.ShowAdSyncSummary(aGroup: TRdcGroup; const aResult: TRdcAdSyncResult);
+const
+  cMaxLines = 12;
+var
+  lText: string;
+
+  procedure AddSection(const aTitle: string; const aNames: TArray<string>);
+  var
+    lIndex: Integer;
+  begin
+    if Length(aNames) = 0 then
+      Exit;
+    lText := lText + #13#10 + Format('%s (%d):', [aTitle, Length(aNames)]) + #13#10;
+    for lIndex := 0 to Min(High(aNames), cMaxLines - 1) do
+      lText := lText + '  ' + aNames[lIndex] + #13#10;
+    if Length(aNames) > cMaxLines then
+      lText := lText + '  ' + Format(_('... en nog %d'), [Length(aNames) - cMaxLines]) + #13#10;
+  end;
+
+begin
+  lText := Format(_('Active Directory ververst voor "%s".'), [aGroup.Caption]) + #13#10;
+  AddSection(_('Nieuw'), aResult.AddedNames);
+  AddSection(_('Hernoemd (vraagt opnieuw om goedkeuring voor een onthouden wachtwoord)'), aResult.RenamedNames);
+  AddSection(_('Verwijderd'), aResult.RemovedNames);
+  AddSection(_('Overgeslagen (ongeldige hostnaam)'), aResult.SkippedNames);
+  MessageDlg(lText, mtInformation, [mbOK], 0);
 end;
 
 procedure TfrmMain.RefreshAdGroupsOnOpen(aFile: TRdcFile);
@@ -3514,7 +3553,16 @@ begin
   lAccount := AccountText(aUserName, aDomain);
   Result := FVault.LoadApproved(lTarget, lAccount, aContext.Hosts,
     function(const aMissing: TArray<TRdcHostRef>): Boolean
+    var
+      lHost: TRdcHostRef;
+      lAllDeclined: Boolean;
     begin
+      // Left unchecked in the group connect list just now: straight to the normal prompt.
+      lAllDeclined := True;
+      for lHost in aMissing do
+        lAllDeclined := lAllDeclined and (FBatchDeclinedKeys.IndexOf(lHost.Key) >= 0);
+      if lAllDeclined then
+        Exit(False);
       Result := ConfirmHostApproval(lAccount, aMissing);
     end, aPassword);
   if Result = rlrDeclined then
@@ -3561,6 +3609,8 @@ end;
 function TfrmMain.ApproveGroupHosts(const aServers: TArray<TRdcServer>; const aUserName, aDomain: string): Boolean;
 var
   lAccount: string;
+  lApproved: TArray<TRdcHostRef>;
+  lFromAd: TArray<Boolean>;
   lHost: TRdcHostRef;
   lMissing: TArray<TRdcHostRef>;
   lServer: TRdcServer;
@@ -3576,10 +3626,23 @@ var
     Result := False;
   end;
 
+  function Listed2(const aKey: string): Boolean;
+  var
+    lItem: TRdcHostRef;
+  begin
+    for lItem in lApproved do
+      if SameText(lItem.Key, aKey) then
+        Exit(True);
+    Result := False;
+  end;
+
 begin
-  // Group connect with a remembered password: one question for all hosts of this account that are not approved yet,
-  // instead of one per server. Servers with another account ask for themselves.
+  // Group connect with a remembered password: one list with a check box per host of this account that is not
+  // approved yet (unchecked by default; hosts from an AD refresh marked), instead of one question per server.
+  // Unchecked hosts get the normal prompt. Cancel: the group prompt (one typed password for all). Servers with
+  // another account ask for themselves.
   Result := False;
+  FBatchDeclinedKeys.Clear;
   lTarget := CredentialTargetFor(aServers[0], aUserName, aDomain);
   lAccount := AccountText(aUserName, aDomain);
   if not EnsureVaultUnlocked(Format(_('Ontgrendel de wachtwoordkluis om met %d servers te verbinden.'), [Length(aServers)])) then
@@ -3589,10 +3652,20 @@ begin
     if SameText(CredentialTargetFor(lServer, aUserName, aDomain), lTarget) then
       for lHost in FVault.MissingHosts(lTarget, FSessions.CredentialContextFor(lServer).Hosts) do
         if not Listed(lHost.Key) then
+        begin
           lMissing := lMissing + [lHost];
+          lFromAd := lFromAd + [lServer.Settings.AdItem.Dn <> ''];
+        end;
   if Length(lMissing) = 0 then
     Exit(True);
-  Result := ConfirmHostApproval(lAccount, lMissing) and FVault.ApproveHosts(lTarget, lAccount, lMissing);
+  if not RdcSelectApprovedHosts(lAccount, lMissing, lFromAd, lApproved) then
+    Exit;
+  if (Length(lApproved) > 0) and not FVault.ApproveHosts(lTarget, lAccount, lApproved) then
+    Exit;
+  for lHost in lMissing do
+    if not Listed2(lHost.Key) then
+      FBatchDeclinedKeys.Add(lHost.Key);
+  Result := True;
 end;
 
 procedure TfrmMain.ForgetSelectedPassword;
@@ -3833,11 +3906,16 @@ begin
   // Declined hosts: the normal group prompt below (one typed password for all).
   if HasRememberedPassword(lServers[0], lUserName, lDomain) and ApproveGroupHosts(lServers, lUserName, lDomain) then
   begin
-    for lIndex := 0 to High(lServers) do
-      ConnectServer(lServers[lIndex]);
+    try
+      for lIndex := 0 to High(lServers) do
+        ConnectServer(lServers[lIndex]);
+    finally
+      FBatchDeclinedKeys.Clear;
+    end;
     ShowActiveSession;
     Exit;
   end;
+  FBatchDeclinedKeys.Clear;
   if not TfrmCredentialPrompt.Execute(Format(_('%d servers in "%s"'), [Length(lServers), lGroup.Caption]), FBatchUserName, FBatchDomain, FBatchPassword, FAppSettings.RememberPasswords, FBatchRemember, lRememberUser) then
     Exit;
   // For the group: its servers inherit it unless they have their own logon settings.

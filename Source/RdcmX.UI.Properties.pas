@@ -384,6 +384,7 @@ begin
     lPage.SetHint('subOus', _('Aan: elke sub-OU wordt een subgroep. Uit: alle computers direct in deze groep.'));
     lPage.SetHint('skipDisabled', _('Computeraccounts die in AD zijn uitgeschakeld niet tonen.'));
     lPage.SetHint('nameFilter', _('Alleen computers waarvan de naam hierop past (* en ? als jokertekens); leeg = alle.'));
+    lPage.SetHint('dnsSuffixes', _('DNS-namen van computers moeten eindigen op het domein van de OU (de DC=-delen) of op een van deze suffixen, gescheiden door ; (bijv. corp.contoso.com). Andere namen worden overgeslagen en gemeld.'));
     lPage.SetHint('refreshOnOpen', _('Bij het openen van het bestand automatisch verversen (alleen als deze OU op deze pc al eens is goedgekeurd).'));
     lPage.SetHint('connectionSpeed', _('Snelheid van de verbinding met deze server. Bij een keuze worden de vinkjes hieronder gezet zoals in Verbinding met extern bureaublad (mstsc); u kunt ze daarna aanpassen.'));
     lPage.SetHint('desktopBackground', _('Achtergrondafbeelding van het externe bureaublad tonen (kost bandbreedte).'));
@@ -437,6 +438,7 @@ begin
   lPage.AddCheck('subOus', _('Sub-OU''s als subgroepen tonen'));
   lPage.AddCheck('skipDisabled', _('Uitgeschakelde computeraccounts overslaan'));
   lPage.AddText('nameFilter', _('Alleen computernamen als (bijv. SRV*)'), 160);
+  lPage.AddText('dnsSuffixes', _('Toegestane DNS-suffixen (optioneel)'), 300);
   lPage.AddCheck('refreshOnOpen', _('Verversen bij het openen van het bestand'));
   lPage.AddHint(_('Server > Verversen vanuit Active Directory vult deze groep met de computers in de OU (met je Windows-account). Ze worden gewone servers; verdwenen computers gaan bij verversen weg, zelf toegevoegde blijven. Erft niet over.'));
 end;

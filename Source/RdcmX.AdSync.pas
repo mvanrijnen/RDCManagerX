@@ -11,6 +11,11 @@
   - Servers keep their own settings, favorites and the inherited settings of the AD group, because they are normal
     servers in the file (also in the .rdg, so RDCMan can open it).
   - A subgroup that has its own AD link is a separate AD group and is skipped.
+  - dNSHostName comes from AD and is checked before use (second security review): only host name characters, no
+    port or spaces, and a dotted name must end with the domain of the OU (its DC= parts) or with one of the
+    configured DNS suffixes. Otherwise the computer is skipped and reported. A server whose host name changes keeps
+    its node but gets a new approval key (a new name is a new host for the vault).
+  - The result lists what was added, renamed, removed and skipped, so the caller can show it (never silent).
   - Only OUs that contain (directly or deeper) at least one computer that passes the filters become groups (user
     request): empty OUs, or OUs with only disabled/filtered computers, are not shown; an OU group that becomes empty
     is removed at the next refresh like any other node that is gone.
@@ -45,7 +50,18 @@ type
     Kept: Integer;
     /// <summary>The name filter is not a valid mask: nothing was changed (no computer removed).</summary>
     InvalidFilter: Boolean;
+    AddedNames: TArray<string>;
+    /// <summary>"old -> new" host names.</summary>
+    RenamedNames: TArray<string>;
+    RemovedNames: TArray<string>;
+    /// <summary>"name: reason" for computers that were not used (invalid host name).</summary>
+    SkippedNames: TArray<string>;
   end;
+
+/// <summary>Is aHost usable as a server name from AD? A single label (computer name) or a DNS name of host name
+/// characters (a-z, 0-9, -, .; labels of 1..63, no leading/trailing -), without port or spaces, ending with the
+/// domain of aOuDn or one of aSuffixes. aReason explains a refusal.</summary>
+function RdcAdCheckHostName(const aHost, aOuDn: string; const aSuffixes: TArray<string>; out aReason: string): Boolean;
 
 /// <summary>Is aFilter usable as name filter (empty, or a valid wildcard mask; e.g. "[a" is not)?</summary>
 function RdcAdIsValidNameFilter(const aFilter: string): Boolean;
@@ -61,7 +77,8 @@ function RdcAdSync(aGroup: TRdcGroup; const aEntries: TArray<TRdcAdEntry>; const
 implementation
 
 uses
-  System.Generics.Defaults, System.Masks;
+  System.Generics.Defaults, System.Masks,
+  RdcmX.Lang;
 
 { TRdcAdEntry }
 
@@ -199,11 +216,73 @@ begin
   end;
 end;
 
+function DomainOfDn(const aDn: string): string;
+var
+  lPart: string;
+begin
+  Result := '';
+  for lPart in RdcAdNormalizeDn(aDn).Split([',']) do
+    if lPart.StartsWith('dc=') then
+    begin
+      if Result <> '' then
+        Result := Result + '.';
+      Result := Result + Copy(lPart, 4, MaxInt);
+    end;
+end;
+
+function RdcAdCheckHostName(const aHost, aOuDn: string; const aSuffixes: TArray<string>; out aReason: string): Boolean;
+var
+  lAllowed: TArray<string>;
+  lChar: Char;
+  lHost: string;
+  lLabel: string;
+  lSuffix: string;
+begin
+  aReason := '';
+  lHost := LowerCase(aHost);
+  Result := False;
+  if (lHost = '') or (Length(lHost) > 253) then
+  begin
+    aReason := _('ongeldige lengte');
+    Exit;
+  end;
+  for lChar in lHost do
+    if not CharInSet(lChar, ['a'..'z', '0'..'9', '-', '.']) then
+    begin
+      aReason := Format(_('ongeldig teken "%s"'), [lChar]);
+      Exit;
+    end;
+  for lLabel in lHost.Split(['.']) do
+    if (lLabel = '') or (Length(lLabel) > 63) or lLabel.StartsWith('-') or lLabel.EndsWith('-') then
+    begin
+      aReason := _('ongeldige naamopbouw');
+      Exit;
+    end;
+  if not lHost.Contains('.') then
+    Exit(True); // computer name: resolved with this PC's own DNS suffixes
+  lAllowed := aSuffixes;
+  if DomainOfDn(aOuDn) <> '' then
+    lAllowed := lAllowed + [DomainOfDn(aOuDn)];
+  for lSuffix in lAllowed do
+    if (lSuffix <> '') and lHost.EndsWith('.' + LowerCase(lSuffix)) then
+      Exit(True);
+  aReason := _('DNS-naam buiten het domein van de OU en de toegestane suffixen');
+end;
+
+function HostOf(const aEntry: TRdcAdEntry): string;
+begin
+  Result := Trim(aEntry.DnsHostName);
+  if Result = '' then
+    Result := Trim(aEntry.Name);
+end;
+
 function IncludedComputer(const aEntry: TRdcAdEntry; aConfig: TRdcxAdSettings): Boolean;
+var
+  lReason: string;
 begin
   Result := (aEntry.Kind = aekComputer) and not (aConfig.SkipDisabled and aEntry.Disabled)
     and ((aConfig.NameFilter = '') or MatchesMask(aEntry.Name, aConfig.NameFilter))
-    and ((Trim(aEntry.DnsHostName) <> '') or (aEntry.Name <> ''));
+    and RdcAdCheckHostName(HostOf(aEntry), aConfig.OuDn, aConfig.DnsSuffixes, lReason);
 end;
 
 function RdcAdSync(aGroup: TRdcGroup; const aEntries: TArray<TRdcAdEntry>; const aIsBusy: TFunc<TRdcServer, Boolean>; const aBeforeRemove: TProc<TRdcNode>): TRdcAdSyncResult;
@@ -222,6 +301,7 @@ var
   lParent: TRdcGroup;
   lParentDn: string;
   lFilled: TDictionary<string, Boolean>;
+  lReason: string;
   lSeen: TDictionary<TRdcNode, Boolean>;
   lServer: TRdcServer;
 
@@ -318,17 +398,23 @@ begin
 
     for lEntry in aEntries do
     begin
-      if not IncludedComputer(lEntry, lConfig) then
+      if (lEntry.Kind <> aekComputer) or (lConfig.SkipDisabled and lEntry.Disabled)
+        or ((lConfig.NameFilter <> '') and not MatchesMask(lEntry.Name, lConfig.NameFilter)) then
         Continue;
-      lHost := Trim(lEntry.DnsHostName);
-      if lHost = '' then
-        lHost := lEntry.Name;
+      lHost := HostOf(lEntry);
+      if not RdcAdCheckHostName(lHost, lConfig.OuDn, lConfig.DnsSuffixes, lReason) then
+      begin
+        Result.SkippedNames := Result.SkippedNames + [Format('%s (%s): %s', [lEntry.Name, lHost, lReason])];
+        Continue;
+      end;
       lParent := ParentGroupFor(lEntry.Dn);
       if lExisting.TryGetValue(RdcAdNormalizeDn(lEntry.Dn), lNode) and (lNode is TRdcServer) then
       begin
         lServer := TRdcServer(lNode);
         if not SameText(lServer.Name, lHost) then
         begin
+          // A new name is a new host for the vault approvals (keys are built from the name).
+          Result.RenamedNames := Result.RenamedNames + [lServer.Name + ' -> ' + lHost];
           lServer.Name := lHost;
           Inc(Result.Updated);
         end;
@@ -341,6 +427,7 @@ begin
         if not SameText(lEntry.Name, lHost) then
           lServer.DisplayName := lEntry.Name;
         lServer.Settings.AdItem.Dn := lEntry.Dn;
+        Result.AddedNames := Result.AddedNames + [lHost];
         Inc(Result.Added);
       end;
       lSeen.AddOrSetValue(lServer, True);
@@ -358,6 +445,7 @@ begin
           begin
             if Assigned(aBeforeRemove) then
               aBeforeRemove(lNode);
+            Result.RemovedNames := Result.RemovedNames + [TRdcServer(lNode).Name];
             lNode.Parent.Delete(lNode);
             Inc(Result.Removed);
           end;

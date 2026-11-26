@@ -379,6 +379,9 @@ type
     /// <summary>Wildcard on the computer name (e.g. SRV*); empty = all.</summary>
     function NameFilter: string;
     function RefreshOnOpen: Boolean;
+    /// <summary>Extra DNS suffixes a computer's dNSHostName may end with, besides the domain of the OU (DC= parts);
+    /// separated by ; or ,.</summary>
+    function DnsSuffixes: TArray<string>;
     /// <summary>Configured: an own section with an OU.</summary>
     function IsLinked: Boolean;
   end;
@@ -1436,12 +1439,12 @@ end;
 
 class function TRdcxAdSettings.ElementOrder: TArray<string>;
 begin
-  Result := ['ouDn', 'server', 'subOus', 'skipDisabled', 'nameFilter', 'refreshOnOpen'];
+  Result := ['ouDn', 'server', 'subOus', 'skipDisabled', 'nameFilter', 'refreshOnOpen', 'dnsSuffixes'];
 end;
 
 class function TRdcxAdSettings.ElementDefaults: TArray<string>;
 begin
-  Result := ['', '', cRdcTrue, cRdcTrue, '', cRdcFalse];
+  Result := ['', '', cRdcTrue, cRdcTrue, '', cRdcFalse, ''];
 end;
 
 class function TRdcxAdSettings.InRdg: Boolean;
@@ -1482,6 +1485,16 @@ end;
 function TRdcxAdSettings.RefreshOnOpen: Boolean;
 begin
   Result := GetBool('refreshOnOpen');
+end;
+
+function TRdcxAdSettings.DnsSuffixes: TArray<string>;
+var
+  lPart: string;
+begin
+  Result := [];
+  for lPart in GetValue('dnsSuffixes').Split([';', ',']) do
+    if Trim(lPart) <> '' then
+      Result := Result + [LowerCase(Trim(lPart).Trim(['.']))];
 end;
 
 function TRdcxAdSettings.IsLinked: Boolean;

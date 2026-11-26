@@ -18,6 +18,7 @@ uses
   RdcmX.Tailscale in 'Source\RdcmX.Tailscale.pas',
   RdcmX.UI.Tailnets in 'Source\RdcmX.UI.Tailnets.pas' {frmTailnets},
   RdcmX.UI.Gateways in 'Source\RdcmX.UI.Gateways.pas' {frmGateways},
+  RdcmX.UI.HostApproval in 'Source\RdcmX.UI.HostApproval.pas',
   RdcmX.Rdp.Session in 'Source\RdcmX.Rdp.Session.pas',
   RdcmX.Redirections in 'Source\RdcmX.Redirections.pas',
   RdcmX.Sessions in 'Source\RdcmX.Sessions.pas',

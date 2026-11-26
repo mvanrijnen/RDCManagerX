@@ -9,7 +9,7 @@ interface
 uses
   System.SysUtils,
   DUnitX.TestFramework,
-  RdcmX.AdLdap, RdcmX.AdSync, RdcmX.Model;
+  RdcmX.AdLdap, RdcmX.AdSync, RdcmX.Credentials, RdcmX.Model;
 
 type
   [TestFixture]
@@ -44,6 +44,10 @@ type
     procedure InvalidNameFilterChangesNothing;
     [Test]
     procedure QueryTargetAndWarnings;
+    [Test]
+    procedure HostNamesAreValidated;
+    [Test]
+    procedure ChangesAreReported;
     [Test]
     procedure AdSettingDoesNotInherit;
   end;
@@ -256,6 +260,50 @@ begin
   Assert.IsTrue(lTarget.IsIpAddress);
   Assert.IsTrue(lTarget.OutsidePcDomain);
   Assert.IsTrue(RdcAdTargetOf('dc01.contoso.com', cBase, '').OutsidePcDomain);
+end;
+
+procedure TAdSyncTests.HostNamesAreValidated;
+var
+  lReason: string;
+  lResult: TRdcAdSyncResult;
+begin
+  Assert.IsTrue(RdcAdCheckHostName('srv01.contoso.com', cBase, [], lReason));
+  Assert.IsTrue(RdcAdCheckHostName('SRV01', cBase, [], lReason), 'computer name');
+  Assert.IsFalse(RdcAdCheckHostName('srv01.contoso.com:3390', cBase, [], lReason), 'port');
+  Assert.IsFalse(RdcAdCheckHostName('srv 01.contoso.com', cBase, [], lReason), 'space');
+  Assert.IsFalse(RdcAdCheckHostName('rdp.evil.tld', cBase, [], lReason), 'foreign suffix');
+  Assert.IsFalse(RdcAdCheckHostName('srv01.evilcontoso.com', cBase, [], lReason), 'suffix must follow a dot');
+  Assert.IsTrue(RdcAdCheckHostName('srv01.corp.example.net', cBase, ['corp.example.net'], lReason), 'configured suffix');
+  Assert.IsFalse(RdcAdCheckHostName('-srv.contoso.com', cBase, [], lReason), 'leading hyphen');
+  // In a sync: skipped and reported, the valid ones are used.
+  FGroup.Settings.Ad.Values['subOus'] := 'False';
+  lResult := Sync([
+    TRdcAdEntry.Computer('CN=OK01,' + cBase, 'OK01', 'ok01.contoso.com'),
+    TRdcAdEntry.Computer('CN=BAD01,' + cBase, 'BAD01', 'rdp.evil.tld'),
+    TRdcAdEntry.Computer('CN=BAD02,' + cBase, 'BAD02', 'bad02.contoso.com:3389')]);
+  Assert.AreEqual(1, lResult.Added);
+  Assert.AreEqual(Integer(2), Integer(Length(lResult.SkippedNames)));
+  Assert.IsNotNull(FindServer('OK01'));
+  Assert.IsNull(FindServer('BAD01'));
+end;
+
+procedure TAdSyncTests.ChangesAreReported;
+var
+  lResult: TRdcAdSyncResult;
+begin
+  FGroup.Settings.Ad.Values['subOus'] := 'False';
+  lResult := Sync([
+    TRdcAdEntry.Computer('CN=A01,' + cBase, 'A01', 'a01.contoso.com'),
+    TRdcAdEntry.Computer('CN=B01,' + cBase, 'B01', 'b01.contoso.com')]);
+  Assert.AreEqual(Integer(2), Integer(Length(lResult.AddedNames)));
+  // A01 gets another DNS name, B01 disappears.
+  lResult := Sync([TRdcAdEntry.Computer('CN=A01,' + cBase, 'A01', 'a01-new.contoso.com')]);
+  Assert.AreEqual(Integer(1), Integer(Length(lResult.RenamedNames)));
+  Assert.AreEqual('a01.contoso.com -> a01-new.contoso.com', lResult.RenamedNames[0]);
+  Assert.AreEqual(Integer(1), Integer(Length(lResult.RemovedNames)));
+  Assert.AreEqual('b01.contoso.com', lResult.RemovedNames[0]);
+  // The renamed server is a new host for the vault: its approval key differs.
+  Assert.AreNotEqual(TRdcPasswordVault.DirectHostKey('a01.contoso.com'), TRdcPasswordVault.DirectHostKey(FindServer('A01').Name));
 end;
 
 procedure TAdSyncTests.AdSettingDoesNotInherit;

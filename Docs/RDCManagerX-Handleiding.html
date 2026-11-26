@@ -181,7 +181,7 @@ opnieuw met de nieuwe afmeting.</p>
   <tr><td>Active Directory</td><td>Alleen bij een groep, erft niet over: koppeling aan een AD-OU (bijv. <code>OU=Computers,DC=contoso,DC=com</code>).
     <em>Server &gt; Verversen vanuit Active Directory</em> vult de groep met de computers daarin (sub-OU's als subgroepen, alleen als er computers in zitten; of plat), met je
     eigen Windows-account. Ze worden gewone servers; verdwenen computers gaan bij verversen weg (niet met een open sessie), zelf
-    toegevoegde servers blijven. De eerste keer per domeincontroller + OU vraagt de app om bevestiging.</td></tr>
+    toegevoegde servers blijven. DNS-namen moeten bij het domein van de OU passen (of bij <em>Toegestane DNS-suffixen</em>); andere worden overgeslagen. Na het verversen toont de app wat er nieuw, hernoemd, verwijderd en overgeslagen is. De eerste keer per server + OU vraagt de app om bevestiging, met een waarschuwing als de server buiten het domein van deze pc valt.</td></tr>
   <tr><td>Gebruikerservaring</td><td>Verbindingssnelheid en weergave-opties zoals in mstsc (achtergrond, vloeiende lettertypen, animaties,
     visuele stijlen), bitmapcache, automatisch opnieuw verbinden, en <em>Sessie actief houden</em>: zolang je niet in de sessie werkt,
     krijgt die af en toe een kleine muisbeweging, zodat de server niet vergrendelt of de schermbeveiliging start.</td></tr>
@@ -207,7 +207,7 @@ betrokken servers. De melding komt pas terug als die instellingen veranderen; be
   <li>Een onthouden wachtwoord hoort bij de <strong>hosts</strong> waarvoor je het gebruikt hebt. Wijst een server (bijvoorbeeld uit een
     bestand van iemand anders) hetzelfde account naar een andere host, of laat hij de verbinding via een (andere) gateway lopen, dan vraagt
     RDCManagerX eerst of het wachtwoord daar gebruikt mag worden (standaard <em>Nee</em>; dan typ je het zelf in). Bij een groep komt er
-    één vraag voor alle nieuwe hosts. Met een wachtwoord uit de kluis is serververificatie altijd verplicht (direct en via een gateway): kan de server zich niet
+    één lijst met een vinkje per nieuwe host (standaard uit; hosts uit Active Directory gemarkeerd). Met een wachtwoord uit de kluis is serververificatie altijd verplicht (direct en via een gateway): kan de server zich niet
     bewijzen, bijvoorbeeld met een niet-vertrouwd certificaat, dan wordt er niet verbonden en typ je het wachtwoord zelf. Via Tailscale
     krijg je dan een waarschuwing, omdat de certificaatnaam daar nooit klopt.</li>
   <li>De kluis vergrendelt na een instelbaar aantal minuten zonder gebruik (Opties). Handmatig: <em>Bestand &gt; Wachtwoordkluis vergrendelen</em>.</li>
