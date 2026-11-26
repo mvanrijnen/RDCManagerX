@@ -1,6 +1,8 @@
 ﻿program RDCManagerX;
 
 uses
+  // First: restricts DLL loading by name to System32 before any other unit initializes (DLL planting).
+  RdcmX.DllSearch in 'Source\RdcmX.DllSearch.pas',
   Vcl.Forms,
   MSTSCLib_TLB in 'Source\Imports\MSTSCLib_TLB.pas',
   RdcmX.AppSettings in 'Source\RdcmX.AppSettings.pas',

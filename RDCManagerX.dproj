@@ -82,6 +82,7 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <DCCReference Include="Source\RdcmX.DllSearch.pas"/>
         <DCCReference Include="Source\Imports\MSTSCLib_TLB.pas"/>
         <DCCReference Include="Source\RdcmX.AppSettings.pas"/>
         <DCCReference Include="Source\RdcmX.Credentials.pas"/>

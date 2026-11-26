@@ -80,17 +80,20 @@ const
   CRYPTPROTECTMEMORY_BLOCK_SIZE = 16;
   CRYPTPROTECTMEMORY_SAME_PROCESS = 0;
 
-function BCryptOpenAlgorithmProvider(out phAlgorithm: BCRYPT_HANDLE; pszAlgId, pszImplementation: PWideChar; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll;
-function BCryptCloseAlgorithmProvider(hAlgorithm: BCRYPT_HANDLE; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll;
-function BCryptSetProperty(hObject: BCRYPT_HANDLE; pszProperty: PWideChar; pbInput: PByte; cbInput: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll;
-function BCryptGenerateSymmetricKey(hAlgorithm: BCRYPT_HANDLE; out phKey: BCRYPT_HANDLE; pbKeyObject: PByte; cbKeyObject: ULONG; pbSecret: PByte; cbSecret: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll;
-function BCryptDestroyKey(hKey: BCRYPT_HANDLE): NTSTATUS; stdcall; external bcryptdll;
-function BCryptEncrypt(hKey: BCRYPT_HANDLE; pbInput: PByte; cbInput: ULONG; pPaddingInfo: Pointer; pbIV: PByte; cbIV: ULONG; pbOutput: PByte; cbOutput: ULONG; out pcbResult: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll;
-function BCryptDecrypt(hKey: BCRYPT_HANDLE; pbInput: PByte; cbInput: ULONG; pPaddingInfo: Pointer; pbIV: PByte; cbIV: ULONG; pbOutput: PByte; cbOutput: ULONG; out pcbResult: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll;
-function BCryptDeriveKeyPBKDF2(hPrf: BCRYPT_HANDLE; pbPassword: PByte; cbPassword: ULONG; pbSalt: PByte; cbSalt: ULONG; cIterations: UInt64; pbDerivedKey: PByte; cbDerivedKey: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll;
-function BCryptGenRandom(hAlgorithm: BCRYPT_HANDLE; pbBuffer: PByte; cbBuffer: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll;
-function CryptProtectMemory(pDataIn: Pointer; cbDataIn: DWORD; dwFlags: DWORD): BOOL; stdcall; external 'crypt32.dll';
-function CryptUnprotectMemory(pDataIn: Pointer; cbDataIn: DWORD; dwFlags: DWORD): BOOL; stdcall; external 'crypt32.dll';
+// "delayed": resolved at first use, after RdcmX.DllSearch restricted DLL loading to System32 (DLL planting).
+{$WARN SYMBOL_PLATFORM OFF}
+function BCryptOpenAlgorithmProvider(out phAlgorithm: BCRYPT_HANDLE; pszAlgId, pszImplementation: PWideChar; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll delayed;
+function BCryptCloseAlgorithmProvider(hAlgorithm: BCRYPT_HANDLE; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll delayed;
+function BCryptSetProperty(hObject: BCRYPT_HANDLE; pszProperty: PWideChar; pbInput: PByte; cbInput: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll delayed;
+function BCryptGenerateSymmetricKey(hAlgorithm: BCRYPT_HANDLE; out phKey: BCRYPT_HANDLE; pbKeyObject: PByte; cbKeyObject: ULONG; pbSecret: PByte; cbSecret: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll delayed;
+function BCryptDestroyKey(hKey: BCRYPT_HANDLE): NTSTATUS; stdcall; external bcryptdll delayed;
+function BCryptEncrypt(hKey: BCRYPT_HANDLE; pbInput: PByte; cbInput: ULONG; pPaddingInfo: Pointer; pbIV: PByte; cbIV: ULONG; pbOutput: PByte; cbOutput: ULONG; out pcbResult: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll delayed;
+function BCryptDecrypt(hKey: BCRYPT_HANDLE; pbInput: PByte; cbInput: ULONG; pPaddingInfo: Pointer; pbIV: PByte; cbIV: ULONG; pbOutput: PByte; cbOutput: ULONG; out pcbResult: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll delayed;
+function BCryptDeriveKeyPBKDF2(hPrf: BCRYPT_HANDLE; pbPassword: PByte; cbPassword: ULONG; pbSalt: PByte; cbSalt: ULONG; cIterations: UInt64; pbDerivedKey: PByte; cbDerivedKey: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll delayed;
+function BCryptGenRandom(hAlgorithm: BCRYPT_HANDLE; pbBuffer: PByte; cbBuffer: ULONG; dwFlags: ULONG): NTSTATUS; stdcall; external bcryptdll delayed;
+function CryptProtectMemory(pDataIn: Pointer; cbDataIn: DWORD; dwFlags: DWORD): BOOL; stdcall; external 'crypt32.dll' delayed;
+function CryptUnprotectMemory(pDataIn: Pointer; cbDataIn: DWORD; dwFlags: DWORD): BOOL; stdcall; external 'crypt32.dll' delayed;
+{$WARN SYMBOL_PLATFORM ON}
 
 procedure Check(aStatus: NTSTATUS; const aWhat: string);
 begin

@@ -107,9 +107,12 @@ type
   end;
   PIcmpEchoReply = ^TIcmpEchoReply;
 
-function IcmpCreateFile: THandle; stdcall; external 'iphlpapi.dll' name 'IcmpCreateFile';
-function IcmpCloseHandle(aIcmpHandle: THandle): BOOL; stdcall; external 'iphlpapi.dll' name 'IcmpCloseHandle';
-function IcmpSendEcho(aIcmpHandle: THandle; aDestinationAddress: Cardinal; aRequestData: Pointer; aRequestSize: Word; aRequestOptions: Pointer; aReplyBuffer: Pointer; aReplySize: DWORD; aTimeout: DWORD): DWORD; stdcall; external 'iphlpapi.dll' name 'IcmpSendEcho';
+// "delayed": resolved at first use, after RdcmX.DllSearch restricted DLL loading to System32 (DLL planting).
+{$WARN SYMBOL_PLATFORM OFF}
+function IcmpCreateFile: THandle; stdcall; external 'iphlpapi.dll' name 'IcmpCreateFile' delayed;
+function IcmpCloseHandle(aIcmpHandle: THandle): BOOL; stdcall; external 'iphlpapi.dll' name 'IcmpCloseHandle' delayed;
+function IcmpSendEcho(aIcmpHandle: THandle; aDestinationAddress: Cardinal; aRequestData: Pointer; aRequestSize: Word; aRequestOptions: Pointer; aReplyBuffer: Pointer; aReplySize: DWORD; aTimeout: DWORD): DWORD; stdcall; external 'iphlpapi.dll' name 'IcmpSendEcho' delayed;
+{$WARN SYMBOL_PLATFORM ON}
 
 var
   GWinsockReady: Boolean;
