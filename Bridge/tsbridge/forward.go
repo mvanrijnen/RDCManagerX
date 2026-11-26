@@ -16,6 +16,14 @@ import (
 // DialFunc maakt een uitgaande verbinding naar het doel (in de DLL via het tailnet).
 type DialFunc func(ctx context.Context, network, address string) (net.Conn, error)
 
+// maxPendingChecks limits the accepted connections whose owner check has not finished yet. Another local process
+// could otherwise open connections faster than they are checked (each check reads the whole TCP table). When the
+// limit is reached, the accept loop waits; new connections queue in the listen backlog.
+const maxPendingChecks = 4
+
+// ownerCheck: does connection c come from process pid? (connFromPid; replaceable in tests).
+type ownerCheck func(c net.Conn, pid uint32) (bool, error)
+
 // Forwarder luistert op een lokaal adres en stuurt elke verbinding door naar Target.
 type Forwarder struct {
 	Target      string
@@ -24,6 +32,8 @@ type Forwarder struct {
 	listener    net.Listener
 	dialTimeout time.Duration
 	logf        func(format string, args ...any)
+	checkOwner  ownerCheck
+	pending     chan struct{} // semaphore: owner checks in progress (maxPendingChecks)
 
 	mu     sync.Mutex
 	conns  map[net.Conn]struct{}
@@ -34,6 +44,10 @@ type Forwarder struct {
 // StartForwarder opent de listener op localAddr ("127.0.0.2:0" = vrije poort) en begint verbindingen te accepteren.
 // Alleen loopback; de poort wordt exclusief geclaimd. allowedPid <> 0: alleen verbindingen uit dat proces.
 func StartForwarder(localAddr, target string, allowedPid uint32, dial DialFunc, logf func(string, ...any)) (*Forwarder, error) {
+	return startForwarder(localAddr, target, allowedPid, dial, logf, connFromPid)
+}
+
+func startForwarder(localAddr, target string, allowedPid uint32, dial DialFunc, logf func(string, ...any), check ownerCheck) (*Forwarder, error) {
 	if target == "" {
 		return nil, errors.New("geen doel opgegeven")
 	}
@@ -57,6 +71,8 @@ func StartForwarder(localAddr, target string, allowedPid uint32, dial DialFunc, 
 		listener:    ln,
 		dialTimeout: 30 * time.Second,
 		logf:        logf,
+		checkOwner:  check,
+		pending:     make(chan struct{}, maxPendingChecks),
 		conns:       make(map[net.Conn]struct{}),
 	}
 	f.wg.Add(1)
@@ -72,14 +88,23 @@ func (f *Forwarder) Port() int {
 func (f *Forwarder) acceptLoop() {
 	defer f.wg.Done()
 	for {
+		if f.allowedPid != 0 {
+			f.pending <- struct{}{} // released by handle once the owner check is done
+		}
 		c, err := f.listener.Accept()
 		if err != nil {
+			if f.allowedPid != 0 {
+				<-f.pending
+			}
 			if !f.isClosed() {
 				f.logf("forward %d: accept: %v", f.Port(), err)
 			}
 			return
 		}
 		if !f.track(c) {
+			if f.allowedPid != 0 {
+				<-f.pending
+			}
 			c.Close()
 			return
 		}
@@ -94,7 +119,8 @@ func (f *Forwarder) handle(local net.Conn) {
 	defer local.Close()
 
 	if f.allowedPid != 0 {
-		ok, err := connFromPid(local, f.allowedPid)
+		ok, err := f.checkOwner(local, f.allowedPid)
+		<-f.pending
 		if err != nil || !ok {
 			// Een ander programma op deze pc probeert de tunnel te gebruiken: weigeren.
 			f.logf("forward %d: verbinding van %s geweigerd (niet van RDCManagerX; %v)", f.Port(), local.RemoteAddr(), err)

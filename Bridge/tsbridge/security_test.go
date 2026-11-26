@@ -12,7 +12,7 @@ import (
 )
 
 func TestListenOnlyLoopback(t *testing.T) {
-	for _, bad := range []string{"0.0.0.0:0", ":0", "192.168.1.10:0", "[::]:0", "localhost:0", "x"} {
+	for _, bad := range []string{"0.0.0.0:0", ":0", "192.168.1.10:0", "[::]:0", "[::1]:0", "[::ffff:127.0.0.1]:0", "localhost:0", "x"} {
 		if err := validateLoopbackListen(bad); err == nil {
 			t.Errorf("%q geaccepteerd", bad)
 		}
@@ -21,7 +21,7 @@ func TestListenOnlyLoopback(t *testing.T) {
 			t.Errorf("forwarder op %q gestart", bad)
 		}
 	}
-	for _, good := range []string{"127.0.0.1:0", "127.0.0.2:0", "[::1]:0"} {
+	for _, good := range []string{"127.0.0.1:0", "127.0.0.2:0", "127.255.0.1:0"} {
 		if err := validateLoopbackListen(good); err != nil {
 			t.Errorf("%q geweigerd: %v", good, err)
 		}

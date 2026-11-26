@@ -26,15 +26,16 @@ import (
 // soExclusiveAddrUse = ~SO_REUSEADDR (winsock2.h).
 const soExclusiveAddrUse = ^int(windows.SO_REUSEADDR)
 
-// validateLoopbackListen: alleen een loopback-IP (127.0.0.0/8 of ::1) als listen-adres.
+// validateLoopbackListen: only an IPv4 loopback address (127.0.0.0/8) as listen address. IPv6 (::1) is refused:
+// the owner check (ownerPidOfClient) only reads the IPv4 TCP table, so it could never accept a connection there.
 func validateLoopbackListen(localAddr string) error {
 	host, _, err := net.SplitHostPort(localAddr)
 	if err != nil {
 		return fmt.Errorf("ongeldig lokaal adres %q: %v", localAddr, err)
 	}
 	ip, err := netip.ParseAddr(host)
-	if err != nil || !ip.IsLoopback() {
-		return fmt.Errorf("lokaal adres %q is geen loopback-adres; alleen 127.x.x.x is toegestaan", host)
+	if err != nil || !ip.Is4() || !ip.IsLoopback() {
+		return fmt.Errorf("lokaal adres %q is geen IPv4-loopback-adres; alleen 127.x.x.x is toegestaan", host)
 	}
 	return nil
 }

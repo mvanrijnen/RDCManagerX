@@ -186,3 +186,62 @@ func TestRedactSecrets(t *testing.T) {
 func itoa(i int) string {
 	return strconv.Itoa(i)
 }
+
+func TestPendingOwnerChecksAreLimited(t *testing.T) {
+	// The owner check blocks until released: at most maxPendingChecks may run at the same time, however many
+	// connections come in. After the release every connection is handled (and refused here).
+	release := make(chan struct{})
+	var mu sync.Mutex
+	running, peak, total := 0, 0, 0
+	check := func(c net.Conn, pid uint32) (bool, error) {
+		mu.Lock()
+		running++
+		total++
+		if running > peak {
+			peak = running
+		}
+		mu.Unlock()
+		<-release
+		mu.Lock()
+		running--
+		mu.Unlock()
+		return false, nil
+	}
+	f, err := startForwarder("127.0.0.2:0", "x:1", 1, plainDial, t.Logf, check)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	const conns = maxPendingChecks + 4
+	var clients []net.Conn
+	for i := 0; i < conns; i++ {
+		c, err := net.Dial("tcp", net.JoinHostPort("127.0.0.2", itoa(f.Port())))
+		if err != nil {
+			t.Fatal(err)
+		}
+		clients = append(clients, c)
+	}
+	defer func() {
+		for _, c := range clients {
+			c.Close()
+		}
+	}()
+	time.Sleep(300 * time.Millisecond)
+	mu.Lock()
+	if peak != maxPendingChecks {
+		t.Errorf("checks in progress: %d, expected exactly %d", peak, maxPendingChecks)
+	}
+	mu.Unlock()
+	close(release)
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		mu.Lock()
+		done := total == conns && running == 0
+		mu.Unlock()
+		if done {
+			return
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	t.Fatalf("not every connection was checked after the release (%d of %d)", total, conns)
+}
