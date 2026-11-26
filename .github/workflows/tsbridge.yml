@@ -1,0 +1,107 @@
+# Rebuilds Bridge\tsbridge with the pinned toolchain (Tools\build-tsbridge.cmd) and fails when the DLL differs from
+# what the exe trusts: cTsBridgeSha256 in Source\RdcmX.TsBridgeHash.inc, and the committed tsbridge.dll.gz that is
+# embedded in the exe. This shows that the committed binary comes from the committed source.
+# Pinned versions must match the PIN_* values in Tools\build-tsbridge.cmd.
+name: tsbridge reproducible build
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "Bridge/tsbridge/**"
+      - "Bridge/bin/Win64/tsbridge.dll.gz"
+      - "Source/RdcmX.TsBridgeHash.inc"
+      - "Tools/build-tsbridge.cmd"
+      - ".github/workflows/tsbridge.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "Bridge/tsbridge/**"
+      - "Bridge/bin/Win64/tsbridge.dll.gz"
+      - "Source/RdcmX.TsBridgeHash.inc"
+      - "Tools/build-tsbridge.cmd"
+      - ".github/workflows/tsbridge.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and compare tsbridge.dll
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write      # build provenance attestation
+      attestations: write
+    env:
+      # WinLibs GCC 16.2.0 + MinGW-w64 14.0.0 UCRT, POSIX threads, release 3 (same zip as winget
+      # BrechtSanders.WinLibs.POSIX.UCRT 16.2.0-14.0.0-r3; SHA-256 checked against the GitHub asset digest).
+      WINLIBS_URL: https://github.com/brechtsanders/winlibs_mingw/releases/download/16.2.0posix-23.1.3-14.0.0-ucrt-r3/winlibs-x86_64-posix-seh-gcc-16.2.0-mingw-w64ucrt-14.0.0-r3.zip
+      WINLIBS_SHA256: 3c69305081e4a647144339a936244fcf7d3d9e558319e1ad7be2cd2886d4b6a1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go (version from go.mod)
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: Bridge/tsbridge/go.mod
+          cache: false
+
+      - name: Install pinned WinLibs
+        shell: pwsh
+        run: |
+          $zip = Join-Path $env:RUNNER_TEMP 'winlibs.zip'
+          Invoke-WebRequest -Uri $env:WINLIBS_URL -OutFile $zip
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLower()
+          if ($hash -ne $env:WINLIBS_SHA256) { throw "WinLibs SHA-256 mismatch: $hash" }
+          $dest = Join-Path $env:RUNNER_TEMP 'winlibs'
+          Expand-Archive -LiteralPath $zip -DestinationPath $dest
+          # Prepended to PATH, so this gcc/ld wins over the compilers preinstalled on the runner.
+          Add-Content -LiteralPath $env:GITHUB_PATH -Value (Join-Path $dest 'mingw64\bin')
+
+      - name: Keep the committed hash and .gz
+        shell: pwsh
+        run: |
+          $m = Select-String -LiteralPath Source\RdcmX.TsBridgeHash.inc -Pattern "cTsBridgeSha256 = '([0-9a-f]{64})'"
+          if (-not $m) { throw 'cTsBridgeSha256 not found in Source\RdcmX.TsBridgeHash.inc' }
+          "EXPECTED_SHA256=$($m.Matches[0].Groups[1].Value)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Copy-Item -LiteralPath Bridge\bin\Win64\tsbridge.dll.gz -Destination (Join-Path $env:RUNNER_TEMP 'committed.dll.gz')
+
+      - name: Build with Tools\build-tsbridge.cmd (runs the Go tests first)
+        shell: cmd
+        run: Tools\build-tsbridge.cmd test
+
+      - name: Compare with cTsBridgeSha256 and the committed tsbridge.dll.gz
+        shell: pwsh
+        run: |
+          $built = (Get-FileHash -Algorithm SHA256 -LiteralPath Bridge\bin\Win64\tsbridge.dll).Hash.ToLower()
+          $unzipped = Join-Path $env:RUNNER_TEMP 'committed.dll'
+          $in = [IO.File]::OpenRead((Join-Path $env:RUNNER_TEMP 'committed.dll.gz'))
+          $out = [IO.File]::Create($unzipped)
+          $gz = New-Object IO.Compression.GZipStream($in, [IO.Compression.CompressionMode]::Decompress)
+          $gz.CopyTo($out); $gz.Dispose(); $out.Dispose(); $in.Dispose()
+          $committed = (Get-FileHash -Algorithm SHA256 -LiteralPath $unzipped).Hash.ToLower()
+          "built:             $built"
+          "cTsBridgeSha256:   $env:EXPECTED_SHA256"
+          "committed .dll.gz: $committed"
+          if ($built -ne $env:EXPECTED_SHA256) { throw 'The DLL built from source differs from cTsBridgeSha256.' }
+          if ($committed -ne $env:EXPECTED_SHA256) { throw 'The committed tsbridge.dll.gz does not contain the DLL with cTsBridgeSha256.' }
+
+      - name: Upload the built DLL (for inspection)
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: tsbridge-built
+          path: Bridge/bin/Win64/tsbridge.dll
+          if-no-files-found: ignore
+
+      - name: Attest build provenance
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: Bridge/bin/Win64/tsbridge.dll
