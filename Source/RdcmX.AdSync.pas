@@ -230,6 +230,27 @@ begin
     end;
 end;
 
+function OnlyChars(const aText: string; const aChars: TSysCharSet): Boolean;
+var
+  lChar: Char;
+begin
+  Result := aText <> '';
+  for lChar in aText do
+    if not CharInSet(lChar, aChars) then
+      Exit(False);
+end;
+
+function IsNumericHost(const aHost: string): Boolean;
+var
+  lLabel: string;
+begin
+  // As inet_addr reads it (aHost in lower case): every label decimal, or hexadecimal with 0x.
+  for lLabel in aHost.Split(['.']) do
+    if not OnlyChars(lLabel, ['0'..'9']) and not (lLabel.StartsWith('0x') and OnlyChars(Copy(lLabel, 3, MaxInt), ['0'..'9', 'a'..'f'])) then
+      Exit(False);
+  Result := True;
+end;
+
 function RdcAdCheckHostName(const aHost, aOuDn: string; const aSuffixes: TArray<string>; out aReason: string): Boolean;
 var
   lAllowed: TArray<string>;
@@ -258,6 +279,12 @@ begin
       aReason := _('ongeldige naamopbouw');
       Exit;
     end;
+  // Only numeric labels (12345, 10.1.2.3, 0x7f000001): Windows reads that as an IP address, not as a name.
+  if IsNumericHost(lHost) then
+  begin
+    aReason := _('alleen cijfers (wordt als IP-adres gelezen)');
+    Exit;
+  end;
   if not lHost.Contains('.') then
     Exit(True); // computer name: resolved with this PC's own DNS suffixes
   lAllowed := aSuffixes;

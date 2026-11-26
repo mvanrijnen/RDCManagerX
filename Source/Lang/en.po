@@ -862,6 +862,10 @@ msgid "ongeldige naamopbouw"
 msgstr "invalid name structure"
 
 #: Source/RdcmX.AdSync.pas
+msgid "alleen cijfers (wordt als IP-adres gelezen)"
+msgstr "digits only (read as an IP address)"
+
+#: Source/RdcmX.AdSync.pas
 msgid "DNS-naam buiten het domein van de OU en de toegestane suffixen"
 msgstr "DNS name outside the domain of the OU and the allowed suffixes"
 

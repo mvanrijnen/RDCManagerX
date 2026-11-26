@@ -269,6 +269,11 @@ var
 begin
   Assert.IsTrue(RdcAdCheckHostName('srv01.contoso.com', cBase, [], lReason));
   Assert.IsTrue(RdcAdCheckHostName('SRV01', cBase, [], lReason), 'computer name');
+  Assert.IsFalse(RdcAdCheckHostName('12345', cBase, [], lReason), 'digits only: read as an IP address');
+  Assert.IsFalse(RdcAdCheckHostName('0x7f000001', cBase, [], lReason), 'hex: inet_addr reads it as an IP address');
+  Assert.IsFalse(RdcAdCheckHostName('10.0x1.2', cBase, [], lReason), 'mixed numeric labels');
+  Assert.IsTrue(RdcAdCheckHostName('2srv', cBase, [], lReason), 'digits and letters');
+  Assert.IsFalse(RdcAdCheckHostName('0xbad', cBase, [], lReason), '0x + hex digits is numeric too');
   Assert.IsFalse(RdcAdCheckHostName('srv01.contoso.com:3390', cBase, [], lReason), 'port');
   Assert.IsFalse(RdcAdCheckHostName('srv 01.contoso.com', cBase, [], lReason), 'space');
   Assert.IsFalse(RdcAdCheckHostName('rdp.evil.tld', cBase, [], lReason), 'foreign suffix');
