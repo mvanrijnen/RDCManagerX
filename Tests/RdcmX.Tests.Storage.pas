@@ -68,6 +68,8 @@ type
     [Test]
     procedure NewerRdcxFormatIsRejected;
     [Test]
+    procedure DoctypeIsRefused;
+    [Test]
     procedure ProfileRenameUpdatesReferences;
     [Test]
     procedure NewProfileIsWrittenWithoutPassword;
@@ -590,6 +592,45 @@ begin
       TRdcJsonFormat.Read(TEncoding.UTF8.GetBytes('{"formatVersion": 99, "root": {}}')).Free;
     end;
   Assert.WillRaise(lRead, ERdcFormatError);
+end;
+
+procedure TStorageTests.DoctypeIsRefused;
+const
+  cMarker = 'XXE-MARKER-7f3a';
+var
+  lDocument: string;
+  lSecret: string;
+
+  procedure CheckRefused(const aXml, aWhat: string);
+  var
+    lLoaded: TRdcFile;
+  begin
+    // RDCMan's CVE-2020-0765: an .rdg with an external entity leaked local files. MSXML 6 refuses any DTD
+    // (ProhibitDTD, on by default), so the file must not load at all, and nothing of the referenced file may show.
+    lLoaded := nil;
+    try
+      try
+        lLoaded := TRdcRdgFormat.Read(TEncoding.UTF8.GetBytes(aXml));
+      except
+        on E: Exception do
+        begin
+          Assert.IsFalse(E.Message.Contains(cMarker), aWhat + ': error message shows the referenced file');
+          Exit;
+        end;
+      end;
+      Assert.IsFalse(TEncoding.UTF8.GetString(TRdcRdgFormat.Write(lLoaded)).Contains(cMarker), aWhat + ': entity was resolved');
+      Assert.Fail(aWhat + ': a document with a DOCTYPE must be refused');
+    finally
+      lLoaded.Free;
+    end;
+  end;
+
+begin
+  lSecret := TPath.Combine(FTempDir, 'secret.txt');
+  TFile.WriteAllText(lSecret, cMarker);
+  lDocument := '<RDCMan programVersion="2.90" schemaVersion="3"><file><properties><name>&x;</name></properties></file></RDCMan>';
+  CheckRefused('<?xml version="1.0" encoding="utf-8"?>'#13#10'<!DOCTYPE RDCMan [<!ENTITY x SYSTEM "file:///' + lSecret.Replace('\', '/') + '">]>'#13#10 + lDocument, 'external entity');
+  CheckRefused('<!DOCTYPE RDCMan [<!ENTITY a "aaaaaaaaaa"><!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;"><!ENTITY x "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">]>' + lDocument, 'entity expansion');
 end;
 
 procedure TStorageTests.ProfileRenameUpdatesReferences;
