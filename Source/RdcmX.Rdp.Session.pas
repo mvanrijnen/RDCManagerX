@@ -267,7 +267,8 @@ implementation
 
 uses
   RdcmX.Credentials,
-  RdcmX.Lang;
+  RdcmX.Lang,
+  RdcmX.Log;
 
 const
   cMinDesktopSize = 200;
@@ -991,12 +992,14 @@ begin
   except
     on E: Exception do
     begin
+      // Log first: the state change below runs the UI handlers, and when those fail too this line is all we have.
+      Log(Format('Connect-fout: %s: %s', [E.ClassName, E.Message]));
+      TRdcLog.WriteException(E, 'verbinden');
       WipeString(FSettings.Password);
       WipeString(FSettings.GatewayPassword);
       ShowControl(False);
       SetError(Format(_('Verbinden mislukt: %s'), [E.Message]));
       SetState(rssDisconnected);
-      Log('Connect-fout: ' + E.Message);
     end;
   end;
   DoDisplayChanged;

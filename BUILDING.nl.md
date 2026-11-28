@@ -50,6 +50,10 @@ Of open `RDCManagerX.dproj` (en `Tests\RDCManagerXTests.dproj`) in de IDE.
   `--run:RdcmX.Tests.Storage.TStorageTests.RoundTripIsByteIdentical`. Het RDP-gedrag zelf heeft geen automatische
   tests; zie `TESTPLAN.md` voor het handmatige testplan. Start de app met `/debuglog` voor
   `%LOCALAPPDATA%\RDCManagerX\debug.log`.
+- **Crashes:** met `/debuglog` komt elke onafgevangen fout in het log, met adres (`RDCManagerX.exe+$offset`) en
+  stack. De Release-build schrijft ook `Win64\Release\RDCManagerX.map`; bewaar die bij die build (hij blijft lokaal
+  en hoort nooit bij een release) en vertaal het log met
+  `python Tools\map-lookup.py Win64\Release\RDCManagerX.map debug.log`.
 - **Versienummer** `jjjj.mm.dd.xxx` (xxx = build van de dag). `Tools\Version.targets` draait `Tools\NextVersion.ps1`
   vóór de resource-compiler: die verhoogt `BuildNumber.json` en schrijft `Source\Version.rc`. Laat "Include version
   information" uit in de projectopties, anders krijgt de exe twee versie-resources.

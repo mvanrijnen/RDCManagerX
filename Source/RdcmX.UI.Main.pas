@@ -484,6 +484,8 @@ type
     procedure DropLegacyPasswords;
     procedure ForgetSelectedPassword;
     procedure HandleRejectedPassword(aServer: TRdcServer);
+    procedure ApplicationException(Sender: TObject; E: Exception);
+    procedure ReportUnexpectedException(E: Exception);
     function ConfirmForgetAllPasswords: Boolean;
     function ApplyRememberPasswordsOption(aWanted: Boolean): Boolean;
     // Losmaken (eigen venster / volledig scherm)
@@ -935,6 +937,7 @@ end;
 
 procedure TfrmMain.InitializeForm;
 begin
+  Application.OnException := ApplicationException;
   FFiles := TObjectList<TRdcFile>.Create(True);
   FTreeNodes := TDictionary<TRdcNode, TTreeNode>.Create;
   FAppSettings := TRdcAppSettings.Create;
@@ -3840,6 +3843,19 @@ begin
         end;
       end;
   end;
+end;
+
+procedure TfrmMain.ApplicationException(Sender: TObject; E: Exception);
+begin
+  ReportUnexpectedException(E);
+end;
+
+procedure TfrmMain.ReportUnexpectedException(E: Exception);
+begin
+  // Every exception nobody handled (also access violations in event handlers) goes into the debug log with its
+  // address and stack, then the normal error dialog. Without this the log showed nothing of the error.
+  TRdcLog.WriteException(E, 'onverwacht');
+  Application.ShowException(E);
 end;
 
 function TfrmMain.ConfirmForgetAllPasswords: Boolean;

@@ -50,6 +50,10 @@ Or open `RDCManagerX.dproj` (and `Tests\RDCManagerXTests.dproj`) in the IDE.
   `--run:RdcmX.Tests.Storage.TStorageTests.RoundTripIsByteIdentical`. RDP behaviour itself has no automated tests;
   see `TESTPLAN.md` for the manual test plan. Start the app with `/debuglog` to write
   `%LOCALAPPDATA%\RDCManagerX\debug.log`.
+- **Crashes:** with `/debuglog` every unhandled exception goes into the log with its address
+  (`RDCManagerX.exe+$offset`) and stack. The Release build also writes `Win64\Release\RDCManagerX.map`; keep it
+  with that build (it stays local and is never part of a release) and resolve the log with
+  `python Tools\map-lookup.py Win64\Release\RDCManagerX.map debug.log`.
 - **Version number** `yyyy.mm.dd.xxx` (xxx = build of the day). `Tools\Version.targets` runs `Tools\NextVersion.ps1`
   before the resource compiler: it increments `BuildNumber.json` and writes `Source\Version.rc`. Leave "Include
   version information" off in the project options, otherwise the exe gets two version resources.
