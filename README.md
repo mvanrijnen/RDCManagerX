@@ -7,6 +7,7 @@
   <img alt="Windows 10 | 11 x64" src="https://img.shields.io/badge/Windows-10_%7C_11_x64-0078D4?style=for-the-badge&logo=windows&logoColor=white">
   <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge"></a>
   <a href="https://mvanrijnen.github.io/RDCManagerX/"><img alt="Manual EN | NL" src="https://img.shields.io/badge/manual-EN_%7C_NL-2f7fd8?style=for-the-badge"></a>
+  <a href="https://alternativeto.net/software/rdcmanagerx/about/?utm_source=badge&utm_medium=referral"><img alt="RDCManagerX | AlternativeTo" src="https://alternativeto.net/static/badges/badge-compact-color.svg" height="28"></a>
 </p>
 
 📖 **Manual (English / Dutch, HTML and PDF): [mvanrijnen.github.io/RDCManagerX](https://mvanrijnen.github.io/RDCManagerX/)**
